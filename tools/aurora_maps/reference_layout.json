@@ -1,0 +1,53 @@
+{
+  "commands": {
+    "low": "commands/commands-low.md",
+    "medium": "commands/commands-medium.md",
+    "high": "commands/commands-high.md",
+    "index": "commands/commands-index.tsv",
+    "catalog": "commands/commands.json"
+  },
+  "runtime": {
+    "lite": "runtime/overview.md",
+    "deep": "runtime/runtime-domains.md",
+    "tree": "runtime/runtime-interaction-tree.md",
+    "generated": "runtime/runtime-generated-map.md",
+    "call_tree": "runtime/runtime-generated-call-tree.md",
+    "skeleton": "runtime/runtime-function-skeleton.jsonl",
+    "control_plane_skeleton": "runtime/control-plane-function-skeleton.jsonl",
+    "search_guide": "runtime/search-guide.md",
+    "symbol_index": "runtime/runtime-symbol-index.tsv"
+  },
+  "ui": {
+    "lite": "ui/ui-lite.md",
+    "deep": "ui/ui-deep.md",
+    "tree": "ui/ui-generated-call-tree.md",
+    "generated": "ui/ui-generated-map.md",
+    "call_tree": "ui/ui-generated-call-tree.md",
+    "skeleton": "ui/ui-function-skeleton.jsonl",
+    "search_guide": "ui/ui-search-guide.md",
+    "symbol_index": "ui/ui-symbol-index.tsv"
+  },
+  "reference_packs": {
+    "pokemon": "reference_packs/pokemon-playbook-lite.md",
+    "game_profiles": "reference_packs/game-profile-reference.md",
+    "scheduler": "reference_packs/scheduler-reference.md",
+    "runtime_troubleshooting": "reference_packs/runtime-troubleshooting-map.md",
+    "ui_troubleshooting": "reference_packs/ui-troubleshooting-map.md",
+    "log_fields": "reference_packs/log-field-reference.md",
+    "memory_retrieval": "reference_packs/memory-retrieval-reference.md",
+    "rehydration": "reference_packs/rehydration-reference.md",
+    "roadmap": "reference_packs/roadmap-reference.md",
+    "codex_cli_windows": "reference_packs/codex-cli-windows-system-notes.md",
+    "prime_agent_harness": "reference_packs/prime-agent-harness-techniques.md",
+    "codex_chat_continuity_refinement": "reference_packs/codex-chat-continuity-refinement-policy.md",
+    "codex_optionality_turn_controls": "reference_packs/codex-optionality-turn-controls-and-aurora-adoption.md",
+    "aurora_control_plane_cli": "reference_packs/aurora-control-plane-cli-reference.md",
+    "aurora_settings_registry": "reference_packs/aurora-settings-registry-reference.md",
+    "aurora_mcp_readonly": "reference_packs/aurora-mcp-readonly-reference.md",
+    "blender_readonly_mcp": "reference_packs/blender-readonly-mcp-reference.md",
+    "fl_studio_readonly_mcp": "reference_packs/fl-studio-readonly-mcp-reference.md",
+    "obs_readonly_mcp": "reference_packs/obs-readonly-mcp-reference.md",
+    "adaptive_reasoning": "reference_packs/adaptive-reasoning-reference.md",
+    "held_inputs": "reference_packs/held-input-reference.md"
+  }
+}

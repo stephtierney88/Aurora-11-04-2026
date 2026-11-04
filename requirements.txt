@@ -1,0 +1,16 @@
+# Minimal Windows runtime + Control Panel dependencies; Python 3.11 recommended.
+# The historical requirements.txt remains available for the original environment.
+numpy>=1.24,<3
+scipy>=1.11,<2
+openai>=2.32,<3
+Pillow>=9.4,<13
+PyAutoGUI==0.9.54
+keyboard==0.13.5
+requests>=2.31,<3
+schedule>=1.2,<2
+sounddevice>=0.4,<1
+tiktoken>=0.7,<1
+pygame>=2.5,<3
+colorama>=0.4,<1
+pydub==0.25.1
+ffmpeg-python==0.2.0

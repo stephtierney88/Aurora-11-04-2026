@@ -1,0 +1,361 @@
+# Aurora commands — summaries
+
+- `ADD_APRIORITY_GOAL(goal_text)`: Add a new open-ended goal.
+- `ADD_GOAL(goal_text; priority; significance)`: Add a new goal with priority and significance.
+- `ADD_JOURNAL(entry)`: Append a continuity/journal note.
+- `ADD_MODEL(name)`: Validate a model with a short test call and add it to the custom Aurora catalog.
+- `ADD_OVERARCHING_GOAL(goal_text)`: Add a long-horizon mission or strategic objective.
+- `ADD_UNKNOWN_PRIORITY(goal_text)`: Add a candidate goal whose priority is still unknown.
+- `APPEND_AGENT_HISTORY(agent_id, visibility=private|parent_visible, summary=..., text=..., note=...)`: Append an explicit operator note to one sub-agent private JSONL log without writing parent chat history, prompts, Pending Commands, or execution queues.
+- `APPLY_PERSONAL_DEFAULTS([mode])`: Validate and apply the saved personal profile; reapply retains setter effects, while changed_only skips unchanged values.
+- `APPLY_SETTINGS_TRANSACTION(token)`: Preview, atomically apply, or explicitly roll back registered runtime settings through the existing transaction service.
+- `APPLY_SYSTEM_DEFAULTS([mode])`: Validate and apply the process-start system profile; reapply retains setter effects, while changed_only skips unchanged values.
+- `APPROVE_AGENT_SUGGESTION(suggestion_id|latest|agent_id, note=...)`: Mark a policy-allowed suggestion approved for review only.
+- `APPROVE_PENDING([selectors..., version:hash])`: Submit the selected held commands once; preserve unstarted or uncertain items for inspection.
+- `APPROVE_PROMPT_PIN(mark_id|target, note=...)`: Approve a Prompt Pin mark as metadata; model-visible inclusion remains off until a later explicit slice.
+- `ARM_CHEAP_LIVE_VISUAL_HARNESS(optional_model)`: Arm a one-turn cheap live visual probe while keeping live mode off; default is gpt-5.4-mini unless nano/mini/model is supplied.
+- `ARM_CHEAP_RESPONSES_SHADOW_PROBE(optional_model)`: Arm a cheap Responses live-probe scaffold while keeping send/API/default migration disabled; default is gpt-5.4-mini unless nano/mini/model is supplied.
+- `ARM_LIVE_VISUAL_HARNESS_PROBE(optional_model)`: Arm a one-turn live visual probe while keeping live mode off; tier is inferred from the selected model.
+- `ARM_RESPONSES_SHADOW_PROBE(optional_model)`: Arm a Responses live-probe scaffold for a chosen model, metadata-only and no-send.
+- `ARM_STRONG_LIVE_VISUAL_HARNESS(optional_model)`: Arm a one-turn stronger-model visual comparison while keeping live mode off; default is gpt-5.4.
+- `ASSIGN_AGENT_TASK(agent_id, title=..., objective=..., expected=..., context=..., priority=0-100, visibility=parent_visible|private, tags=...)`: Record a metadata-only sub-agent work brief without spawning workers, writing parent history, inserting Pending Commands, or changing model context.
+- `AUTHORIZE_OPERATOR(passcode)`: Temporarily unlock privileged external operator commands for the configured TTL.
+- `BACKFILL_IMAGE_CONTEXT_INDEX(optional_limit)`: Create missing metadata sidecars for a bounded newest-first set of existing screenshots without renaming files.
+- `BUILD_RESPONSES_SHADOW_OFFLINE_POSTURE()`: Build and log the offline token/cost/state posture without calling the Responses API.
+- `BUILD_RESPONSES_SHADOW_PAYLOAD_PREVIEW()`: Build and log the no-send Responses payload preview without calling the Responses API.
+- `CANCEL_ACTIVE_WORK()`: Cancel model and command work and release Aurora-owned inputs. Live stays unchanged; remote model work may still drain.
+- `CHECK_PREVIOUS_HANDOFF()`: Load yesterday's handoff file into pinned handoff context if it exists.
+- `CLEAR()`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
+- `CLEAR%(percentage)`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
+- `CLEAR_CONTEXT_MARK(mark_id|target|all, optional mark_type=...)`: Append a clear event for writable context marks without deleting audit history.
+- `CLEAR_DO_NOT_INCLUDE(mark_id|target|all)`: Clear active do-not-include/drop metadata without erasing the audit log.
+- `CLEAR_HANDOFF()`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
+- `CLEAR_INIT()`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
+- `CLEAR_NEXT_INFERENCE()`: Clear the queued one-turn override, retaining normal session policy. Works while setting locks are enabled.
+- `CLEAR_NONPIN()`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
+- `CLEAR_NOPIN%(percentage[, random|oldest|newest])`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
+- `CLEAR_OPERATOR_PASSCODE()`: Clear the configured external-operator passcode.
+- `CLEAR_PENDING([selectors..., version:hash])`: Drop matching held/uncertain items without execution; an empty match changes nothing.
+- `CLEAR_PENDING_COMMANDS([selectors..., version:hash])`: Drop matching held/uncertain items without execution; an empty match changes nothing.
+- `CLEAR_PIN()`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
+- `CLEAR_RECENT_CONTEXT()`: Clear recent-context memory.
+- `CLEAR_RESPONSES_SHADOW_PROBE()`: Clear the Responses live-probe scaffold while keeping chat/completions as the fallback.
+- `CLEAR_ROUTE_STATE()`: Clear route state, route intent, local path, blockers, and recent movement results.
+- `CLOSE_CHAT_HEAD()`: Ask the control panel to close the floating chat strip and its attached history pane.
+- `COMPLETE_GOAL(goal_id)`: Mark a goal as completed.
+- `DELETE_MSG(timestamp)`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
+- `DHISTORY()`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
+- `DRY_RUN_AGENT_PENDING_INSERT(optional_filter)`: Log and display a no-exec dry-run proving which review links satisfy the future insertion contract while leaving the executable Pending queue unchanged.
+- `EDIT_MSGS(timestamp, text[, timestamp, text...])`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
+- `FIND_REFERENCE(query, optional_pack_name|all)`: Alias for REF(...) when a more explicit command name reads better.
+- `GB_MODE()`: Set runtime.action to gb. Uses the same runtime setting lock and observed readback.
+- `HELP`: Display this help message.
+- `HIDE_AI_COMMANDS(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `HIDE_AI_TEXT(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `HIDE_USER_COMMANDS(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `HIDE_USER_TEXT(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `INIT(text...)`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
+- `INSERT_AGENT_PENDING_COMMAND(review_link_or_dry_run_id, confirm=dry_run:<id>, note=...)`: Insert a contract-ready sub-agent suggestion into the held Pending queue only after exact dry-run confirmation; it still requires APPROVE_PENDING before execution.
+- `INSERT_AGENT_PENDING_FROM_DRY_RUN(review_link_or_dry_run_id, confirm=dry_run:<id>, note=...)`: Insert a contract-ready sub-agent suggestion into the held Pending queue only after exact dry-run confirmation; it still requires APPROVE_PENDING before execution.
+- `INSERT_PENDING(command)`: Hold a validated command/batch using the chosen normal, insert or replace mode.
+- `LAUNCH_CONTROL_PANEL()`: Open the Aurora control panel window.
+- `LINK_AGENT_SUGGESTION_TASK(task_id|latest|agent_id, suggestion=latest|suggestion_id|agent_id, note=...)`: Link a task packet to a suggestion as review provenance while keeping the Pending gate closed.
+- `LINK_AGENT_TASK_SUGGESTION(task_id|latest|agent_id, suggestion=latest|suggestion_id|agent_id, note=...)`: Link a task packet to a suggestion as review provenance while keeping the Pending gate closed.
+- `LIST_COMMANDS(low|medium|high)`: Display the mirrored Aurora command catalog at the requested verbosity.
+- `LIST_EPISODIC_SNAPSHOTS([limit])`: Existing episodic snapshot write/list/lexical-search behavior with complete argument admission and correlated receipts; no inferred persistence or rollback guarantee.
+- `LOAD_TASKS(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `LOCK_OPERATOR_ACCESS()`: Clear the current external-operator authorization immediately.
+- `LOCK_SETTING([lock])`: Read locks when omitted; otherwise enable or disable the named runtime setting lock. Settings values are unchanged.
+- `LOGIN_CODEX_OAUTH()`: Open the ChatGPT/Codex OAuth sign-in helper in a new window.
+- `LOOKUP_COMMAND(command_name, low|medium|high)`: Look up one command from the mirrored Aurora command catalog.
+- `MARK_AGENT_SUGGESTION(suggestion_id|latest|agent_id, mark_type=operator_pin|search_pin|importance_score, note=...)`: Link a staged suggestion to a Context Mark provenance row without prompt inclusion or execution.
+- `MARK_AGENT_SUGGESTION_PROVENANCE(suggestion_id|latest|agent_id, mark_type=operator_pin|search_pin|importance_score, note=...)`: Link a staged suggestion to a Context Mark provenance row without prompt inclusion or execution.
+- `MARK_CONTEXT(target, mark_type=..., value=..., note=..., approval=draft|requested|approved|rejected)`: Record a metadata-only context mark; it stays visible in Prompt Ledger but does not become model-visible.
+- `MARK_DO_NOT_INCLUDE(target, note=...)`: Convenience command to record a metadata-only do-not-include/drop mark while preserving local evidence.
+- `MARK_REPLY(target, mark_type=..., value=..., note=..., approval=...)`: Record a metadata-only mark for a reply target.
+- `MARK_TURN(target, mark_type=..., value=..., note=..., approval=...)`: Record a metadata-only mark for a turn target.
+- `MEM(query, [k,] options...)`: Validate the complete query before batch execution, then recheck with runtime defaults. argument_policy=legacy preserves old clamps/fallbacks; strict rejects invalid legacy numeric/enum fields. Hard filters, option names, Boolean/date syntax and new options always validate. May call embeddings and update cache/feedback/results; no automatic memory promotion.
+- `MOD_AGENT(agent_id, role=..., rank=..., urgency=..., allow=..., deny=..., history=..., status=active|paused|silenced|retired)`: Modify registry metadata only.
+- `NO_ACTION_MODE()`: Set runtime.action to none. Uses the same runtime setting lock and observed readback.
+- `OPEN_CHAT_HEAD()`: Ask the control panel to open the floating always-on-top chat strip.
+- `OVERRIDE_PENDING(command)`: Hold a validated command/batch using the chosen normal, insert or replace mode.
+- `PIN(text...)`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
+- `PREVIEW_SETTINGS_TRANSACTION(token)`: Preview, atomically apply, or explicitly roll back registered runtime settings through the existing transaction service.
+- `PROMOTE_EPISODIC_MEMORY(index, target[, prefix, result_handle])`: Copy a legacy preview item, or exact full retained summary when a handle is supplied, into live memory; no state rewind.
+- `pyag:click(x=None, y=None, button='left')`: Click at optional coordinates; omitted or null coordinates use the current position.
+- `pyag:doubleclick(x=None, y=None, button='left')`: Double-click at optional coordinates using the selected mouse button.
+- `pyag:drag(x, y, duration=0.0, button='left')`: Drag to desktop coordinates with the selected mouse button.
+- `pyag:focus_window(title=None)`: Focus a matching window, or the configured emulator title when omitted; failure blocks later batch actions.
+- `pyag:hold(key, duration=None)`: Hold a key; omit duration for an indefinite hold requiring an explicit release.
+- `pyag:hold_click(x=None, y=None, duration=0.0, button='left')`: Hold a mouse button for a finite duration, releasing on completion or cancellation.
+- `pyag:hotkey(keys...)`: Press a complete chord; every key must be valid before any key is sent.
+- `pyag:leftclick(x=None, y=None, button='left')`: Click at optional coordinates; omitted or null coordinates use the current position.
+- `pyag:move(x, y, duration=0.0)`: Move the pointer to desktop coordinates; negative coordinates support other monitors.
+- `pyag:move_key(key, tiles)`: Hold a game direction using the existing tile-duration calibration; game-specific accuracy is not guaranteed.
+- `pyag:multi_hold(keys...)`: Hold all listed keys until explicitly released.
+- `pyag:multi_press(keys...)`: Press every listed key in order; invalid keys reject the whole request.
+- `pyag:multi_release(keys...)`: Release every listed desktop key.
+- `pyag:press(key, presses=1, interval=0.0)`: Press one key a positive integer number of times, with an optional interval.
+- `pyag:release(key, routing='owned')`: Release a key using its owned route; optional current explicitly uses the current mapping.
+- `pyag:screenshot(filename='screenshot.png')`: Save a desktop screenshot at the supplied path or screenshot.png.
+- `pyag:scroll_down(amount=1)`: Scroll downward by signed units; negative units reverse direction.
+- `pyag:scroll_up(amount=1)`: Scroll upward by signed units; negative units reverse direction.
+- `pyag:type(text, interval=0.0)`: Type text supported by the active PyAutoGUI character set, with an optional interval.
+- `PYAG_MODE()`: Set runtime.action to pyag. Uses the same runtime setting lock and observed readback.
+- `QUEUE_LIVE_VISUAL_HARNESS_PROBE_PROMPT()`: Queue the bounded probe prompt while live mode is off. Turning live on afterward can spend one visual model turn.
+- `QUEUE_PENDING(command)`: Hold a validated command/batch using the chosen normal, insert or replace mode.
+- `RECALL(query, [k,] options...)`: Validate the complete query before batch execution, then recheck with runtime defaults. argument_policy=legacy preserves old clamps/fallbacks; strict rejects invalid legacy numeric/enum fields. Hard filters, option names, Boolean/date syntax and new options always validate. May call embeddings and update cache/feedback/results; no automatic memory promotion.
+- `RECALL_PREVIOUS_SUMMARY(optional_character_name)`: Display yesterday's handoff summary and the init profile for review.
+- `RECORD_LIVE_VISUAL_HARNESS_PROBE_RESULT()`: Record the latest post-arm model-turn diagnostics against the live visual probe contract.
+- `REF(query_or_pack, optional_pack_name|all)`: Shorthand reference lookup; exact pack names expand to SHOW_REFERENCE_PACK(...), otherwise SEARCH_REFERENCE_PACK(...).
+- `REHEARSE_LIVE_VISUAL_HARNESS()`: Run the Window 11 offline harness rehearsal without model calls or desktop/game actions; records checks for live/action/next-turn/image/count/setup posture.
+- `REJECT_AGENT_SUGGESTION(suggestion_id|latest|agent_id, note=...)`: Mark a suggestion rejected for review only.
+- `REJECT_PROMPT_PIN(mark_id|target, note=...)`: Reject a Prompt Pin mark as metadata.
+- `RELEASE_HELD_INPUTS()`: Cancel active/queued command batches and release Aurora-owned inputs. Model work and Live stay unchanged.
+- `REMOVE_MODEL(name)`: Remove a custom model from the Aurora catalog.
+- `REPLACE_PENDING(command)`: Hold a validated command/batch using the chosen normal, insert or replace mode.
+- `REQUEST_DEMAND_CAPTURE(optional_reason, optional_settle_seconds)`: Request a one-off screenshot capture without changing the normal timer heartbeat or reordering pending commands.
+- `REQUEST_PROMPT_PIN(target, note=...)`: Convenience command to request a metadata-only Prompt Pin.
+- `REQUEST_SCREENSHOT_CAPTURE(optional_reason, optional_settle_seconds)`: Request a one-off screenshot capture without changing the normal timer heartbeat or reordering pending commands.
+- `RESET_RESPONSES_SESSION()`: Explicitly start a fresh Responses chain after inspecting status; clears local continuation identity, never replays a failed request.
+- `RETRIEVAL_PULL(query_or_filters, options...)`: Validate the complete query before batch execution, then recheck with runtime defaults. argument_policy=legacy preserves old clamps/fallbacks; strict rejects invalid legacy numeric/enum fields. Hard filters, option names, Boolean/date syntax and new options always validate. May call embeddings and update cache/feedback/results; no automatic memory promotion.
+- `RETRIEVE_HANDOFF(optional_filename)`: Load a handoff file into pinned handoff context. Defaults to yesterday if no file is provided.
+- `ROLLBACK_SETTINGS_TRANSACTION(token)`: Preview, atomically apply, or explicitly roll back registered runtime settings through the existing transaction service.
+- `RUN_AGENT_HELPER_CLOSURE_CHECK()`: Build and log the Window 20 metadata-first sub-agent helper closure/readiness checklist.
+- `RUN_AGENT_PENDING_INSERT_DRY_RUN(optional_filter)`: Log and display a no-exec dry-run proving which review links satisfy the future insertion contract while leaving the executable Pending queue unchanged.
+- `RUN_COMPANION_CONTRACT_CLOSURE_CHECK()`: Build and log the Window 21 companion contract closure/readiness checklist.
+- `RUN_LIVE_VISUAL_HARNESS_REHEARSAL()`: Run the Window 11 offline harness rehearsal without model calls or desktop/game actions; records checks for live/action/next-turn/image/count/setup posture.
+- `RUN_PROMPT_INCLUSION_CLOSURE_CHECK()`: Build and log the Window 19 Prompt Inclusion closure/readiness checklist after activation proof.
+- `RUN_PROMPT_INCLUSION_PREVIEW_REHEARSAL()`: Create temporary approved Prompt Pin/drop metadata, build the no-send preview, clear the temporary marks, and report non-empty diff/rollback proof without changing prompt packing.
+- `RUN_RESPONSES_SHADOW_CLOSURE_CHECK()`: Build and log the closure/fallback readiness checklist without calling the Responses API.
+- `SAVECH([path_prefix])`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
+- `SAVE_ALL_PINS(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `SAVE_HANDOFF(optional_filename)`: Save a structured handoff snapshot to the logging folder or a provided path.
+- `SAVE_PERSONAL_DEFAULTS()`: Atomically save current profile settings, retaining unknown fields in a valid existing file.
+- `SAVE_PINS(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `SAVE_TASKS(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `SEARCH_COMMANDS(query, low|medium|high)`: Search the mirrored Aurora command catalog by topic, summary, handler, or signature text.
+- `SEARCH_EPISODIC_SNAPSHOTS(query[, limit])`: Existing episodic snapshot write/list/lexical-search behavior with complete argument admission and correlated receipts; no inferred persistence or rollback guarantee.
+- `SEARCH_IMAGE_CONTEXT_INDEX(query, optional_limit)`: Search image sidecars by caption, OCR text, tags, capture reason, image id, and path.
+- `SEARCH_PROGRAM_MAP(query, runtime|ui)`: Search the mirrored runtime/control-panel symbol indexes and generated maps.
+- `SEARCH_REFERENCE_PACK(query, optional_pack_name|all)`: Search the mirrored Aurora reference packs by topic text.
+- `SET_ACTION_MODE([value])`: Set runtime.action, or omit value to read it. Controller family available to Aurora for approved actions.
+- `SET_ADD_IMSGS_TO_HISTORY(on|off)`: Explicitly control important-message history retention.
+- `SET_ADD_UMSGS_TO_HISTORY(on|off)`: Explicitly control unimportant-message history retention.
+- `SET_AGENT_SUGGESTION_APPROVAL(suggestion_id|latest|agent_id, approval=approved|rejected|requested|draft, note=...)`: Append review-state metadata without Pending Command insertion or execution.
+- `SET_AGENT_TASK_STATUS(task_id|latest|agent_id, status=draft|active|review|blocked|closed, note=...)`: Append review/status metadata for a sub-agent task packet without execution or prompt inclusion.
+- `SET_ALWAYS(on|off, true|false)`: Explicitly set always-mode and hide_input together.
+- `SET_AUTH_MODE([value])`: Set auth.mode, or omit value to read it. Credential route Aurora will resolve before a model request.
+- `SET_AUTO_DYNAMIC_INFERENCE(on|off)`: Allow Aurora to adapt the next turn's model settings automatically.
+- `SET_AUTO_PROMPT(on|off)`: Explicitly enable or disable auto prompting.
+- `SET_BATTLE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`: Set battle reasoning effort.
+- `SET_BATTLE_VERBOSITY(low|medium|high)`: Set verbosity for battle turns.
+- `SET_CHAT_HEAD_HISTORY_SIZE(width,height)`: Set the attached history window size.
+- `SET_CHAT_HEAD_OPACITY(value)`: Set chat-head window opacity between 0.25 and 1.0.
+- `SET_CHAT_HEAD_SEND_ANIMATION(pulse|none)`: Control the send animation style used by the floating chat strip input.
+- `SET_CHAT_HEAD_SEND_ANIMATION_SECONDS(value)`: Set the floating chat strip send animation duration.
+- `SET_CHAT_HEAD_STRIP_SIZE(width,height)`: Set the strip window size.
+- `SET_CHAT_HEAD_TOPMOST(on|off)`: Control whether the chat-head windows stay topmost.
+- `SET_CHAT_LOG_ECHO(on|off)`: Toggle compact [CHATLOG] console echo output.
+- `SET_COMMAND_DRIP_LOOKAHEAD(turns)`: Set how many turns ahead Aurora sketches likely command candidates; this does not approve commands.
+- `SET_COMMAND_DRIP_RETENTION(turns)`: Set how many recent turns of command drip history remain on hand. Recommended normal range: 3-7.
+- `SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED(on|off)`: Show or hide likely dropped candidates in the drip tree.
+- `SET_COMMAND_DRIP_SHOW_VARIANTS(on|off)`: Show or hide near-miss command variants in the drip tree.
+- `SET_CONTEXT_MARK_APPROVAL(mark_id|target, approval=draft|requested|approved|rejected, optional mark_type=...)`: Update a context mark approval state.
+- `SET_CRITIQUE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`: Set reasoning effort for critique/self-review turns.
+- `SET_CRITIQUE_TURN_INTERVAL(turns)`: Set how often Aurora performs a deeper critique/self-review turn.
+- `SET_CRITIQUE_VERBOSITY(low|medium|high)`: Set verbosity for critique/self-review turns.
+- `SET_CURSOR_LABEL(on|off)`: Toggle the near-cursor XY label.
+- `SET_DEMAND_CAPTURE([value])`: Set capture.demand_enabled, or omit value to read it. Whether commands and explicit requests may ask the capture service for a fresh frame.
+- `SET_EPISODIC_EMBEDDINGS(off|auto|force)`: Choose lexical-only retrieval, lexical fallback, or embedding-required retrieval.
+- `SET_EPISODIC_EMBEDDING_MODEL(name)`: Set which OpenAI embedding model episodic retrieval should use.
+- `SET_EPISODIC_MEMORY(on|off)`: Enable or disable compact episodic snapshot writing.
+- `SET_EPISODIC_MEMORY_INTERVAL(seconds)`: Set the periodic episodic snapshot interval. Minimum 60 seconds.
+- `SET_EPISODIC_MEMORY_PERIODIC(on|off)`: Enable or disable periodic episodic snapshot writes.
+- `SET_EPISODIC_MEMORY_SCENE_TRIGGER(on|off)`: Enable or disable scene-change episodic snapshot writes.
+- `SET_EPISODIC_PLANNING_ASSIST(off|review|critique|review_critique)`: Bound automatic episodic retrieval injection to higher-attention planning turns.
+- `SET_EPISODIC_PLANNING_ASSIST_COOLDOWN(turns)`: Set the minimum turn gap before bounded planning retrieval may run again. Range 0-12.
+- `SET_EPISODIC_PLANNING_ASSIST_K(k)`: Set how many episodic memories bounded planning turns may inject. Range 1-4.
+- `SET_EXECUTION_MODE([value])`: Set runtime.execution, or omit value to read it. Approval and execution posture for commands proposed by the model.
+- `SET_GAME_PROFILE([value])`: Set game.profile, or omit value to read it. Gameplay assumptions, prompts, controls, and save-state guidance.
+- `SET_HIGH_DETAIL(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `SET_IMAGE_DETAIL([value])`: Set vision.image_detail, or omit value to read it. Default image detail before model-specific compatibility normalization.
+- `SET_IMPORTANT_MESSAGES(on|off)`: Explicitly enable or disable important messages.
+- `SET_IMSGS_DECAY_CHECK(on|off)`: Explicitly control important-message decay checks.
+- `SET_KEYPOINT_GRID(on|off)`: Toggle the red key-point grid overlay.
+- `SET_LATEST_IMAGE_DETAIL(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `SET_LIVE_INIT([value])`: Set runtime.live_init, or omit value to read it. Whether Aurora loads its full live initialization prompt when that path is used.
+- `SET_LIVE_MODE([value])`: Set runtime.live, or omit value to read it. Whether Aurora may send model requests and process model responses.
+- `SET_MAX_IMAGES_IN_HISTORY(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `SET_MODEL_TRANSPORT([value])`: Set model.transport, or omit value to read it. Explicit live transport selection. Responses requires Astra/API-key auth and keeps provider history. An intervening Chat Completions turn requires an explicit Responses reset. Does not enable live mode.
+- `SET_MODEL_VERBOSITY([value])`: Set inference.verbosity, or omit value to read it. Default response verbosity for model families that support it.
+- `SET_NEXT_INFERENCE([key=value; ...])`: Replace the queued one-turn model/effort/verbosity/image/temperature plan; omit arguments to inspect. Session defaults stay unchanged.
+- `SET_NEXT_REASONING_EFFORT([effort[, note]])`: Replace the queued plan with one turn's reasoning effort and optional note; omit arguments to inspect. Model compatibility normalization still applies.
+- `SET_OPERATOR_PASSCODE(passcode)`: Configure or replace the external-operator passcode used for privileged raw bridge commands.
+- `SET_OPERATOR_PASSCODE_REQUIRED(on|off)`: Require or relax passcode authorization for privileged external operator commands.
+- `SET_PASSCODE_COMMAND_VISIBILITY(on|off)`: Show raw passcode-bearing commands in logs/history, or mask them as *******.
+- `SET_PENDING_QUEUE_MODE(normal|replace|insert)`: Set how newly queued pending commands behave by default in the pending planning lane.
+- `SET_PROMPT_INCLUSION_ACTIVATION(on|off, preview_id=latest|fresh|..., checklist_id=latest|fresh|..., confirm=offline_proof|rollback)`: Enable or disable reversible Prompt Inclusion after fresh review and offline proof.
+- `SET_REASONING_EFFORT([value])`: Set inference.reasoning_effort, or omit value to read it. Default reasoning effort before model-specific compatibility normalization.
+- `SET_REASONING_MODEL([value])`: Set model.reasoning, or omit value to read it. Model selected when Aurora requests a reasoning-oriented turn.
+- `SET_REASONING_SUMMARY_MODE(auto|none|brief|detailed)`: Track the preferred reasoning summary mode.
+- `SET_REVIEW_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`: Set reasoning effort for scheduled review turns.
+- `SET_REVIEW_TURN_INTERVAL(turns)`: Set how often Aurora performs a deliberate review turn.
+- `SET_REVIEW_VERBOSITY(low|medium|high)`: Set verbosity for scheduled higher-attention review turns.
+- `SET_SCREENSHOT_INTERVAL([value])`: Set capture.screenshot_interval, or omit value to read it. Requested screenshot polling interval before idle floors and other effective cadence rules.
+- `SET_SESSION_REASONING_EFFORT([value])`: Set inference.reasoning_effort, or omit value to read it. Default reasoning effort before model-specific compatibility normalization.
+- `SET_SHOW_AI_COMMANDS(on|off)`: Explicitly control AI command visibility.
+- `SET_SHOW_AI_TEXT(on|off)`: Explicitly control AI text visibility.
+- `SET_SHOW_USER_COMMANDS(on|off)`: Explicitly control user command visibility.
+- `SET_SHOW_USER_TEXT(on|off)`: Explicitly control user text visibility.
+- `SET_SOUND_EFFECTS(on|off)`: Enable or disable sound effects.
+- `SET_STATEFUL_MODEL_PRESET(stateless-default|responses-link-preview|conversation-preview)`: Select the visible stateful preset profile metadata; live transport remains unchanged until a later transport slice.
+- `SET_STATUS_OVERLAY(on|off)`: Toggle the top status text overlay.
+- `SET_TEMPERATURE([value])`: Set inference.temperature, or omit value to read it. Sampling temperature used by Aurora where the selected model accepts it.
+- `SET_TEXT_MODEL([value])`: Set model.text, or omit value to read it. Model used for text-oriented Aurora turns.
+- `SET_TILE_GRID(on|off)`: Toggle the colored tile grid overlay.
+- `SET_TIME_LOGGING(on|off)`: Toggle detailed timing/debug logging.
+- `SET_TURN_CAPTURE_WAKE([value])`: Set scheduler.capture_wake_enabled, or omit value to read it. Whether settled capture changes may wake a model turn in hybrid scheduler mode.
+- `SET_TURN_CAPTURE_WAKE_DEBOUNCE_SECONDS([value])`: Set scheduler.capture_wake_debounce_seconds, or omit value to read it. Settle delay before a changed capture may wake a model turn.
+- `SET_TURN_HEARTBEAT_SECONDS([value])`: Set scheduler.heartbeat_seconds, or omit value to read it. Maximum quiet interval before the scheduler heartbeat can wake a turn.
+- `SET_TURN_MIN_GAP_SECONDS([value])`: Set scheduler.min_gap_seconds, or omit value to read it. Minimum spacing between model-turn submissions.
+- `SET_TURN_POST_ACTION_SETTLE_SECONDS([value])`: Set scheduler.post_action_settle_seconds, or omit value to read it. Delay after an action result before scheduler follow-up may proceed.
+- `SET_TURN_SCHEDULER_MODE([value])`: Set scheduler.mode, or omit value to read it. Wake strategy for capture-driven, event-driven, or hybrid turns.
+- `SET_TURN_SCHEDULER_PROFILE([value])`: Set scheduler.profile, or omit value to read it. Named bundle for Aurora turn wake and pacing thresholds.
+- `SET_UMSGS_DECAY_CHECK(on|off)`: Explicitly control unimportant-message decay checks.
+- `SET_UNIMPORTANT_MESSAGES(on|off)`: Explicitly enable or disable unimportant messages.
+- `SET_VISION_MODEL([value])`: Set model.vision, or omit value to read it. Model selected for vision-oriented Aurora turns.
+- `SHOW_AGENTS()`: Display metadata-only Agent Registry / History ACL state.
+- `SHOW_AGENT_HELPER_CLOSURE()`: Display Window 20 helper closure readiness, Pending cleanup status, manual-approval boundary, and guardrails.
+- `SHOW_AGENT_HISTORY(optional_agent_id)`: Display per-agent private-history JSONL counts and parent-visible summaries.
+- `SHOW_AGENT_HISTORY_ACLS()`: Display per-agent history ACL preview rows and JSONL audit-log path readiness.
+- `SHOW_AGENT_PENDING_GATE(optional_filter)`: Display task/suggestion review links and the closed Pending Command gate preview.
+- `SHOW_AGENT_PENDING_INSERT_CHECKLIST(optional_filter)`: Display the no-exec Pending insertion checklist/dry-run contract for review-linked suggestions.
+- `SHOW_AGENT_PENDING_INSERT_DRY_RUN(optional_filter)`: Display the no-exec Pending insertion checklist/dry-run contract for review-linked suggestions.
+- `SHOW_AGENT_REVIEW_LINKS(optional_filter)`: Display task/suggestion review links and the closed Pending Command gate preview.
+- `SHOW_AGENT_SUGGESTIONS(optional_agent_or_status)`: Display append-only sub-agent suggestion audit rows and policy outcomes.
+- `SHOW_AGENT_SUGGESTION_ROUTES()`: Display metadata-only sub-agent suggestion route and policy-tag preview rows.
+- `SHOW_AGENT_TASKS(optional_agent_or_status)`: Display append-only sub-agent task packets and review/status outcomes.
+- `SHOW_AUTH()`: Display the configured and last-resolved auth path.
+- `SHOW_CHAT_HEAD()`: Display the current floating chat-head settings.
+- `SHOW_CHECKPOINT_READINESS()`: Display the read-only Window 18-21 checkpoint posture rollup; does not stage, commit, call models, spawn helpers, or approve Pending Commands.
+- `SHOW_COMMAND_DRIP()`: Display the recent and near-future command tree. Lookahead lanes are candidate forecasts, not approved actions.
+- `SHOW_COMPANION_CONTRACT_CLOSURE()`: Display Window 21 companion contract closure readiness, parked companion status, and write-boundary guardrails.
+- `SHOW_COMPANION_CONTRACT_READINESS()`: Display the Window 21 read-only companion contract readiness surface for Control Panel, Browser, Portal/Chats, and AGB without opening integration writes.
+- `SHOW_COMPANION_PROTOCOL_CONTRACT()`: Display the Window 21 read-only companion request/receipt/route protocol contract without enabling companion writes.
+- `SHOW_COMPANION_RECEIPT_AUDIT()`: Display the Window 21 read-only companion receipt/audit readiness contract without creating or writing a receipt store.
+- `SHOW_CONTEXT_MARKS()`: Display writable metadata context-mark policy/store status for Prompt Pin, Operator/Local Pin, Search Pin, Retention Class, Importance Score, Retrieval Relevance Boost, and explicit drop/do-not-include semantics.
+- `SHOW_DEFAULT_PROFILES()`: Inspect system/personal profiles and distinguish missing, invalid and unreadable saved files.
+- `SHOW_DO_NOT_INCLUDE()`: Display do-not-include/drop metadata rows and their non-erasing, non-model-visible status.
+- `SHOW_EPISODIC_MEMORY_STATUS()`: Display episodic snapshot status, last snapshot, and storage path.
+- `SHOW_GAME_PROFILE()`: Display the current game profile, profile source, and the active save-state caveat.
+- `SHOW_HELD_INPUTS()`: Inspect Aurora-owned inputs, their request identity, frozen route and release uncertainty.
+- `SHOW_HISTORY_CONTEXT_SERVICE()`: Display the Window 16 history/context service inventory, current store ownership, companion read/write contract preview, and cleanup candidates.
+- `SHOW_IMAGE_CONTEXT_INDEX()`: Display Window 12 screenshot sidecar/index metadata for capture reason, prompt-context state, hashes, caption/OCR/tags, and embedding placeholders.
+- `SHOW_IMAGE_COST_POSTURE()`: Display Window 18 screenshot/image-index cost posture, bounded scan/backfill/search limits, cache posture, and cheap-versus-expensive image-work guardrails without changing files or model context.
+- `SHOW_LIVE_VISUAL_HARNESS()`: Display the Window 11 bounded live visual/reasoning harness contract, readiness warnings, expected image/context counts, escalation stages, and cleanup expectations.
+- `SHOW_LIVE_VISUAL_HARNESS_PROBE()`: Display the armed live probe contract and latest recorded result.
+- `SHOW_LIVE_VISUAL_HARNESS_REHEARSAL()`: Display the latest recorded offline harness rehearsal result.
+- `SHOW_LOCKS()`: Display which runtime settings are currently locked.
+- `SHOW_MODELS()`: Display built-in and custom models currently available to Aurora.
+- `SHOW_MODEL_STATUS()`: Display the active model trio, effort defaults, interval heuristics, stateful preset metadata, and capability notes.
+- `SHOW_MONITOR_STATUS()`: Display bounded runtime health checks for process state, worker restarts, capture freshness, command wake state, pending queue posture, and gameplay input/foreground readiness.
+- `SHOW_NEXT_INFERENCE()`: Read the queued one-turn plan and its content fingerprint without changing it.
+- `SHOW_OPERATOR_RISK_SUMMARY()`: Display the Window 18 read-only risk digest for cost/model spend, desktop/game actions, model-visible context, command insertion/execution, Responses/stateful transport, and operator access/auth without changing settings.
+- `SHOW_OVERLAY()`: Display the current overlay/grid settings.
+- `SHOW_PENDING()`: Inspect held command identities, queue version, state and recovery evidence.
+- `SHOW_PENDING_COMMANDS()`: Inspect held command identities, queue version, state and recovery evidence.
+- `SHOW_PORTAL_COMPANION_INTAKE()`: Display the Window 22 read-only Portal companion-intake viewer/registry surface without Portal calls, polling, receipt writes, source reads, or automation.
+- `SHOW_PORTAL_COMPANION_INTAKE_AUDIT()`: Alias for SHOW_PORTAL_INTAKE_AUDIT().
+- `SHOW_PORTAL_COMPANION_INTAKE_CLOSURE()`: Alias for SHOW_PORTAL_INTAKE_CLOSURE().
+- `SHOW_PORTAL_COMPANION_INTAKE_DOCKET()`: Alias for SHOW_PORTAL_INTAKE_DOCKET().
+- `SHOW_PORTAL_COMPANION_INTAKE_GATES()`: Alias for SHOW_PORTAL_INTAKE_GATES().
+- `SHOW_PORTAL_COMPANION_INTAKE_HANDOFFS()`: Alias for SHOW_PORTAL_INTAKE_HANDOFFS().
+- `SHOW_PORTAL_COMPANION_INTAKE_PARKING()`: Alias for SHOW_PORTAL_INTAKE_PARKING().
+- `SHOW_PORTAL_COMPANION_INTAKE_PROOF()`: Alias for SHOW_PORTAL_INTAKE_PROOF().
+- `SHOW_PORTAL_COMPANION_INTAKE_REGISTRY()`: Alias for SHOW_PORTAL_INTAKE_REGISTRY().
+- `SHOW_PORTAL_COMPANION_INTAKE_REPORT()`: Alias for SHOW_PORTAL_INTAKE_REPORT().
+- `SHOW_PORTAL_COMPANION_INTAKE_REVIEW()`: Alias for SHOW_PORTAL_INTAKE_REVIEW().
+- `SHOW_PORTAL_COMPANION_INTAKE_UNBLOCKERS()`: Alias for SHOW_PORTAL_INTAKE_UNBLOCKERS().
+- `SHOW_PORTAL_COMPANION_INTAKE_WAITLIST()`: Alias for SHOW_PORTAL_INTAKE_WAITLIST().
+- `SHOW_PORTAL_INTAKE()`: Alias for SHOW_PORTAL_COMPANION_INTAKE().
+- `SHOW_PORTAL_INTAKE_AUDIT()`: Display the Window 22 local acceptance audit matrix: what is proved, waiting, missing, or blocked before live reads/proof/submission/mutation.
+- `SHOW_PORTAL_INTAKE_CLOSURE()`: Display the Window 22 parked closure audit proving the local intake window is safely paused pending upstream evidence.
+- `SHOW_PORTAL_INTAKE_DOCKET()`: Display the Window 22 promotion evidence docket: who owns each missing proof item before later gates may move.
+- `SHOW_PORTAL_INTAKE_GATES()`: Display the Window 22 local intake gate board: what is ready, parked, or blocked before live reads, proof, receipt submission, or mutation.
+- `SHOW_PORTAL_INTAKE_HANDOFFS()`: Display copy-only external handoff packets for Mac Portal, AGB, Aurora Browser, and the operator without submitting or sending them.
+- `SHOW_PORTAL_INTAKE_PARKING()`: Display the Window 22 parking/resume packet naming why Aurora can pause locally and what evidence would reopen later gates.
+- `SHOW_PORTAL_INTAKE_PROOF()`: Display the Window 22 local proof ledger for recorded intake slice validations and the current validation target.
+- `SHOW_PORTAL_INTAKE_REGISTRY()`: Display the local v0.90 envelope registry/cache contract Aurora needs before any live Portal read path.
+- `SHOW_PORTAL_INTAKE_REPORT()`: Display the Window 22 copy-only operator report packets for the human operator, Mac Portal, AGB, and Aurora Browser.
+- `SHOW_PORTAL_INTAKE_REVIEW()`: Display copy-only readiness review packets for Mac Portal, AGB, Aurora Browser, and the human operator while live reads/proof/submission/mutation remain parked.
+- `SHOW_PORTAL_INTAKE_UNBLOCKERS()`: Display the Window 22 explicit unblocker checklist for later live-read, peer-card, cross-client proof, receipt, and mutation gates.
+- `SHOW_PORTAL_INTAKE_WAITLIST()`: Display the Window 22 copy-only upstream waitlist for Mac Portal, AGB, Aurora Browser, and future gated work.
+- `SHOW_PROGRAM_MAP(runtime|ui, lite|deep|tree|generated|call_tree|skeleton|control_plane_skeleton|guide|index)`: Display a mirrored runtime or control-panel map section. control_plane_skeleton is runtime-only.
+- `SHOW_PROMPT_INCLUSION_ACTIVATION()`: Display current Prompt Inclusion activation state, offline proof, active Prompt Pin additions, and active do-not-include omissions.
+- `SHOW_PROMPT_INCLUSION_ACTIVATION_CHECKLIST()`: Display the default-off Prompt Inclusion activation review checklist, rollback plan, and future command shape without enabling activation.
+- `SHOW_PROMPT_INCLUSION_CLOSURE()`: Display Window 19 closure readiness, parked-off posture, proof status, and next roadmap guardrails.
+- `SHOW_PROMPT_INCLUSION_PREVIEW()`: Display the Window 19 no-send activation-plan diff naming which approved Prompt Pins would be added and which approved drop marks would omit content if future activation were enabled.
+- `SHOW_PROMPT_INCLUSION_READINESS()`: Display the Window 19 preview-only gate for Prompt Pins, do-not-include marks, history writes, sub-agent suggestions, and transport guardrails before any model-visible inclusion is enabled.
+- `SHOW_PROMPT_INCLUSION_REHEARSAL()`: Display the latest Prompt Inclusion preview rehearsal result.
+- `SHOW_PROMPT_PINS()`: Display Prompt Pin preview rows from the Prompt Ledger before any model-visible inclusion is enabled.
+- `SHOW_REFERENCE_PACK(pack_name)`: Display a mirrored Aurora reference pack such as pokemon, game_profiles, scheduler, runtime_troubleshooting, ui_troubleshooting, log_fields, memory_retrieval, rehydration, roadmap, codex_cli_windows, prime_agent_harness, codex_chat_continuity_refinement, codex_optionality_turn_controls, aurora_control_plane_cli, aurora_settings_registry, aurora_mcp_readonly, blender_readonly_mcp, or fl_studio_readonly_mcp.
+- `SHOW_REFERENCE_TOPICS()`: Display the mirrored Aurora reference-map topics available to both Codex and Aurora.
+- `SHOW_REHYDRATION_STATUS()`: Display continuity source counts, automatic planning-assist gates, last retrieval/promotion, chat-tail state, and reference-pack readiness.
+- `SHOW_RESPONSES_SHADOW_CLOSURE()`: Display the Window 17 closure/fallback readiness checklist.
+- `SHOW_RESPONSES_SHADOW_OFFLINE_POSTURE()`: Display the Window 17 offline token/cost/state posture for the no-send Responses preview.
+- `SHOW_RESPONSES_SHADOW_PAYLOAD_PREVIEW()`: Display the Window 17 no-send Responses payload preview derived from Prompt Ledger rows.
+- `SHOW_RESPONSES_SHADOW_PROBE()`: Display the Window 17 operator-armed Responses live-probe scaffold and its no-send guardrails.
+- `SHOW_RESPONSES_SHADOW_TRANSPORT()`: Display the Window 17 read-only chat/completions vs Responses comparison contract, readiness blockers, and no-migration guardrails.
+- `SHOW_RETRIEVAL_RESULT(handle[, offset, limit])`: Inspect an immutable retained K-set without rescoring or a provider call.
+- `SHOW_RUNTIME()`: Display the current runtime mode and key toggles.
+- `SHOW_RUNTIME_HEALTH()`: Display the Window 18 operator health readout that summarizes monitor, state export, queue/bridge, capture, image-index cost, recovery/defaults, auth, and safety guardrail posture without changing settings.
+- `SHOW_SECURITY()`: Display the external-operator passcode/authorization state.
+- `SHOW_STATEFUL_MODEL_PRESETS()`: Display explicit stateful preset profiles and whether they are metadata-only or active.
+- `SHOW_TURN_SCHEDULER()`: Display the current turn-scheduler mode, cadence, and last wake reason.
+- `SHOW_TURN_SCHEDULER_PROFILES()`: Display the named scheduler profiles and their thresholds.
+- `SHOW_WINDOW_18_21_CHECKPOINT_READINESS()`: Alias for SHOW_CHECKPOINT_READINESS().
+- `SHUTDOWN_RUNTIME()`: Request shutdown, cancel work and release Aurora-owned inputs; report incomplete cleanup.
+- `SILENCE_AGENT(agent_id, note=...)`: Silence a sub-agent registry row without deleting history or stopping a worker.
+- `STAGE_AGENT_SUGGESTION(suggestion_id|latest|agent_id, note=...)`: Create a visible Pending Command candidate object while leaving the executable Pending Commands queue untouched.
+- `STATUS()`: Display the current runtime mode and key toggles.
+- `SUGGEST_AGENT_COMMAND(agent_id, command=..., reason=..., risk=low|medium|high, target=pending_commands)`: Record a policy-tagged suggestion audit row without Pending Command insertion or execution.
+- `SUMMON_AGENT(agent_id, role=..., rank=..., urgency=..., allow=..., deny=..., history=private|parent_visible)`: Add or reactivate a sub-agent registry row without spawning a worker.
+- `TASKS(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `TOGGLE_ADD_IMSGS_TO_HISTORY(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `TOGGLE_ADD_UMSGS_TO_HISTORY(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `TOGGLE_ALWAYS(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `TOGGLE_AUTO_PROMPT(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `TOGGLE_CHAT_HEAD()`: Toggle the floating chat strip open/closed.
+- `TOGGLE_IMAGE_DETAIL()`: Switch low image detail to high; every other supported detail switches to low. Uses the same runtime setting lock and observed readback.
+- `TOGGLE_IMSGS(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `TOGGLE_IMSGS_DECAY_CHECK(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `TOGGLE_LATEST_IMAGE_DETAIL(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `TOGGLE_LIVE_MODE()`: Flip live mode on/off. Uses the same runtime setting lock and observed readback.
+- `TOGGLE_POWER_WORD(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `TOGGLE_UMSGS(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `TOGGLE_UMSGS_DECAY_CHECK(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `UNLOCK_SETTING([lock])`: Read locks when omitted; otherwise enable or disable the named runtime setting lock. Settings values are unchanged.
+- `UPDATE_ACTIVE_QUESTIONS(items)`: Set the fresh questions Aurora should keep on hand while uncertainty remains high.
+- `UPDATE_CANDIDATE_ALTERNATIVES(items)`: Set alternative next actions or route ideas worth trying soon.
+- `UPDATE_CONTEXT(recent_events)`: Update recent context and events; separate events with semicolons.
+- `UPDATE_CURRENT_AREA(area)`: Set the current area, room, route, or stable location.
+- `UPDATE_IMAGE_CONTEXT_METADATA(image_id_or_path, caption="...", ocr="...", tags="tag1;tag2", embedding_ids="id1;id2")`: Explicitly fill sidecar semantic metadata without making it model-visible.
+- `UPDATE_INVENTORY(inventory_items)`: Update your notable inventory; separate items with semicolons.
+- `UPDATE_KNOWN_FAILURES(items)`: Set actions or plans that are currently known to be failing or blocked.
+- `UPDATE_LAST_LANDMARK(landmark)`: Record the most recent stable landmark.
+- `UPDATE_LOCAL_PATH_PLAN(steps)`: Set the short-horizon path steps; separate with semicolons.
+- `UPDATE_LONG_TERM_CONTEXT(items)`: Set long-horizon strategic context; separate with semicolons.
+- `UPDATE_MID_TERM_CONTEXT(items)`: Set the medium-horizon context or plan; separate with semicolons.
+- `UPDATE_NOTES(items)`: Set stable notes/reminders; separate with semicolons.
+- `UPDATE_PARTY(party_status)`: Update your current party status; provide details for each Pokémon, separated by semicolons.
+- `UPDATE_PINNED_IMMEDIATE(actions)`: Set the immediate next actions; separate with semicolons.
+- `UPDATE_PINNED_SHORT_TERM(actions)`: Set the soon-ish action list; separate with semicolons.
+- `UPDATE_RECENT_MOVEMENT_RESULTS(items)`: Set recent movement outcomes; separate with semicolons.
+- `UPDATE_ROUTE_BLOCKERS(items)`: Set route blockers or navigation constraints; separate with semicolons.
+- `UPDATE_ROUTE_INTENT(intents)`: Set the current high-level route or destination intent; separate with semicolons.
+- `UPDATE_STALE_ASSUMPTIONS(items)`: Set assumptions that may be wrong, outdated, or worth re-checking.
+- `UPDATE_TARGET_AREA(area)`: Set the intended destination or target area.
+- `UPDATE_TRAVEL_HEADING(direction_or_mode)`: Set the broader travel direction or movement mode.
+- `WAIT(seconds)`: Wait for a finite, non-negative duration in seconds while servicing cancellation and controls.
+- `WRITE_EPISODIC_SNAPSHOT([reason, tags])`: Existing episodic snapshot write/list/lexical-search behavior with complete argument admission and correlated receipts; no inferred persistence or rollback guarantee.

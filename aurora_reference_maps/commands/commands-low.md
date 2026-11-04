@@ -1,0 +1,363 @@
+# Aurora commands — compact
+
+Callable bindings only. See commands.json for aliases, provenance and contract coverage.
+
+- `ADD_APRIORITY_GOAL(goal_text)`
+- `ADD_GOAL(goal_text; priority; significance)`
+- `ADD_JOURNAL(entry)`
+- `ADD_MODEL(name)`
+- `ADD_OVERARCHING_GOAL(goal_text)`
+- `ADD_UNKNOWN_PRIORITY(goal_text)`
+- `APPEND_AGENT_HISTORY(agent_id, visibility=private|parent_visible, summary=..., text=..., note=...)`
+- `APPLY_PERSONAL_DEFAULTS([mode])`
+- `APPLY_SETTINGS_TRANSACTION(token)`
+- `APPLY_SYSTEM_DEFAULTS([mode])`
+- `APPROVE_AGENT_SUGGESTION(suggestion_id|latest|agent_id, note=...)`
+- `APPROVE_PENDING([selectors..., version:hash])`
+- `APPROVE_PROMPT_PIN(mark_id|target, note=...)`
+- `ARM_CHEAP_LIVE_VISUAL_HARNESS(optional_model)`
+- `ARM_CHEAP_RESPONSES_SHADOW_PROBE(optional_model)`
+- `ARM_LIVE_VISUAL_HARNESS_PROBE(optional_model)`
+- `ARM_RESPONSES_SHADOW_PROBE(optional_model)`
+- `ARM_STRONG_LIVE_VISUAL_HARNESS(optional_model)`
+- `ASSIGN_AGENT_TASK(agent_id, title=..., objective=..., expected=..., context=..., priority=0-100, visibility=parent_visible|private, tags=...)`
+- `AUTHORIZE_OPERATOR(passcode)`
+- `BACKFILL_IMAGE_CONTEXT_INDEX(optional_limit)`
+- `BUILD_RESPONSES_SHADOW_OFFLINE_POSTURE()`
+- `BUILD_RESPONSES_SHADOW_PAYLOAD_PREVIEW()`
+- `CANCEL_ACTIVE_WORK()`
+- `CHECK_PREVIOUS_HANDOFF()`
+- `CLEAR()`
+- `CLEAR%(percentage)`
+- `CLEAR_CONTEXT_MARK(mark_id|target|all, optional mark_type=...)`
+- `CLEAR_DO_NOT_INCLUDE(mark_id|target|all)`
+- `CLEAR_HANDOFF()`
+- `CLEAR_INIT()`
+- `CLEAR_NEXT_INFERENCE()`
+- `CLEAR_NONPIN()`
+- `CLEAR_NOPIN%(percentage[, random|oldest|newest])`
+- `CLEAR_OPERATOR_PASSCODE()`
+- `CLEAR_PENDING([selectors..., version:hash])`
+- `CLEAR_PENDING_COMMANDS([selectors..., version:hash])`
+- `CLEAR_PIN()`
+- `CLEAR_RECENT_CONTEXT()`
+- `CLEAR_RESPONSES_SHADOW_PROBE()`
+- `CLEAR_ROUTE_STATE()`
+- `CLOSE_CHAT_HEAD()`
+- `COMPLETE_GOAL(goal_id)`
+- `DELETE_MSG(timestamp)`
+- `DHISTORY()`
+- `DRY_RUN_AGENT_PENDING_INSERT(optional_filter)`
+- `EDIT_MSGS(timestamp, text[, timestamp, text...])`
+- `FIND_REFERENCE(query, optional_pack_name|all)`
+- `GB_MODE()`
+- `HELP`
+- `HIDE_AI_COMMANDS(...)`
+- `HIDE_AI_TEXT(...)`
+- `HIDE_USER_COMMANDS(...)`
+- `HIDE_USER_TEXT(...)`
+- `INIT(text...)`
+- `INSERT_AGENT_PENDING_COMMAND(review_link_or_dry_run_id, confirm=dry_run:<id>, note=...)`
+- `INSERT_AGENT_PENDING_FROM_DRY_RUN(review_link_or_dry_run_id, confirm=dry_run:<id>, note=...)`
+- `INSERT_PENDING(command)`
+- `LAUNCH_CONTROL_PANEL()`
+- `LINK_AGENT_SUGGESTION_TASK(task_id|latest|agent_id, suggestion=latest|suggestion_id|agent_id, note=...)`
+- `LINK_AGENT_TASK_SUGGESTION(task_id|latest|agent_id, suggestion=latest|suggestion_id|agent_id, note=...)`
+- `LIST_COMMANDS(low|medium|high)`
+- `LIST_EPISODIC_SNAPSHOTS([limit])`
+- `LOAD_TASKS(...)`
+- `LOCK_OPERATOR_ACCESS()`
+- `LOCK_SETTING([lock])`
+- `LOGIN_CODEX_OAUTH()`
+- `LOOKUP_COMMAND(command_name, low|medium|high)`
+- `MARK_AGENT_SUGGESTION(suggestion_id|latest|agent_id, mark_type=operator_pin|search_pin|importance_score, note=...)`
+- `MARK_AGENT_SUGGESTION_PROVENANCE(suggestion_id|latest|agent_id, mark_type=operator_pin|search_pin|importance_score, note=...)`
+- `MARK_CONTEXT(target, mark_type=..., value=..., note=..., approval=draft|requested|approved|rejected)`
+- `MARK_DO_NOT_INCLUDE(target, note=...)`
+- `MARK_REPLY(target, mark_type=..., value=..., note=..., approval=...)`
+- `MARK_TURN(target, mark_type=..., value=..., note=..., approval=...)`
+- `MEM(query, [k,] options...)`
+- `MOD_AGENT(agent_id, role=..., rank=..., urgency=..., allow=..., deny=..., history=..., status=active|paused|silenced|retired)`
+- `NO_ACTION_MODE()`
+- `OPEN_CHAT_HEAD()`
+- `OVERRIDE_PENDING(command)`
+- `PIN(text...)`
+- `PREVIEW_SETTINGS_TRANSACTION(token)`
+- `PROMOTE_EPISODIC_MEMORY(index, target[, prefix, result_handle])`
+- `pyag:click(x=None, y=None, button='left')`
+- `pyag:doubleclick(x=None, y=None, button='left')`
+- `pyag:drag(x, y, duration=0.0, button='left')`
+- `pyag:focus_window(title=None)`
+- `pyag:hold(key, duration=None)`
+- `pyag:hold_click(x=None, y=None, duration=0.0, button='left')`
+- `pyag:hotkey(keys...)`
+- `pyag:leftclick(x=None, y=None, button='left')`
+- `pyag:move(x, y, duration=0.0)`
+- `pyag:move_key(key, tiles)`
+- `pyag:multi_hold(keys...)`
+- `pyag:multi_press(keys...)`
+- `pyag:multi_release(keys...)`
+- `pyag:press(key, presses=1, interval=0.0)`
+- `pyag:release(key, routing='owned')`
+- `pyag:screenshot(filename='screenshot.png')`
+- `pyag:scroll_down(amount=1)`
+- `pyag:scroll_up(amount=1)`
+- `pyag:type(text, interval=0.0)`
+- `PYAG_MODE()`
+- `QUEUE_LIVE_VISUAL_HARNESS_PROBE_PROMPT()`
+- `QUEUE_PENDING(command)`
+- `RECALL(query, [k,] options...)`
+- `RECALL_PREVIOUS_SUMMARY(optional_character_name)`
+- `RECORD_LIVE_VISUAL_HARNESS_PROBE_RESULT()`
+- `REF(query_or_pack, optional_pack_name|all)`
+- `REHEARSE_LIVE_VISUAL_HARNESS()`
+- `REJECT_AGENT_SUGGESTION(suggestion_id|latest|agent_id, note=...)`
+- `REJECT_PROMPT_PIN(mark_id|target, note=...)`
+- `RELEASE_HELD_INPUTS()`
+- `REMOVE_MODEL(name)`
+- `REPLACE_PENDING(command)`
+- `REQUEST_DEMAND_CAPTURE(optional_reason, optional_settle_seconds)`
+- `REQUEST_PROMPT_PIN(target, note=...)`
+- `REQUEST_SCREENSHOT_CAPTURE(optional_reason, optional_settle_seconds)`
+- `RESET_RESPONSES_SESSION()`
+- `RETRIEVAL_PULL(query_or_filters, options...)`
+- `RETRIEVE_HANDOFF(optional_filename)`
+- `ROLLBACK_SETTINGS_TRANSACTION(token)`
+- `RUN_AGENT_HELPER_CLOSURE_CHECK()`
+- `RUN_AGENT_PENDING_INSERT_DRY_RUN(optional_filter)`
+- `RUN_COMPANION_CONTRACT_CLOSURE_CHECK()`
+- `RUN_LIVE_VISUAL_HARNESS_REHEARSAL()`
+- `RUN_PROMPT_INCLUSION_CLOSURE_CHECK()`
+- `RUN_PROMPT_INCLUSION_PREVIEW_REHEARSAL()`
+- `RUN_RESPONSES_SHADOW_CLOSURE_CHECK()`
+- `SAVECH([path_prefix])`
+- `SAVE_ALL_PINS(...)`
+- `SAVE_HANDOFF(optional_filename)`
+- `SAVE_PERSONAL_DEFAULTS()`
+- `SAVE_PINS(...)`
+- `SAVE_TASKS(...)`
+- `SEARCH_COMMANDS(query, low|medium|high)`
+- `SEARCH_EPISODIC_SNAPSHOTS(query[, limit])`
+- `SEARCH_IMAGE_CONTEXT_INDEX(query, optional_limit)`
+- `SEARCH_PROGRAM_MAP(query, runtime|ui)`
+- `SEARCH_REFERENCE_PACK(query, optional_pack_name|all)`
+- `SET_ACTION_MODE([value])`
+- `SET_ADD_IMSGS_TO_HISTORY(on|off)`
+- `SET_ADD_UMSGS_TO_HISTORY(on|off)`
+- `SET_AGENT_SUGGESTION_APPROVAL(suggestion_id|latest|agent_id, approval=approved|rejected|requested|draft, note=...)`
+- `SET_AGENT_TASK_STATUS(task_id|latest|agent_id, status=draft|active|review|blocked|closed, note=...)`
+- `SET_ALWAYS(on|off, true|false)`
+- `SET_AUTH_MODE([value])`
+- `SET_AUTO_DYNAMIC_INFERENCE(on|off)`
+- `SET_AUTO_PROMPT(on|off)`
+- `SET_BATTLE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`
+- `SET_BATTLE_VERBOSITY(low|medium|high)`
+- `SET_CHAT_HEAD_HISTORY_SIZE(width,height)`
+- `SET_CHAT_HEAD_OPACITY(value)`
+- `SET_CHAT_HEAD_SEND_ANIMATION(pulse|none)`
+- `SET_CHAT_HEAD_SEND_ANIMATION_SECONDS(value)`
+- `SET_CHAT_HEAD_STRIP_SIZE(width,height)`
+- `SET_CHAT_HEAD_TOPMOST(on|off)`
+- `SET_CHAT_LOG_ECHO(on|off)`
+- `SET_COMMAND_DRIP_LOOKAHEAD(turns)`
+- `SET_COMMAND_DRIP_RETENTION(turns)`
+- `SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED(on|off)`
+- `SET_COMMAND_DRIP_SHOW_VARIANTS(on|off)`
+- `SET_CONTEXT_MARK_APPROVAL(mark_id|target, approval=draft|requested|approved|rejected, optional mark_type=...)`
+- `SET_CRITIQUE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`
+- `SET_CRITIQUE_TURN_INTERVAL(turns)`
+- `SET_CRITIQUE_VERBOSITY(low|medium|high)`
+- `SET_CURSOR_LABEL(on|off)`
+- `SET_DEMAND_CAPTURE([value])`
+- `SET_EPISODIC_EMBEDDINGS(off|auto|force)`
+- `SET_EPISODIC_EMBEDDING_MODEL(name)`
+- `SET_EPISODIC_MEMORY(on|off)`
+- `SET_EPISODIC_MEMORY_INTERVAL(seconds)`
+- `SET_EPISODIC_MEMORY_PERIODIC(on|off)`
+- `SET_EPISODIC_MEMORY_SCENE_TRIGGER(on|off)`
+- `SET_EPISODIC_PLANNING_ASSIST(off|review|critique|review_critique)`
+- `SET_EPISODIC_PLANNING_ASSIST_COOLDOWN(turns)`
+- `SET_EPISODIC_PLANNING_ASSIST_K(k)`
+- `SET_EXECUTION_MODE([value])`
+- `SET_GAME_PROFILE([value])`
+- `SET_HIGH_DETAIL(...)`
+- `SET_IMAGE_DETAIL([value])`
+- `SET_IMPORTANT_MESSAGES(on|off)`
+- `SET_IMSGS_DECAY_CHECK(on|off)`
+- `SET_KEYPOINT_GRID(on|off)`
+- `SET_LATEST_IMAGE_DETAIL(...)`
+- `SET_LIVE_INIT([value])`
+- `SET_LIVE_MODE([value])`
+- `SET_MAX_IMAGES_IN_HISTORY(...)`
+- `SET_MODEL_TRANSPORT([value])`
+- `SET_MODEL_VERBOSITY([value])`
+- `SET_NEXT_INFERENCE([key=value; ...])`
+- `SET_NEXT_REASONING_EFFORT([effort[, note]])`
+- `SET_OPERATOR_PASSCODE(passcode)`
+- `SET_OPERATOR_PASSCODE_REQUIRED(on|off)`
+- `SET_PASSCODE_COMMAND_VISIBILITY(on|off)`
+- `SET_PENDING_QUEUE_MODE(normal|replace|insert)`
+- `SET_PROMPT_INCLUSION_ACTIVATION(on|off, preview_id=latest|fresh|..., checklist_id=latest|fresh|..., confirm=offline_proof|rollback)`
+- `SET_REASONING_EFFORT([value])`
+- `SET_REASONING_MODEL([value])`
+- `SET_REASONING_SUMMARY_MODE(auto|none|brief|detailed)`
+- `SET_REVIEW_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`
+- `SET_REVIEW_TURN_INTERVAL(turns)`
+- `SET_REVIEW_VERBOSITY(low|medium|high)`
+- `SET_SCREENSHOT_INTERVAL([value])`
+- `SET_SESSION_REASONING_EFFORT([value])`
+- `SET_SHOW_AI_COMMANDS(on|off)`
+- `SET_SHOW_AI_TEXT(on|off)`
+- `SET_SHOW_USER_COMMANDS(on|off)`
+- `SET_SHOW_USER_TEXT(on|off)`
+- `SET_SOUND_EFFECTS(on|off)`
+- `SET_STATEFUL_MODEL_PRESET(stateless-default|responses-link-preview|conversation-preview)`
+- `SET_STATUS_OVERLAY(on|off)`
+- `SET_TEMPERATURE([value])`
+- `SET_TEXT_MODEL([value])`
+- `SET_TILE_GRID(on|off)`
+- `SET_TIME_LOGGING(on|off)`
+- `SET_TURN_CAPTURE_WAKE([value])`
+- `SET_TURN_CAPTURE_WAKE_DEBOUNCE_SECONDS([value])`
+- `SET_TURN_HEARTBEAT_SECONDS([value])`
+- `SET_TURN_MIN_GAP_SECONDS([value])`
+- `SET_TURN_POST_ACTION_SETTLE_SECONDS([value])`
+- `SET_TURN_SCHEDULER_MODE([value])`
+- `SET_TURN_SCHEDULER_PROFILE([value])`
+- `SET_UMSGS_DECAY_CHECK(on|off)`
+- `SET_UNIMPORTANT_MESSAGES(on|off)`
+- `SET_VISION_MODEL([value])`
+- `SHOW_AGENTS()`
+- `SHOW_AGENT_HELPER_CLOSURE()`
+- `SHOW_AGENT_HISTORY(optional_agent_id)`
+- `SHOW_AGENT_HISTORY_ACLS()`
+- `SHOW_AGENT_PENDING_GATE(optional_filter)`
+- `SHOW_AGENT_PENDING_INSERT_CHECKLIST(optional_filter)`
+- `SHOW_AGENT_PENDING_INSERT_DRY_RUN(optional_filter)`
+- `SHOW_AGENT_REVIEW_LINKS(optional_filter)`
+- `SHOW_AGENT_SUGGESTIONS(optional_agent_or_status)`
+- `SHOW_AGENT_SUGGESTION_ROUTES()`
+- `SHOW_AGENT_TASKS(optional_agent_or_status)`
+- `SHOW_AUTH()`
+- `SHOW_CHAT_HEAD()`
+- `SHOW_CHECKPOINT_READINESS()`
+- `SHOW_COMMAND_DRIP()`
+- `SHOW_COMPANION_CONTRACT_CLOSURE()`
+- `SHOW_COMPANION_CONTRACT_READINESS()`
+- `SHOW_COMPANION_PROTOCOL_CONTRACT()`
+- `SHOW_COMPANION_RECEIPT_AUDIT()`
+- `SHOW_CONTEXT_MARKS()`
+- `SHOW_DEFAULT_PROFILES()`
+- `SHOW_DO_NOT_INCLUDE()`
+- `SHOW_EPISODIC_MEMORY_STATUS()`
+- `SHOW_GAME_PROFILE()`
+- `SHOW_HELD_INPUTS()`
+- `SHOW_HISTORY_CONTEXT_SERVICE()`
+- `SHOW_IMAGE_CONTEXT_INDEX()`
+- `SHOW_IMAGE_COST_POSTURE()`
+- `SHOW_LIVE_VISUAL_HARNESS()`
+- `SHOW_LIVE_VISUAL_HARNESS_PROBE()`
+- `SHOW_LIVE_VISUAL_HARNESS_REHEARSAL()`
+- `SHOW_LOCKS()`
+- `SHOW_MODELS()`
+- `SHOW_MODEL_STATUS()`
+- `SHOW_MONITOR_STATUS()`
+- `SHOW_NEXT_INFERENCE()`
+- `SHOW_OPERATOR_RISK_SUMMARY()`
+- `SHOW_OVERLAY()`
+- `SHOW_PENDING()`
+- `SHOW_PENDING_COMMANDS()`
+- `SHOW_PORTAL_COMPANION_INTAKE()`
+- `SHOW_PORTAL_COMPANION_INTAKE_AUDIT()`
+- `SHOW_PORTAL_COMPANION_INTAKE_CLOSURE()`
+- `SHOW_PORTAL_COMPANION_INTAKE_DOCKET()`
+- `SHOW_PORTAL_COMPANION_INTAKE_GATES()`
+- `SHOW_PORTAL_COMPANION_INTAKE_HANDOFFS()`
+- `SHOW_PORTAL_COMPANION_INTAKE_PARKING()`
+- `SHOW_PORTAL_COMPANION_INTAKE_PROOF()`
+- `SHOW_PORTAL_COMPANION_INTAKE_REGISTRY()`
+- `SHOW_PORTAL_COMPANION_INTAKE_REPORT()`
+- `SHOW_PORTAL_COMPANION_INTAKE_REVIEW()`
+- `SHOW_PORTAL_COMPANION_INTAKE_UNBLOCKERS()`
+- `SHOW_PORTAL_COMPANION_INTAKE_WAITLIST()`
+- `SHOW_PORTAL_INTAKE()`
+- `SHOW_PORTAL_INTAKE_AUDIT()`
+- `SHOW_PORTAL_INTAKE_CLOSURE()`
+- `SHOW_PORTAL_INTAKE_DOCKET()`
+- `SHOW_PORTAL_INTAKE_GATES()`
+- `SHOW_PORTAL_INTAKE_HANDOFFS()`
+- `SHOW_PORTAL_INTAKE_PARKING()`
+- `SHOW_PORTAL_INTAKE_PROOF()`
+- `SHOW_PORTAL_INTAKE_REGISTRY()`
+- `SHOW_PORTAL_INTAKE_REPORT()`
+- `SHOW_PORTAL_INTAKE_REVIEW()`
+- `SHOW_PORTAL_INTAKE_UNBLOCKERS()`
+- `SHOW_PORTAL_INTAKE_WAITLIST()`
+- `SHOW_PROGRAM_MAP(runtime|ui, lite|deep|tree|generated|call_tree|skeleton|control_plane_skeleton|guide|index)`
+- `SHOW_PROMPT_INCLUSION_ACTIVATION()`
+- `SHOW_PROMPT_INCLUSION_ACTIVATION_CHECKLIST()`
+- `SHOW_PROMPT_INCLUSION_CLOSURE()`
+- `SHOW_PROMPT_INCLUSION_PREVIEW()`
+- `SHOW_PROMPT_INCLUSION_READINESS()`
+- `SHOW_PROMPT_INCLUSION_REHEARSAL()`
+- `SHOW_PROMPT_PINS()`
+- `SHOW_REFERENCE_PACK(pack_name)`
+- `SHOW_REFERENCE_TOPICS()`
+- `SHOW_REHYDRATION_STATUS()`
+- `SHOW_RESPONSES_SHADOW_CLOSURE()`
+- `SHOW_RESPONSES_SHADOW_OFFLINE_POSTURE()`
+- `SHOW_RESPONSES_SHADOW_PAYLOAD_PREVIEW()`
+- `SHOW_RESPONSES_SHADOW_PROBE()`
+- `SHOW_RESPONSES_SHADOW_TRANSPORT()`
+- `SHOW_RETRIEVAL_RESULT(handle[, offset, limit])`
+- `SHOW_RUNTIME()`
+- `SHOW_RUNTIME_HEALTH()`
+- `SHOW_SECURITY()`
+- `SHOW_STATEFUL_MODEL_PRESETS()`
+- `SHOW_TURN_SCHEDULER()`
+- `SHOW_TURN_SCHEDULER_PROFILES()`
+- `SHOW_WINDOW_18_21_CHECKPOINT_READINESS()`
+- `SHUTDOWN_RUNTIME()`
+- `SILENCE_AGENT(agent_id, note=...)`
+- `STAGE_AGENT_SUGGESTION(suggestion_id|latest|agent_id, note=...)`
+- `STATUS()`
+- `SUGGEST_AGENT_COMMAND(agent_id, command=..., reason=..., risk=low|medium|high, target=pending_commands)`
+- `SUMMON_AGENT(agent_id, role=..., rank=..., urgency=..., allow=..., deny=..., history=private|parent_visible)`
+- `TASKS(...)`
+- `TOGGLE_ADD_IMSGS_TO_HISTORY(...)`
+- `TOGGLE_ADD_UMSGS_TO_HISTORY(...)`
+- `TOGGLE_ALWAYS(...)`
+- `TOGGLE_AUTO_PROMPT(...)`
+- `TOGGLE_CHAT_HEAD()`
+- `TOGGLE_IMAGE_DETAIL()`
+- `TOGGLE_IMSGS(...)`
+- `TOGGLE_IMSGS_DECAY_CHECK(...)`
+- `TOGGLE_LATEST_IMAGE_DETAIL(...)`
+- `TOGGLE_LIVE_MODE()`
+- `TOGGLE_POWER_WORD(...)`
+- `TOGGLE_UMSGS(...)`
+- `TOGGLE_UMSGS_DECAY_CHECK(...)`
+- `UNLOCK_SETTING([lock])`
+- `UPDATE_ACTIVE_QUESTIONS(items)`
+- `UPDATE_CANDIDATE_ALTERNATIVES(items)`
+- `UPDATE_CONTEXT(recent_events)`
+- `UPDATE_CURRENT_AREA(area)`
+- `UPDATE_IMAGE_CONTEXT_METADATA(image_id_or_path, caption="...", ocr="...", tags="tag1;tag2", embedding_ids="id1;id2")`
+- `UPDATE_INVENTORY(inventory_items)`
+- `UPDATE_KNOWN_FAILURES(items)`
+- `UPDATE_LAST_LANDMARK(landmark)`
+- `UPDATE_LOCAL_PATH_PLAN(steps)`
+- `UPDATE_LONG_TERM_CONTEXT(items)`
+- `UPDATE_MID_TERM_CONTEXT(items)`
+- `UPDATE_NOTES(items)`
+- `UPDATE_PARTY(party_status)`
+- `UPDATE_PINNED_IMMEDIATE(actions)`
+- `UPDATE_PINNED_SHORT_TERM(actions)`
+- `UPDATE_RECENT_MOVEMENT_RESULTS(items)`
+- `UPDATE_ROUTE_BLOCKERS(items)`
+- `UPDATE_ROUTE_INTENT(intents)`
+- `UPDATE_STALE_ASSUMPTIONS(items)`
+- `UPDATE_TARGET_AREA(area)`
+- `UPDATE_TRAVEL_HEADING(direction_or_mode)`
+- `WAIT(seconds)`
+- `WRITE_EPISODIC_SNAPSHOT([reason, tags])`
