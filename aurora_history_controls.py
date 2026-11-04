@@ -16,6 +16,23 @@ import random
 import re
 from decimal import Decimal
 from pathlib import Path
+from contextlib import contextmanager
+from contextvars import ContextVar
+
+_HISTORY_ACTOR = ContextVar("aurora_history_actor", default="unknown")
+
+
+def current_history_actor():
+    return _HISTORY_ACTOR.get()
+
+
+@contextmanager
+def history_actor_scope(actor):
+    marker = _HISTORY_ACTOR.set(str(actor or "unknown"))
+    try:
+        yield
+    finally:
+        _HISTORY_ACTOR.reset(marker)
 
 
 HISTORY_RESULT_SCHEMA = "aurora_history_command_result_v1"
@@ -96,7 +113,7 @@ def history_summary(entries):
             "protected_count": sum(history_exemption(row) in PROTECTED_EXEMPTIONS for row in entries)}
 
 
-def plan_history_change(entries, options, *, new_entry=None, sample=random.sample):
+def plan_history_change(entries, options, *, new_entry=None, sample=random.sample, editor=None, edited_at=None):
     """Plan against positions, preserving equal-valued duplicates and stable order."""
     result = copy.deepcopy(entries)
     operation = options["operation"]
@@ -132,6 +149,9 @@ def plan_history_change(entries, options, *, new_entry=None, sample=random.sampl
             if index is None:
                 raise ValueError(f"No history message has timestamp {timestamp!r}; no edits applied.")
             result[index]["content"] = {"type": "text", "text": text}
+            if editor is not None:
+                result[index]["edited_by"] = str(editor)
+                result[index]["edited_at"] = str(edited_at or "unknown")
             edited.append(index)
     if operation in {"pin", "replace_init"}:
         if new_entry is None:

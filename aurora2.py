@@ -51,7 +51,8 @@ from pathlib import Path
 from typing import Any, cast
 
 from aurora_codex_oauth import CodexOAuthError, CodexOAuthManager
-from aurora_conversation import build_conversation_snapshot
+from aurora_conversation import build_conversation_snapshot, build_init_context, build_prompt_materials
+from aurora_history_controls import current_history_actor, history_actor_scope
 from aurora_command_protocol import CommandSyntaxError, split_command_batch
 from aurora_command_contracts import (
     DesktopCommandError, command_result_failed, desktop_result, parse_desktop_arguments,
@@ -1630,6 +1631,7 @@ def build_registered_settings_runtime_state():
                 runtime_state.get("game_profile_source", GAME_PROFILE_SOURCE)
             ).strip() or GAME_PROFILE_SOURCE,
             "screenshot_interval": float(time_interval),
+            "capture_mode": CAPTURE_MODE,
             "load_live_init_prompt": bool(LOAD_LIVE_INIT_PROMPT),
         },
         "models": {
@@ -23031,6 +23033,9 @@ def build_runtime_monitor_snapshot(runtime_process=None, control_panel_process=N
     capture_warning_after = max(15.0, effective_capture_interval * 6.0)
     if not runtime_active:
         add_check("capture_freshness", "ok", "runtime inactive; capture freshness is not expected")
+    elif CAPTURE_MODE == "request_only":
+        add_check("capture_freshness", "watch", "request-only capture; no periodic freshness guarantee",
+                  "Explicit pending requests are checked separately; verify a fresh frame before acting.")
     elif last_capture_ready_at:
         status = "warning" if last_capture_age is not None and last_capture_age > capture_warning_after else "ok"
         add_check(
@@ -24404,6 +24409,7 @@ def _build_control_panel_state_snapshot_unlocked():
             "time_logging": TIME_LOGGING_ENABLED,
             "chat_log_echo": CHAT_LOG_ECHO_ENABLED,
             "screenshot_interval": time_interval,
+            "capture_mode": CAPTURE_MODE,
             "effective_screenshot_interval": get_effective_screenshot_interval(),
             "idle_screenshot_interval_floor": idle_screenshot_interval,
             "unchanged_screenshot_persist_interval": get_unchanged_screenshot_persist_interval(),
@@ -24454,6 +24460,7 @@ def _build_control_panel_state_snapshot_unlocked():
             },
         },
         "planning": {
+            "inference_counter": int(agent_state.inference_counter),
             "auto_dynamic_inference": bool(AUTO_DYNAMIC_INFERENCE_ENABLED),
             "review_turn_interval": int(REVIEW_TURN_INTERVAL),
             "critique_turn_interval": int(CRITIQUE_TURN_INTERVAL),
@@ -24605,6 +24612,10 @@ def _build_control_panel_state_snapshot_unlocked():
         "pending_queue": get_pending_command_snapshot(),
         "history_control": copy.deepcopy(runtime_state.get("last_history_command_result", {})),
         "chat_history_tail": history_context_facade.control_panel_history_tail(limit=20),
+        "init_context": build_init_context(init_prompt, source=runtime_state.get("init_prompt_source", "unknown"),
+            profile=INIT_PROMPT_PROFILE, configured_file=LIVE_INIT_FILENAME,
+            configured_mode="load" if LOAD_LIVE_INIT_PROMPT else INIT_MODE, prompt_limit=MAX_INIT_PROMPT_CHARS),
+        "prompt_materials": copy.deepcopy(runtime_state.get("last_prompt_materials", {})),
         "conversation": build_conversation_snapshot(
             history_read_state,
             build_prompt_inclusion_effects(history_read_state["recent_prompt_history"])
@@ -25990,6 +26001,7 @@ def submit_pending_entry(entry, token, automatic=False):
             conflict_key=entry.get("conflict_key", ""), semantic_label=entry.get("semantic_label", ""),
             execution_operating_context=entry.get("operating_context", "unknown"),
             prepared_commands=entry["_prepared_commands"], command_generation=token.generation,
+            history_actor=entry.get("history_actor", "unknown"),
             pending_id=entry["pending_id"], pending_attempt_id=entry["pending_attempt_id"])
         status = submitted.get("submission_status", "uncertain")
         return {"status": status, "reason": "" if status in {"queued", "completed"} else "Inspect the correlated command execution receipt.",
@@ -26058,14 +26070,17 @@ def execute_pending_approval(args, automatic=False):
 
 
 def infer_pending_queue_directive(command_text):
-    cleaned = normalize_action_command(command_text)
+    # Keep the authored namespace until prepare_command_batch freezes its route.
+    # Canonical GB syntax uses the PYAG dispatcher internally; normalizing here
+    # would turn explicit game controls into literal desktop input on admission.
+    cleaned = normalize_text_content(command_text).strip()
     command_name = get_command_name(cleaned).upper()
     queue_mode = PENDING_WRAPPER_MODES.get(command_name)
     if not queue_mode:
         return {"command": cleaned, "queue_mode": None, "directive": ""}
     args = extract_command_arguments(cleaned)
     validate_pending_arguments(command_name, args)
-    return {"command": normalize_action_command(args[0]), "queue_mode": queue_mode, "directive": command_name}
+    return {"command": normalize_text_content(args[0]).strip(), "queue_mode": queue_mode, "directive": command_name}
 
 
 def score_pending_entry(entry, current_turn=None):
@@ -28413,6 +28428,27 @@ def build_base_system_prompt():
             "A screenshot is evidence of its capture time; confirm freshness, crop origin, coordinate scale and target focus before input. "
             "Use REQUEST_SCREENSHOT_CAPTURE(reason, 0) for a fresh observation when permitted, then wait for actual capture evidence."
         )
+        prompt_sections.append(
+            "Multiple commands per response are supported: put each complete command on its own line beneath Executed Commands:. "
+            "You can combine an approved action with memory updates and a following REQUEST_SCREENSHOT_CAPTURE(after_action, 0). "
+            "A batch has no intervening visual feedback and is not an all-or-nothing transaction; inspect each receipt. "
+            "Use a short bounded sequence only on a stable, verified path within the operator's scope; use one gameplay action on menus, transitions or uncertain scenes. "
+            "A capture request can wake the capture worker before its periodic deadline; queued does not mean captured or already seen by the model. "
+            "Wait for a newer image/capture identifier in a later inference, not a guessed fixed seven-second delay. "
+            "The capture and inference workers must be active; settle time, scheduling, permissions and provider latency still apply. "
+            "GB:move_key(right, 1) exists as duration-based tile movement, not visual tile counting. Its legacy timings include a 1.35-second pre-movement wait. "
+            "Calibrate on the current ROM/emulator/speed before longer moves; Pokemon Blue timings do not establish FireRed accuracy. "
+            "GB:hold(right, 0.2) is an illustrative short probe, not a guaranteed tile. PYAG uses literal desktop keys and may not drive this emulator; "
+            "do not switch input backends silently after failure. Scene classification is heuristic: report screenshot/state conflicts and request reconciliation without bypassing admission."
+        )
+        periodic_capture = ("off (request_only)" if CAPTURE_MODE == "request_only" else
+                            f"heartbeat at effective {get_effective_screenshot_interval():g}s")
+        prompt_sections.append(
+            f"Configured capture policy: periodic={periodic_capture}; demand requests={'on' if DEMAND_CAPTURE_ENABLED else 'off'}. "
+            f"Configured inference scheduler: {TURN_SCHEDULER_MODE}; heartbeat={TURN_SCHEDULER_HEARTBEAT_SECONDS:g}s; "
+            f"minimum gap={TURN_SCHEDULER_MIN_GAP_SECONDS:g}s; capture-change wake={'on' if TURN_SCHEDULER_CAPTURE_WAKE_ENABLED else 'off'}. "
+            "These are configuration values, not proof a worker is running or that an image was delivered."
+        )
     if init_context:
         prompt_sections.append("Persistent init context:\n" + init_context)
     if runtime_snapshot:
@@ -28431,7 +28467,7 @@ def build_visual_user_prompt(prompt_text):
         "Preferred response format:\n"
         "Observations:\n"
         "- one or two concrete visual facts\n"
-        "Commands:\n"
+        f"{'Executed Commands' if INIT_PROMPT_PROFILE == 'current' else 'Commands'}:\n"
         "- one command per line using GB:... for gameplay controls or PYAG:... for desktop controls\n"
         "Memory Update:\n"
         "- one UPDATE_CONTEXT(...), ADD_GOAL(...), or related memory command when helpful\n"
@@ -28461,6 +28497,12 @@ def build_visual_user_prompt(prompt_text):
         f"For in-game movement on this machine, the confirmed Controller 2 mapping is Up={GAME_DIRECTION_KEY_TRANSLATIONS['up']}, Down={GAME_DIRECTION_KEY_TRANSLATIONS['down']}, Left={GAME_DIRECTION_KEY_TRANSLATIONS['left']}, Right={GAME_DIRECTION_KEY_TRANSLATIONS['right']}, A={GAME_CONTROL_KEY_TRANSLATIONS['a']}, B={GAME_CONTROL_KEY_TRANSLATIONS['b']}, Start={GAME_CONTROL_KEY_TRANSLATIONS['start']}, Select={GAME_CONTROL_KEY_TRANSLATIONS['select']}. Use semantic gameplay commands and let the runtime translate; avoid emulator-only extras like L={GAME_RESERVED_EMULATOR_KEYS['l_shoulder']}, R={GAME_RESERVED_EMULATOR_KEYS['r_shoulder']}, Speed={GAME_RESERVED_EMULATOR_KEYS['speed']}, Capture={GAME_RESERVED_EMULATOR_KEYS['capture']}, and Gameshark={GAME_RESERVED_EMULATOR_KEYS['gameshark']} unless explicitly needed. If B fails to cancel a menu on a short tap, prefer GB:hold(b, 0.25) or another brief held B press before assuming the menu is unresponsive.\n"
         f"{get_game_profile_save_note()}"
     ]
+    if INIT_PROMPT_PROFILE == "current":
+        prompt_sections.append(
+            "\nPlace executable memory updates in the same Executed Commands section, not only in prose. "
+            "Multiple commands are supported when safe, but a batch receives no new screenshot between its actions. "
+            "Request capture after an action when a fresh observation is needed, then verify that the next image is newer."
+        )
     if context_info.get("context") != "unknown":
         prompt_sections.append(
             "\nInferred operating context: "
@@ -28499,6 +28541,7 @@ SCREENSHOT_FAULT_FAIL_ONCE = os.getenv("AURORA_FAULT_SCREENSHOT_FAIL_ONCE", "0")
 SCREENSHOT_FAULT_FAIL_AFTER_FRAMES = max(1, int(os.getenv("AURORA_FAULT_SCREENSHOT_FAIL_AFTER_FRAMES", "5")))
 SCREENSHOT_FAULT_MARKER_PATH = (os.getenv("AURORA_FAULT_SCREENSHOT_FAIL_MARKER", "").strip() or "")
 screenshot_capture_wake_event = threading.Event()
+CAPTURE_MODE = coerce_setting_value("capture.mode", os.getenv("AURORA_CAPTURE_MODE", "heartbeat"))
 
 
 def get_effective_screenshot_interval():
@@ -28517,7 +28560,10 @@ def get_effective_screenshot_interval():
 
 def get_next_screenshot_capture_wait_seconds(next_regular_capture_at, now=None):
     now = time.time() if now is None else float(now)
-    regular_wait = max(0.0, float(next_regular_capture_at) - now)
+    # A bounded idle wait is interruptible by demand requests and mode changes.
+    # Request-only must never fall through to a regular capture, even at startup.
+    regular_wait = (3600.0 if CAPTURE_MODE == "request_only" else
+                    max(0.0, float(next_regular_capture_at) - now))
     demand_due_at = get_next_demand_capture_due_at(now)
     if demand_due_at:
         demand_wait = max(0.0, demand_due_at - now)
@@ -28666,6 +28712,7 @@ def initialize_application():
         for init_file in init_candidates:
             if os.path.exists(init_file):
                 init_prompt = read_text_file(init_file)
+                set_runtime_value("init_prompt_source", init_file)
                 loaded_init_file = init_file
                 break
         if loaded_init_file:
@@ -28675,6 +28722,7 @@ def initialize_application():
             append_runtime_feedback("No live init file found. Proceeding without an init prompt.")
     elif INIT_MODE_LOCAL == 'test':
         init_prompt = test_init_prompt
+        set_runtime_value("init_prompt_source", "built-in short prompt (" + INIT_PROMPT_PROFILE + ")")
         append_runtime_feedback("Using test init prompt.")
         initiate_and_handoff()
     elif INIT_MODE_LOCAL == 'skip':
@@ -30471,6 +30519,12 @@ def send_prompt_to_chatgpt(
     init_prompt_text = normalize_text_content(init_prompt).strip()
     init_prompt_total_chars = len(init_prompt_text)
     init_prompt_used_chars = min(init_prompt_total_chars, MAX_INIT_PROMPT_CHARS) if init_prompt_total_chars else 0
+    set_runtime_value("last_prompt_materials", build_prompt_materials(
+        system=base_system_prompt, memory=state_snapshot,
+        current=image_text if image_path else formatted_prompt,
+        retrieval=episodic_planning_context.get("message", "") if episodic_planning_context.get("used") else "",
+        prepared_at=timestamp, model=model_name,
+    ))
     set_runtime_value("last_prompt_diagnostics", {
         "model": model_name,
         "image_attached": bool(image_path),
@@ -30607,9 +30661,11 @@ def send_prompt_to_chatgpt(
 
         # Display and update chat history with AI's response
         display_message("assistant", ai_response)
-        update_chat_history("assistant", ai_response)
+        update_chat_history("assistant", ai_response, model_name=model_name,
+                            provider_model=response_data.get("model", ""))
         MODEL_WORK.current().check()
-        process_assistant_response(ai_response)
+        with history_actor_scope("model:" + model_name):
+            process_assistant_response(ai_response)
         turn_duration_ms = int((time.perf_counter() - turn_started_at) * 1000)
         completed_epoch = time.time()
         set_runtime_value("last_turn_duration_ms", turn_duration_ms)
@@ -30686,6 +30742,8 @@ def update_chat_history(
     exemption: str = "None",
     image_timestamp=None,
     sticky=False,
+    model_name="",
+    provider_model="",
 ):
 
     global enable_unimportant_messages
@@ -30727,7 +30785,10 @@ def update_chat_history(
     # Prepare the dictionary entry for the chat history
     history_entry = {
         "timestamp": timestamp,
+        "timestamp_iso": current_time.astimezone().isoformat(timespec="seconds"),
         "role": role,
+        "model": str(provider_model or model_name) if role == "assistant" else "",
+        "model_source": ("provider_reported" if provider_model else "requested" if model_name else "unknown") if role == "assistant" else "",
         "token_count": token_count,
         "Exemption": exemption,
         "last_key": agent_state.last_key,  # Add this line to include the last key press
@@ -30751,6 +30812,9 @@ def update_chat_history(
             }
             text_history_entry = {
                 "timestamp": timestamp,
+                "timestamp_iso": history_entry["timestamp_iso"],
+                "model": history_entry["model"],
+                "model_source": history_entry["model_source"],
                 "role": role,
                 "token_count": token_count,
                 "Exemption": exemption,
@@ -33297,7 +33361,7 @@ def is_urgent_control_command(prepared_commands):
 
 def execute_command_entry(command_entry):
     """Preserve request identity and full results on queued and urgent paths."""
-    with HELD_INPUTS.owner_scope(command_entry):
+    with HELD_INPUTS.owner_scope(command_entry), history_actor_scope(command_entry.get("history_actor", "operator" if command_entry.get("is_user") else "unknown")):
         execution_result = handle_commands(
             command_entry["command"], command_entry["is_user"],
             prepared_commands=command_entry.get("prepared_commands"),
@@ -33333,6 +33397,7 @@ def enqueue_or_execute_command(
     pending_id="",
     pending_attempt_id="",
     command_generation=None,
+    history_actor=None,
 ):
     command_generation = COMMAND_WORK.current().generation if command_generation is None else command_generation
     COMMAND_WORK.token(command_generation).check()
@@ -33348,6 +33413,7 @@ def enqueue_or_execute_command(
     command_entry = {
         'command': command,
         'is_user': is_user,
+        'history_actor': "operator" if is_user else (history_actor or current_history_actor()),
         'timestamp': timestamp,
         'associated_goal': associated_goal,
         'why': why,
@@ -33466,6 +33532,7 @@ def queue_pending_model_command(command, associated_goal="No specific goal", sou
             if replace_representative:
                 matching_entry["command"] = command
                 matching_entry["_prepared_commands"] = prepared
+                matching_entry["history_actor"] = current_history_actor()
             if resolved_queue_mode == "replace":
                 replace_immediate_pending_entries(
                     pending_store,
@@ -33520,6 +33587,7 @@ def queue_pending_model_command(command, associated_goal="No specific goal", sou
             "timestamp": timestamp,
             "command": command,
             "_prepared_commands": prepared,
+            "history_actor": current_history_actor(),
             "associated_goal": associated_goal,
             "source": source,
             "mode": EXECUTION_MODE,
@@ -36132,7 +36200,7 @@ def make_history_control_entry(kind, text):
             "image_path": "", "content": {"type": "text", "text": f"[{timestamp}] {prefix}: {text}"}}
 
 
-def execute_history_command(name, args):
+def execute_history_command(name, args, *, actor="unknown"):
     """One history authority for the existing raw/CLI/panel command bindings."""
     name = name.upper()
     result = {"schema_version": HISTORY_RESULT_SCHEMA, "command": name, "success": False,
@@ -36158,7 +36226,8 @@ def execute_history_command(name, args):
                     if not enable_important_messages or not ADD_IMSGS_TO_HISTORY:
                         raise ValueError("Important-message history retention is disabled; enable it before writing INIT/PIN.")
                     new_entry = make_history_control_entry("Init" if operation == "replace_init" else "Pinned", options["text"])
-                proposed, counts = plan_history_change(before, options, new_entry=new_entry)
+                proposed, counts = plan_history_change(before, options, new_entry=new_entry,
+                    editor=actor, edited_at=datetime.datetime.now().astimezone().isoformat(timespec="seconds"))
                 result.update(counts)
                 result["added_timestamps"] = [new_entry["timestamp"]] if new_entry else []
                 if proposed != before:
@@ -36871,6 +36940,22 @@ def set_screenshot_interval(seconds):
     return time_interval
 
 
+def set_capture_mode(value):
+    global CAPTURE_MODE
+    require_runtime_setting_unlocked("screenshot_interval", "Screenshot capture mode")
+    CAPTURE_MODE = coerce_setting_value("capture.mode", value)
+    screenshot_capture_wake_event.set()
+    append_runtime_feedback(f"Screenshot capture mode: {CAPTURE_MODE}. In-flight capture may finish.")
+    return CAPTURE_MODE
+
+
+def set_capture_mode_command(args, is_user):
+    if args:
+        set_capture_mode(args[0])
+    display_message("system", f"Screenshot capture mode: {CAPTURE_MODE}")
+    return True
+
+
 def set_live_init_mode(enabled):
     global LOAD_LIVE_INIT_PROMPT
     require_runtime_setting_unlocked("live_init", "Live init prompt")
@@ -37063,6 +37148,7 @@ def _build_runtime_preferences_snapshot():
         "summary_mode": normalize_reasoning_summary_mode(DEFAULT_REASONING_SUMMARY_MODE, fallback="auto"),
         "temperature": DEFAULT_MODEL_TEMPERATURE,
         "screenshot_interval": time_interval,
+        "capture_mode": CAPTURE_MODE,
         "turn_scheduler_profile": TURN_SCHEDULER_PROFILE_NAME,
         "turn_scheduler_mode": TURN_SCHEDULER_MODE,
         "turn_heartbeat_seconds": TURN_SCHEDULER_HEARTBEAT_SECONDS,
@@ -42010,7 +42096,7 @@ def recall_previous_summary_command(args, is_user):
 
 
 def edit_msgs_command(args, is_user):
-    return execute_history_command('EDIT_MSGS', args)
+    return execute_history_command('EDIT_MSGS', args, actor="operator" if is_user else current_history_actor())
 
 def delete_msg_command(args, is_user):
     return execute_history_command('DELETE_MSG', args)
@@ -42772,6 +42858,7 @@ command_dispatch = {
     'SHOW_DEFAULT_PROFILES': show_default_profiles_command,
     'SET_TEMPERATURE': set_temperature_command,
     'SET_SCREENSHOT_INTERVAL': set_screenshot_interval_command,
+    'SET_CAPTURE_MODE': set_capture_mode_command,
     'SET_LIVE_INIT': set_live_init_command,
     'SET_SOUND_EFFECTS': set_sound_effects_command,
     'SET_TIME_LOGGING': set_time_logging_command,
@@ -43133,6 +43220,7 @@ def build_cli_parser():
     parser.add_argument("--critique-turn-interval", type=int)
     parser.add_argument("--temperature", type=float)
     parser.add_argument("--screenshot-interval", type=float)
+    parser.add_argument("--capture-mode", choices=["heartbeat", "request_only"])
     parser.add_argument("--turn-scheduler-profile", choices=sorted(TURN_SCHEDULER_PROFILES.keys()))
     parser.add_argument("--turn-scheduler-mode", choices=sorted(ALLOWED_TURN_SCHEDULER_MODES))
     parser.add_argument("--turn-heartbeat-seconds", type=float)
@@ -43178,6 +43266,7 @@ def build_cli_parser():
 
 def build_startup_config_snapshot():
     return {
+        "capture_mode": CAPTURE_MODE,
         "auth_mode": AUTH_MODE,
         "live_mode": bool(SEND_TO_MODEL and ENABLE_MODEL_RESPONSES),
         "execution_mode": EXECUTION_MODE,
@@ -43308,6 +43397,8 @@ def apply_cli_args(parsed_args):
 
     if parsed_args.screenshot_interval is not None:
         time_interval = max(0.02, float(parsed_args.screenshot_interval))
+    if parsed_args.capture_mode is not None:
+        set_capture_mode(parsed_args.capture_mode)
     if parsed_args.turn_scheduler_profile:
         apply_turn_scheduler_profile(parsed_args.turn_scheduler_profile, require_unlock=False)
     if parsed_args.turn_scheduler_mode:

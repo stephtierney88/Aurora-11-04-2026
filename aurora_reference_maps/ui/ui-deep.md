@@ -1,5 +1,11 @@
 # Aurora 2 Control Panel Deep Map
 
+## November 4 — The Switchboard / Implementation 23
+
+`AuroraControlPanel._build_switchboard_tab` hosts a fit-width scroll page. `Switchboard` preserves dirty setting drafts across exports, reads effective source/scope/lock values and submits preview/apply/rollback through `_submit_settings_transaction(inline_results=True)`; Advanced retains its existing dialog behavior. `load_switchboard_catalog` validates generated source hashes, falling back to AST discovery. `command_draft` uses visible argument placeholders; local framing/name validation complements runtime admission. `wait_receipt` is a bounded worker returning through a queue; Tk owns rendering and no timeout replays work.
+
+`switchboard_flow` supplies 3/4/8 abstract/group/function nodes and separate capture/turn loops with stale gates. `draw_flow` redraws only on topology/size changes. Context chips use `context_contents`, `show_tip`, `show_contents` and a scrollable viewer; loaded Init/current conversation/latest screenshot are distinct from last-prepared text. Inspection does no capture, retrieval or provider I/O. `PortalShortcuts` caches 24 clockwise frames and shares one panel timer; hidden widgets stop frame advancement, motion is optional and close cancels the timer. Main chat shortcuts are not duplicated inside visible pages. The legacy Advanced chat shortcut remains reachable.
+
 ## November 4 — Conversation-first friend preview / Implementation 22
 
 `aurora_conversation.py` builds detached bounded current/retained views from HistoryContextService state; effective drop filters apply to current rows. The panel starts on Conversation, has a composer and optional system details, and retains Chat historical logs plus all 23 views. `Reopen last view` preserves the prior startup option. New routine models default to gpt-6.1-sol low; review role defaults to gpt-6-astra medium, with older models/configurations retained. The native bounded test sequence and limits are recorded in docs/reviews/2026-11-04/implementation-22.md. General gameplay/native testing remains deferred. Core R2b2b is still next after this user-directed preview.

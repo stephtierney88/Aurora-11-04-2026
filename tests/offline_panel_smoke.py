@@ -19,6 +19,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 COPY_FILES = (
+    "aurora_switchboard.py", "aurora_command_catalog.py", "aurora_portal_spinner.png", "aurora_flow_emblem.png",
     "aurora2.py", "aurora2_control_panel.py", "aurora_panel_layout.py", "aurora_preflight.py",
     "aurora_runtime_work.py", "aurora_input_ownership.py", "aurora_responses_reasoning.py", "aurora_capture_store.py", "aurora_command_protocol.py", "aurora_command_contracts.py", "aurora_default_profiles.py",
     "aurora_pending_commands.py", "aurora_history_controls.py", "aurora_episodic_retrieval.py", "aurora_search_query.py", "aurora_retrieval_results.py", "aurora_retrieval_commands.py", "aurora_conversation.py", "aurora_control_plane.py", "aurora_codex_oauth.py", "aurora_settings_registry.py",
@@ -28,6 +29,7 @@ COPY_FILES = (
 
 def check_visible_layout(app, pump):
     app.state("normal")
+    pump(.4)  # Wait for the native restore transition before sizing/docking.
     app.geometry("1000x700+30+30")
     pump()
     app._apply_settings_mode("docked")
@@ -76,7 +78,7 @@ def check_visible_layout(app, pump):
             if width == 900:
                 views.append(name)
         sizes.append({"width": app.winfo_width(), "height": app.winfo_height()})
-    assert len(views) == 23
+    assert len(views) == 24
     app.toggle_maximized()
     pump()
     assert app.state() == "zoomed", app.state()
@@ -156,13 +158,27 @@ def check_panel(work, interactive=False, hidden=False):
         app.render_conversation()
         rendered = app.conversation_text.get("1.0", "end-1c")
         assert "visible fixture message" in rendered and "archived fixture message" not in rendered
+        visible.update(role="assistant", model="fixture-model", model_source="provider_reported",
+                       timestamp_iso="2026-11-04T15:00:00-08:00", edited_by="model:fixture-editor")
+        app.state_cache["conversation"] = build_conversation_snapshot({"history_store": [visible], "recent_prompt_history": [visible]})
+        app.render_conversation()
+        rendered = app.conversation_text.get("1.0", "end-1c")
+        assert "fixture-model" in rendered and "15:00:00" in rendered and "fixture-editor" in rendered
+        for variable in (app.conversation_time_var, app.conversation_model_var, app.conversation_edits_var):
+            assert variable.get()
+            variable.set(False)
+        app.render_conversation()
+        rendered = app.conversation_text.get("1.0", "end-1c")
+        assert "fixture-model" not in rendered and "15:00:00" not in rendered and "fixture-editor" not in rendered
+        for variable in (app.conversation_time_var, app.conversation_model_var, app.conversation_edits_var):
+            variable.set(True)
         app.state_cache["conversation"] = build_conversation_snapshot({"history_store": [old], "recent_prompt_history": []})
         app.render_conversation()
         assert "visible fixture message" not in app.conversation_text.get("1.0", "end-1c")
         app.send_conversation_message()
         assert app.conversation_composer.get("1.0", "end-1c") == ""
         assert "Queued" in app.conversation_delivery_var.get()
-        until(lambda: "Draft survives refresh" in (work / "aurora_external_bridge_log.jsonl").read_text(encoding="utf-8"), "conversation ingestion")
+        until(lambda: (work / "aurora_external_bridge_log.jsonl").exists() and "Draft survives refresh" in (work / "aurora_external_bridge_log.jsonl").read_text(encoding="utf-8"), "conversation ingestion")
         if not hidden:
             check_visible_layout(app, pump)
         widths = {"settings": app.settings_view.winfo_width(), "workspace": app.workspace_frame.winfo_width()}
@@ -203,6 +219,77 @@ def check_panel(work, interactive=False, hidden=False):
             transaction_results.append({"operation": operation, "status": expected, "request_id": pending_id})
         app.reload_observed_settings()
         assert float(field.get()) == old_value
+
+        print("Checking Switchboard drafts, capture mode and receipts", flush=True)
+        app.show_tab("The Switchboard")
+        app.refresh_now()
+        board = app.switchboard
+        assert len(board.rows) == 360
+        assert board.level.get() == "Overview" and board.flow_section.expanded
+        assert not board.controls.expanded and not board.commands_section.expanded
+        for kind in ("init", "system", "memory", "current", "conversation", "screen"):
+            board.show_contents(kind)
+            pump(.05)
+            assert board.init_text.get("1.0", "end-1c").strip()
+        board.show_init_tip()
+        assert board._init_tip is not None
+        board.hide_init_tip()
+        assert board._init_tip is None
+        board.init_section.set_expanded(False)
+        if not hidden:
+            board.jump(board.flow_section)
+            pump()
+            page = app.page_views["The Switchboard"]
+            assert page.canvas.yview()[0] > 0, "Flow-map jump did not scroll"
+            assert abs(board.flow_section.winfo_rooty() - page.canvas.winfo_rooty()) < 30
+            board.jump(board.commands_section)
+            pump()
+            assert page.canvas.yview()[0] > .1, "Command-desk jump did not scroll"
+        item = next(str(i) for i, row in enumerate(board.rows) if row["command"] == "SHOW_RUNTIME")
+        board.tree.selection_set(item)
+        board.prepare_selected()
+        assert board.pending is None and board.editor.get("1.0", "end-1c") == "SHOW_RUNTIME()"
+        board.run_text("SET_TIME_LOGGING(off)")
+        until(lambda: board.pending is None, "Switchboard raw receipt")
+        until(lambda: snapshot()["modes"]["time_logging"] is False, "Switchboard raw state")
+        board.variables["capture.mode"].set("request_only")
+        app.refresh_now()
+        assert board.variables["capture.mode"].get() == "request_only"
+        original_primary = snapshot()["models"]["text"]
+        board.variables["model.text"].set("gpt-6.1-terra")
+        request = board.submit_settings("apply", keys=board.model_keys)
+        assert request is not None
+        until(lambda: app.settings_transaction_pending is None, "model choices apply")
+        until(lambda: snapshot()["models"]["text"] == "gpt-6.1-terra", "primary model observed")
+        assert snapshot()["modes"]["capture_mode"] == "heartbeat", "Model-only apply applied an unrelated draft"
+        assert board.variables["capture.mode"].get() == "request_only"
+        assert board.rollback() is not None
+        until(lambda: app.settings_transaction_pending is None, "model choices undo")
+        until(lambda: snapshot()["models"]["text"] == original_primary, "primary model restored")
+        for operation in ("preview", "apply", "rollback"):
+            request = board.rollback() if operation == "rollback" else board.submit_settings(operation)
+            assert request is not None, app.settings_transaction_status_var.get()
+            until(lambda: app.settings_transaction_pending is None, "Switchboard " + operation)
+            expected = "request_only" if operation == "apply" else "heartbeat"
+            until(lambda: snapshot()["modes"]["capture_mode"] == expected, "capture mode " + operation)
+            assert app.settings_transaction_last_receipt["status"] == {"preview": "previewed", "apply": "applied", "rollback": "rolled_back"}[operation]
+            if app.settings_transaction_dialog is not None:
+                app.settings_transaction_dialog.destroy()
+                app.settings_transaction_dialog = None
+        board.reload()
+        board.open_defaults()
+        assert board.defaults_section.expanded
+        assert "runtime.live" in board.defaults_preview.get("1.0", "end-1c")
+        for operation in ("preview", "apply", "rollback"):
+            request = board.rollback() if operation == "rollback" else board.submit_defaults(operation)
+            assert request is not None, app.settings_transaction_status_var.get()
+            until(lambda: app.settings_transaction_pending is None, "preview defaults " + operation)
+            assert app.settings_transaction_last_receipt["status"] == {"preview": "previewed", "apply": "applied", "rollback": "rolled_back"}[operation]
+            until(lambda: snapshot()["modes"]["capture_mode"] == ("request_only" if operation == "apply" else "heartbeat"), "reset capture mode")
+            assert not snapshot()["modes"]["live"]
+        board.defaults_section.set_expanded(False)
+        board.reload()
+        app.show_tab("Dashboard")
 
         app.refresh_dashboard(app.state_cache)
         print("Checking Dashboard and refresh recovery", flush=True)
@@ -273,7 +360,7 @@ def check_panel(work, interactive=False, hidden=False):
             app.show_tab("Dashboard")
         if interactive:
             faulthandler.cancel_dump_traceback_later()
-            app.geometry("1000x700+30+30")
+            app.state("zoomed")
             app.show_tab("Conversation")
             app.conversation_delivery_var.set("Offline walkthrough: inference is locked off; messages queue locally.")
             app.after(15 * 60 * 1000, app.on_close)

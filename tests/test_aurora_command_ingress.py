@@ -28,6 +28,7 @@ from aurora_control_plane import (
     read_jsonl_batch, read_jsonl_from, validate_bridge_request,
 )
 from aurora_settings_registry import coerce_setting_value
+from aurora_history_controls import current_history_actor, history_actor_scope
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -82,6 +83,7 @@ class RuntimeIngressTests(unittest.TestCase):
         self.inputs = queue.Queue()
         self.journal = MutationAdmissionJournal(self.temp.name, session_id="test")
         self.scope = {
+            "current_history_actor": current_history_actor, "history_actor_scope": history_actor_scope,
             **runtime_constants(), "json": json, "re": re, "time": time, "os": os,
             "datetime": datetime, "CommandSyntaxError": CommandSyntaxError,
             "command_result_failed": command_result_failed,

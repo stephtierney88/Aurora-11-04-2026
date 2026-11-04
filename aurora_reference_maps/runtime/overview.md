@@ -1,5 +1,13 @@
 # Aurora 2 Runtime Overview
 
+## November 4 — assistant game routing / Implementation 24
+
+`infer_pending_queue_directive` preserves authored namespaces until `prepare_command_batch` freezes the action route. The actual assistant/pending-wrapper path now retains GB mapping independently of current mode; internal canonical PYAG dispatch spelling must not become a new explicit desktop route. 360 bindings are unchanged. Guarded scenario evidence confirms goal/history operations and remaining G1 persistence gaps. The bounded FireRed test verified one native movement and Sol/Astra/restoration, then stopped on scene-classifier false positives (`upper`/`pp`, negated battle text). Evidence-aware classification and G1 precede more gameplay qualification; full details are in Implementation 24.
+
+## November 4 — Switchboard runtime / Implementation 23
+
+`capture.mode` is the 24th shared setting: heartbeat preserves periodic capture, request_only waits for due demand requests. Environment, CLI, raw SET_CAPTURE_MODE, profiles and versioned transactions converge on the same setter; the interruptible worker reevaluates deadlines. Turn scheduling remains separate. All 359 prior bindings remain (360 now, 98 reviewed). `aurora_conversation.build_init_context` exports loaded Init/source/clipping; `build_prompt_materials` retains four bounded last-prepared text components without image bytes. The panel reads these exports; inspection never invokes prompt builders or provider/native operations. Preparation is not delivery or exact provider-session replay. See Implementation 23 and the human/AI guides.
+
 ## November 4 — Conversation-first friend preview / Implementation 22
 
 `aurora_conversation.py` builds detached bounded current/retained views from HistoryContextService state; effective drop filters apply to current rows. The panel starts on Conversation, has a composer and optional system details, and retains Chat historical logs plus all 23 views. `Reopen last view` preserves the prior startup option. New routine models default to gpt-6.1-sol low; review role defaults to gpt-6-astra medium, with older models/configurations retained. The native bounded test sequence and limits are recorded in docs/reviews/2026-11-04/implementation-22.md. General gameplay/native testing remains deferred. Core R2b2b is still next after this user-directed preview.
@@ -225,3 +233,5 @@ Window 24 Slice 3 keeps FL Studio in a third sibling server. The FL device scrip
   use `aurora2-control-panel-map`
 
 November 4 prompt/novice follow-up: current/legacy init profiles and command-discovery context delivery are selectable at startup; see README_FOR_AI.md. Primary runtime start is paused/safe, enable preserves settings, legacy orb activation remains, Advanced opens expanded with Dock retained, and Conversation has Quick start. See README_FOR_HUMANS.md.
+
+Switchboard provenance/reset follow-up: `aurora_conversation` exports timestamp/model/source/editor metadata; `aurora_history_controls.history_actor_scope` carries model identity through queued edits; `BoundedModelIO.snapshot` exposes only the active requested model. `aurora_switchboard.preview_default_changes` defines the bounded 22-setting paused preview reset, through the existing settings authority. Direct role selectors and context previews retain all legacy controls.

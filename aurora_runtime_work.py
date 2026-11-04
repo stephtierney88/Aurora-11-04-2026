@@ -96,6 +96,7 @@ class BoundedModelIO:
         self._active_token = None
         self._started = 0.0
         self._discarded = 0
+        self._active_model = ""
 
     @property
     def busy(self):
@@ -120,6 +121,7 @@ class BoundedModelIO:
             raise
         with self._state_lock:
             self._active_token = token
+            self._active_model = str((frozen_packet.get("payload") or {}).get("model") or "") if isinstance(frozen_packet, dict) else ""
             self._started = time.monotonic()
 
         def worker():
@@ -157,6 +159,7 @@ class BoundedModelIO:
             return {
                 "state": "draining" if token and token.event.is_set() else "running" if token else "idle",
                 "active_network_calls": int(token is not None),
+                "requested_model": self._active_model if token else "",
                 "elapsed_seconds": round(time.monotonic() - self._started, 3) if token else 0.0,
                 "discarded_results": self._discarded,
                 "remote_cancellation_confirmed": False,

@@ -109,7 +109,7 @@ class AuroraCliShellTests(unittest.TestCase):
             self.assertEqual(exit_code, 0)
             self.assertEqual(payload["schema_version"], "aurora_operator_dashboard_v1")
             self.assertEqual(payload["events"]["count"], 0)
-            self.assertEqual(payload["settings"]["count"], 23)
+            self.assertEqual(payload["settings"]["count"], 24)
 
     def test_direct_runtime_command_routes_through_stopped_control_plane(self):
         with tempfile.TemporaryDirectory() as temp_dir:

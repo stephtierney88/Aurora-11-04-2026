@@ -64,6 +64,14 @@ runtime.MODEL_TRANSPORT = "responses"
 try:
     first = runtime.send_prompt_to_chatgpt("Routine local fake-provider check.")
     assert first, runtime.runtime_state.get("last_response_summary")
+    materials = runtime.runtime_state["last_prompt_materials"]
+    assert "You are AURORA" in materials["sections"]["system"]["text"]
+    assert "Multiple commands per response are supported" in materials["sections"]["system"]["text"]
+    assert "Configured capture policy:" in materials["sections"]["system"]["text"]
+    assert "not proof a worker is running" in materials["sections"]["system"]["text"]
+    assert "Routine local fake-provider check." in materials["sections"]["current"]["text"]
+    exported_materials = runtime.build_control_panel_state_snapshot()["prompt_materials"]
+    assert exported_materials == materials and exported_materials is not materials
     deadline = time.monotonic() + 3
     while runtime.agent_state.next_inference_plan.get("reasoning_effort") != "high" and time.monotonic() < deadline:
         time.sleep(0.01)
@@ -80,6 +88,7 @@ try:
     proof = {"status": "passed", "startup": startup, "requests": requests_seen,
              "model_requested_escalation": True, "command_result_count": len(recent),
              "reasoning_state": runtime.RESPONSES_REASONING.snapshot(),
+             "prompt_materials_export_verified": True,
              "native_capture_network_guards_unused": True, "real_api_calls": 0}
 finally:
     runtime.SEND_TO_MODEL = runtime.ENABLE_MODEL_RESPONSES = False

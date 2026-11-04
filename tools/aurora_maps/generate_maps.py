@@ -20,7 +20,7 @@ CONTROL_PLANE_PATHS = (
     ROOT / "aurora_pending_commands.py",
     ROOT / "aurora_history_controls.py",
     ROOT / "aurora_episodic_retrieval.py",
-    ROOT / "aurora_search_query.py", ROOT / "aurora_retrieval_results.py", ROOT / "aurora_retrieval_commands.py", ROOT / "aurora_conversation.py",
+    ROOT / "aurora_search_query.py", ROOT / "aurora_retrieval_results.py", ROOT / "aurora_retrieval_commands.py", ROOT / "aurora_conversation.py", ROOT / "aurora_switchboard.py",
     ROOT / "aurora_panel_layout.py",
     ROOT / "obs_readonly_mcp_server.py",
     ROOT / "obs_readonly_client.py",

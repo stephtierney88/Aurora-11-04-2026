@@ -33,6 +33,7 @@ def sample_state():
             "game_profile": "firered",
             "game_profile_source": "env",
             "screenshot_interval": 0.12,
+            "capture_mode": "heartbeat",
             "load_live_init_prompt": False,
         },
         "models": {
@@ -85,6 +86,7 @@ def sample_state():
                 "turn_capture_wake_debounce_seconds": 0.9,
                 "turn_post_action_settle_seconds": 0.55,
                 "screenshot_interval": 0.12,
+            "capture_mode": "heartbeat",
                 "demand_capture_enabled": True,
                 "load_live_init_prompt": False,
                 "advanced": {"image_detail": "low"},
@@ -99,11 +101,11 @@ class AuroraSettingsRegistryTests(unittest.TestCase):
         definitions = list_setting_definitions()
 
         self.assertEqual(summary["schema_version"], "aurora_settings_registry_v1")
-        self.assertEqual(summary["setting_count"], 23)
-        self.assertEqual(len(definitions), 23)
+        self.assertEqual(summary["setting_count"], 24)
+        self.assertEqual(len(definitions), 24)
         self.assertTrue(summary["write_enabled"])
         self.assertEqual(summary["mutation_status"], "atomic_runtime_transactions")
-        self.assertEqual(len({definition.key for definition in definitions}), 23)
+        self.assertEqual(len({definition.key for definition in definitions}), 24)
 
     def test_alias_resolution_and_strict_key_errors(self):
         self.assertEqual(resolve_setting_definition("live").key, "runtime.live")
@@ -197,10 +199,10 @@ class AuroraSettingsRegistryTests(unittest.TestCase):
             state_age_seconds=0.1,
             category="capture",
         )
-        self.assertEqual(snapshot["count"], 2)
+        self.assertEqual(snapshot["count"], 3)
         self.assertEqual(
             {row["key"] for row in snapshot["settings"]},
-            {"capture.screenshot_interval", "capture.demand_enabled"},
+            {"capture.screenshot_interval", "capture.demand_enabled", "capture.mode"},
         )
         self.assertTrue(snapshot["version"].startswith("sv1:"))
 

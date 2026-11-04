@@ -152,6 +152,7 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SET_AUTO_PROMPT(on|off)`
 - `SET_BATTLE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`
 - `SET_BATTLE_VERBOSITY(low|medium|high)`
+- `SET_CAPTURE_MODE([value])`
 - `SET_CHAT_HEAD_HISTORY_SIZE(width,height)`
 - `SET_CHAT_HEAD_OPACITY(value)`
 - `SET_CHAT_HEAD_SEND_ANIMATION(pulse|none)`

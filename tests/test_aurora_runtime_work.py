@@ -23,7 +23,7 @@ class ModelWorkTests(unittest.TestCase):
         domain, io = CancellationDomain(), BoundedModelIO()
         entered, release = threading.Event(), threading.Event()
         seen, returned, errors = [], [], []
-        packet = {"messages": [{"text": "original"}], "auth": {"mode": "original"}}
+        packet = {"messages": [{"text": "original"}], "auth": {"mode": "original"}, "payload": {"model": "model-A"}}
 
         def transport(frozen):
             seen.append(frozen)
@@ -41,6 +41,8 @@ class ModelWorkTests(unittest.TestCase):
         worker.start()
         self.addCleanup(release.set)
         self.assertTrue(entered.wait(1))
+        self.assertEqual(io.snapshot()["requested_model"], "model-A")
+        packet["payload"]["model"] = "model-B"
         packet["messages"][0]["text"] = "changed"
         packet["auth"]["mode"] = "changed"
         started = time.perf_counter()
@@ -53,6 +55,7 @@ class ModelWorkTests(unittest.TestCase):
         self.assertEqual(seen[0]["messages"][0]["text"], "original")
         self.assertEqual(seen[0]["auth"]["mode"], "original")
         self.assertEqual(io.snapshot()["state"], "draining")
+        self.assertEqual(io.snapshot()["requested_model"], "model-A")
 
         # Cancellation while waiting for the occupied slot cannot start a second request.
         next_token = domain.token()
@@ -65,6 +68,7 @@ class ModelWorkTests(unittest.TestCase):
             time.sleep(0.005)
         self.assertFalse(io.busy)
         self.assertEqual(io.snapshot()["discarded_results"], 1)
+        self.assertEqual(io.snapshot()["requested_model"], "")
         self.assertEqual(io.call(lambda frozen: frozen, {"ok": True}, domain.token()), {"ok": True})
 
     def test_service_can_cancel_before_transport_completes(self):

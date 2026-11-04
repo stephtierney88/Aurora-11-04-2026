@@ -305,7 +305,7 @@ class AuroraControlPlaneTests(unittest.TestCase):
             self.assertNotIn("command", dashboard["events"]["rows"][0])
             self.assertNotIn("top-secret", serialized)
             self.assertNotIn("top-secret", rendered)
-            self.assertEqual(dashboard["settings"]["count"], 23)
+            self.assertEqual(dashboard["settings"]["count"], 24)
             self.assertEqual(dashboard["settings"]["scope"], "runtime_session")
             self.assertEqual(dashboard["settings"]["writable_count"], 0)
             self.assertFalse(dashboard["summary"]["automatic_replay"])

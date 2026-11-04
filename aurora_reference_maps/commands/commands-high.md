@@ -2112,6 +2112,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
 
+### SET_CAPTURE_MODE
+
+- Signature: `SET_CAPTURE_MODE([value])` (reviewed_contract)
+- Summary: Set capture.mode, or omit value to read it. Heartbeat captures periodically; request_only captures only when the demand service has a due request.
+- Handler: `set_capture_mode_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read capture.mode when omitted; otherwise set it in this runtime session. Heartbeat captures periodically; request_only captures only when the demand service has a due request. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["heartbeat", "request_only"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `capture.mode`
+- Runtime lock: screenshot_interval
+- Apply timing: next_capture_cycle
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
 ### SET_CHAT_HEAD_HISTORY_SIZE
 
 - Signature: `SET_CHAT_HEAD_HISTORY_SIZE(width,height)` (help_text)

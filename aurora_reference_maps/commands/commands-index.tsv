@@ -149,6 +149,7 @@ SET_AUTO_DYNAMIC_INFERENCE	SET_AUTO_DYNAMIC_INFERENCE(on|off)	Other Commands	set
 SET_AUTO_PROMPT	SET_AUTO_PROMPT(on|off)	Other Commands	set_auto_prompt_command	Explicitly enable or disable auto prompting.
 SET_BATTLE_REASONING_EFFORT	SET_BATTLE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)	Other Commands	set_battle_reasoning_effort_command	Set battle reasoning effort.
 SET_BATTLE_VERBOSITY	SET_BATTLE_VERBOSITY(low|medium|high)	Other Commands	set_battle_verbosity_command	Set verbosity for battle turns.
+SET_CAPTURE_MODE	SET_CAPTURE_MODE([value])	Runtime commands	set_capture_mode_command	Set capture.mode, or omit value to read it. Heartbeat captures periodically; request_only captures only when the demand service has a due request.
 SET_CHAT_HEAD_HISTORY_SIZE	SET_CHAT_HEAD_HISTORY_SIZE(width,height)	Other Commands	set_chat_head_history_size_command	Set the attached history window size.
 SET_CHAT_HEAD_OPACITY	SET_CHAT_HEAD_OPACITY(value)	Other Commands	set_chat_head_opacity_command	Set chat-head window opacity between 0.25 and 1.0.
 SET_CHAT_HEAD_SEND_ANIMATION	SET_CHAT_HEAD_SEND_ANIMATION(pulse|none)	Other Commands	set_chat_head_send_animation_command	Control the send animation style used by the floating chat strip input.

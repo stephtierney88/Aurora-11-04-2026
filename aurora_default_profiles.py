@@ -55,6 +55,7 @@ PROFILE_FIELDS = {
     "turn_capture_wake_debounce_seconds": ("set_turn_capture_wake_debounce_seconds", "scheduler.capture_wake_debounce_seconds", ""),
     "turn_post_action_settle_seconds": ("set_turn_post_action_settle_seconds", "scheduler.post_action_settle_seconds", ""),
     "demand_capture_enabled": ("set_demand_capture_enabled", "capture.demand_enabled", ""),
+    "capture_mode": ("set_capture_mode", "capture.mode", ""),
     "unchanged_screenshot_persist_interval": ("set_unchanged_screenshot_persist_interval", "persist_interval", "screenshot_interval"),
     "auto_dynamic_inference": ("set_auto_dynamic_inference_enabled", "boolean", "reasoning"),
     "review_turn_interval": ("set_review_turn_interval", "nonnegative_int", "reasoning"),

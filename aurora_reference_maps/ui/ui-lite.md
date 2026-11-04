@@ -1,5 +1,11 @@
 # Aurora 2 Control Panel Lite Map
 
+November 4 final acceptance: the friend-preview guides now distinguish working in-memory goal/history commands from broken goal persistence and unsupported range deletion/full horizons. The bounded FireRed run verified one mapped input and Sol/Astra restoration but stopped on a scene-classifier error; the Switchboard's displayed scene is a heuristic state, not verified visual truth. See Implementation 24; no new UI control or binding is claimed.
+
+## November 4 — The Switchboard / Implementation 23
+
+The 24th view lives in `aurora_switchboard.py`: default Overview flow, observed model/mode/cadence summary, hover/click context contents, expandable typed switches and command desk. Settings use the existing versioned transaction service; raw commands use correlated shared inbox receipts. Yellow prepares; green runs complete commands; placeholders cannot execute. Overview/Groups/Functions are topology views, not live traces. Loaded Init/current conversation/latest capture differ from bounded last-prepared system/memory/retrieval/current-prompt evidence. Missing evidence remains unknown. One top Conversation/Popout pair stays visible; clockwise Portal animation is cached and optional. All old Advanced/raw routes remain. Human/AI guides explain setup and limitations.
+
 ## November 4 — Conversation-first friend preview / Implementation 22
 
 `aurora_conversation.py` builds detached bounded current/retained views from HistoryContextService state; effective drop filters apply to current rows. The panel starts on Conversation, has a composer and optional system details, and retains Chat historical logs plus all 23 views. `Reopen last view` preserves the prior startup option. New routine models default to gpt-6.1-sol low; review role defaults to gpt-6-astra medium, with older models/configurations retained. The native bounded test sequence and limits are recorded in docs/reviews/2026-11-04/implementation-22.md. General gameplay/native testing remains deferred. Core R2b2b is still next after this user-directed preview.
@@ -106,6 +112,8 @@ Main cards:
 - screenshot viewer and image-memory viewer both support prev/next/latest/popout flows
 
 ## Verification
+
+November 4 preview follow-up: main status links to scoped Primary/Vision/Review selectors. Conversation defaults to Times/Models/Edits enabled with persistent display preferences. Reset to preview defaults opens the same 22-setting review/apply/rollback view from main controls, Switchboard title/command desk and Commands. It preserves auth, game profile, other Advanced settings, saved profiles and history. This bounded reset is not a factory wipe.
 
 Implementation 03 passed 146 unit tests and hidden Tk/offline runtime transaction and refresh checks. Final manual visual/keyboard/scaling QA is open after the user stopped Computer Use because of severe desktop lag; do not infer a cause or resume native capture from this note. See `docs/reviews/2026-09-05/implementation-03.md`.
 

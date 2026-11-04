@@ -68,7 +68,7 @@ class InferenceOptionTests(unittest.TestCase):
 
     def test_descriptions_publish_contracts_without_removing_bindings(self):
         rows = {r["command"]: r for r in build_command_catalog(ingress.ROOT)["commands"]}
-        self.assertEqual(len(rows), 359)
+        self.assertEqual(len(rows), 360)
         for name in INFERENCE_PLAN_COMMANDS:
             self.assertEqual(rows[name]["contract"], describe_command_contract(name))
             self.assertEqual(rows[name]["contract"]["result"]["receipt_field"], "inference_plan_results")

@@ -229,6 +229,22 @@ class HistoryRuntimeTests(unittest.TestCase):
         self.assertEqual(len(self.invalidations), 1)
         self.assertNotEqual(changed["before_version"], changed["after_version"])
 
+    def test_queued_edit_keeps_origin_model_and_original_authorship(self):
+        original = row("old")
+        original.update(role="assistant", model="original-model", timestamp_iso="2026-10-01T01:00:00-07:00")
+        self.store.append(original)
+        self.scope["active_command_queue"] = __import__("queue").Queue()
+        with history.history_actor_scope("model:editor-A"):
+            self.scope["enqueue_or_execute_command"]('EDIT_MSGS("2026-10-01 01:00:00",changed)', False)
+        queued = self.scope["active_command_queue"].get_nowait()
+        with history.history_actor_scope("model:later-B"):
+            self.scope["execute_command_entry"](queued)
+        self.assertEqual(self.store[0]["edited_by"], "model:editor-A")
+        self.assertEqual(self.store[0]["model"], "original-model")
+        self.assertEqual(self.store[0]["timestamp_iso"], original["timestamp_iso"])
+        self.assertTrue(self.store[0]["edited_at"])
+        self.assertEqual(history.current_history_actor(), "unknown")
+
     def test_no_matching_timestamp_is_failure_and_stops_tail(self):
         self.store.append(row("old"))
         for command in ["EDIT_MSGS(missing,new)", "DELETE_MSG(missing)"]:

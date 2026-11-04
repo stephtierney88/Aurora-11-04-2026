@@ -150,6 +150,7 @@
 - `SET_AUTO_PROMPT(on|off)`: Explicitly enable or disable auto prompting.
 - `SET_BATTLE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`: Set battle reasoning effort.
 - `SET_BATTLE_VERBOSITY(low|medium|high)`: Set verbosity for battle turns.
+- `SET_CAPTURE_MODE([value])`: Set capture.mode, or omit value to read it. Heartbeat captures periodically; request_only captures only when the demand service has a due request.
 - `SET_CHAT_HEAD_HISTORY_SIZE(width,height)`: Set the attached history window size.
 - `SET_CHAT_HEAD_OPACITY(value)`: Set chat-head window opacity between 0.25 and 1.0.
 - `SET_CHAT_HEAD_SEND_ANIMATION(pulse|none)`: Control the send animation style used by the floating chat strip input.

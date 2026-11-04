@@ -33,6 +33,9 @@ def build_conversation_view(entries, *, source, max_chars=MAX_VIEW_CHARS,
         used += len(text)
         rows.append({"role": str(entry.get("role", "unknown")), "text": text,
                      "timestamp": str(entry.get("timestamp", "")), "kind": kind,
+                     "timestamp_iso": str(entry.get("timestamp_iso", "")),
+                     "model": str(entry.get("model", "")), "model_source": str(entry.get("model_source", "unknown")),
+                     "edited_by": str(entry.get("edited_by", "")), "edited_at": str(entry.get("edited_at", "")),
                      "shortened": shortened})
     rows.reverse()
     result = {"source": source, "rows": rows, "total": len(entries),
@@ -51,6 +54,45 @@ def build_conversation_snapshot(history_read_state, current_entries=None):
                                                 source="retained_runtime_history")}
 
 
-def conversation_text(view):
-    return "\n\n".join(f"{row['role'].title()}  {row.get('timestamp', '')}\n{row['text']}"
-                       for row in view.get("rows", []))
+def conversation_text(view, *, show_time=True, show_model=True, show_edits=True):
+    blocks = []
+    for row in view.get("rows", []):
+        details = []
+        if show_model and row.get("role") == "assistant":
+            model = row.get("model") or "model unknown"
+            if row.get("model_source") == "requested":
+                model += " (requested)"
+            details.append(model)
+        if show_time:
+            details.append(row.get("timestamp_iso") or row.get("timestamp") or "time unknown")
+        if show_edits and row.get("edited_by"):
+            details.append("last edited by " + row["edited_by"] + (" · " + row.get("edited_at", "") if show_time else ""))
+        text = row["text"]
+        legacy_prefix = "[" + str(row.get("timestamp", "")) + "] "
+        if row.get("timestamp") and text.startswith(legacy_prefix):
+            text = text[len(legacy_prefix):]
+        blocks.append(f"{row['role'].title()}  {' · '.join(details)}\n{text}")
+    return "\n\n".join(blocks)
+
+
+def build_init_context(text, *, source, profile, configured_file, configured_mode, prompt_limit):
+    """Bounded observation of loaded init, not a disk read or complete provider prompt."""
+    text = str(text or "").strip()
+    limit = min(64000, max(0, int(prompt_limit)))
+    return {"schema_version": "aurora_init_context_v1", "source": str(source or "unknown"),
+            "profile": str(profile), "configured_file": str(configured_file), "configured_mode": str(configured_mode),
+            "text": text[:limit], "total_chars": len(text), "displayed_chars": min(len(text), limit),
+            "truncated": len(text) > limit, "prompt_char_limit": int(prompt_limit),
+            "note": "Loaded init in runtime memory. Other system guidance, working memory and conversation are separate. This is not the complete last provider request."}
+
+
+def build_prompt_materials(*, system, memory, current, retrieval, prepared_at, model):
+    """Bounded text evidence at request preparation; never includes image bytes."""
+    sections = {}
+    for name, value in (("system", system), ("memory", memory), ("current", current), ("retrieval", retrieval)):
+        text = str(value or "")
+        sections[name] = {"text": text[:24000], "total_chars": len(text),
+                          "displayed_chars": min(len(text), 24000), "truncated": len(text) > 24000}
+    return {"schema_version": "aurora_prompt_materials_v1", "prepared_at": str(prepared_at),
+            "model": str(model), "sections": sections,
+            "note": "Last prepared text components, before provider transport. Preparation does not prove delivery or completion. Current context may since have changed; history, image bytes and provider session transformations are not reproduced here."}

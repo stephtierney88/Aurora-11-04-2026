@@ -23,15 +23,15 @@
     },
     {
       "file": "aurora2.py",
-      "sha256": "c6c72f1c012693eb43786169936bc2e2d235a1d3233a3e4d857df2a55841f1b3"
+      "sha256": "df7fb3474d6bbc4e7257f0e5a77f67cd79681b468001cad67609f778904b3896"
     },
     {
       "file": "aurora2_control_panel.py",
-      "sha256": "4abea2a3d5b6b46a7115ebffa83865f30e1a9fb9aa26cf410f93e0a50b259fb7"
+      "sha256": "6c595b9489e7d20a7eed519ac9cb3d615d09593b4684c0ac402eb8f5593669da"
     },
     {
       "file": "aurora2_init.txt",
-      "sha256": "be4853c680fef8c0eb77cb3ca9f5c25342719b357b72bcd1491d4bab7aa8c1ea"
+      "sha256": "2e44de4997a648ba2cdc6bfedd83cebf7538dddcc69ff6b227edfd597cd4d8e1"
     },
     {
       "file": "aurora2_init_legacy.txt",
@@ -71,19 +71,23 @@
     },
     {
       "file": "aurora_conversation.py",
-      "sha256": "ab41f0aee96699138d27a29a11a1230bc2e57daf21076911991edeb9beb51d45"
+      "sha256": "9f97abce2aa8484423a2e19a56fef3e6ef137bd70a1ca7890a55f07d929c6119"
     },
     {
       "file": "aurora_default_profiles.py",
-      "sha256": "4b08b4ad5dc7e2b0dd37eabede17fcdfe45628fa673d7a99ac1f12fbad8b8a41"
+      "sha256": "bd071aa19a0a5e25fee0a8862f2347b20e2952d496b0467cd10bb579d9e6974d"
     },
     {
       "file": "aurora_episodic_retrieval.py",
       "sha256": "36fb49fb0827869140965ff1012281c79841f558e16743f277444272683cff71"
     },
     {
+      "file": "aurora_flow_emblem.png",
+      "sha256": "ac616d7e7efdadfb387b9e96c2ad340c4f1544d1a1dfd339d6ea4336fecc211e"
+    },
+    {
       "file": "aurora_history_controls.py",
-      "sha256": "2061fec8e7ee4eddd2d45879f2db72765c5bdc21e43d05e8a19e80a3147ec224"
+      "sha256": "4148e1740dc33d9b51f01b12e46995ec04d2077f547c509523602dd0daf2d139"
     },
     {
       "file": "aurora_input_ownership.py",
@@ -110,32 +114,36 @@
       "sha256": "269a73f5c6eba5092eaa17393e1d74319029a98028459c7f5fb0481a1ee8999b"
     },
     {
+      "file": "aurora_portal_spinner.png",
+      "sha256": "336b223f05d96f09bcb087b1d789758194a9365986b2911ade1f945121dfecd9"
+    },
+    {
       "file": "aurora_preflight.py",
       "sha256": "f538e0668f24c6d1d881a725181177ef73d31fe558eb4f77edcddedb9e4119e1"
     },
     {
       "file": "aurora_reference_maps/commands/commands-high.md",
-      "sha256": "4f22dd8335febbb4fc86c1422c39e01b8a8ac91f60066dc698eaaf32694c74ea"
+      "sha256": "61c7e79d82d3bfc94127d4793b68bc02b49f15a99df6df6d2bf72a62a24f424f"
     },
     {
       "file": "aurora_reference_maps/commands/commands-index.tsv",
-      "sha256": "b6da7c1f9b21d93992a4123bb83f104be6c80e9efe736c52936a48b8cf9797c8"
+      "sha256": "efd35e7832adeeca2420806eb786385259f151018a0214d6f4ecf32f32b8331f"
     },
     {
       "file": "aurora_reference_maps/commands/commands-low.md",
-      "sha256": "5fc9f4032cc814b34d01a4c79c0c704e081215d4548229a01fc698f751f9b088"
+      "sha256": "9559edafbb41219d8b086bdc8a1c64e402aab10fb18cc6b9e0dc6dc1c9305b83"
     },
     {
       "file": "aurora_reference_maps/commands/commands-medium.md",
-      "sha256": "df406bf052d67c95b9805be58242c3b094c90edf7aea009e8a7be538edd60f86"
+      "sha256": "922ceaff469341af8c067ba8842e9b1b4fcee868cfd048f30874a6379da2d5ea"
     },
     {
       "file": "aurora_reference_maps/commands/commands.json",
-      "sha256": "7ed1a20730d2335495b975ec2eb6637ff6a19b6e7b55baef577e0e73aaf68c50"
+      "sha256": "1a6eb2e2376fb7d62da41468769d538ffae4a2fa028a614c5cba17e489342c18"
     },
     {
       "file": "aurora_reference_maps/manifest.json",
-      "sha256": "f1aa98ae00112ec5eb5edcaada430f421f3db13af4e5fc15212c297aac788747"
+      "sha256": "eccab87dedc7d5153a0d4cbf79698ec4cda4d20a2b5fed956933e69735a539b4"
     },
     {
       "file": "aurora_reference_maps/reference_packs/adaptive-reasoning-reference.md",
@@ -223,11 +231,11 @@
     },
     {
       "file": "aurora_reference_maps/runtime/control-plane-function-skeleton.jsonl",
-      "sha256": "89ef8300099bc0100f7bc169857df4db65cf26f083448b2ad80b87b746570b76"
+      "sha256": "5a98f85df8a0154968645629bcbe3dc4541715acd81e20f5502a1f180c655501"
     },
     {
       "file": "aurora_reference_maps/runtime/overview.md",
-      "sha256": "cb038433fce6eef2638572c7a403a8800e12626b5155eb931131189ec0e69266"
+      "sha256": "7748070be36057722dfa0b38709083afe2d8778cad96f15623cd30d76fa0eec0"
     },
     {
       "file": "aurora_reference_maps/runtime/runtime-domains.md",
@@ -235,15 +243,15 @@
     },
     {
       "file": "aurora_reference_maps/runtime/runtime-function-skeleton.jsonl",
-      "sha256": "01df41882ff740c265a14c16a1611e8837fdb83ebb79c8baaf09bfdafdbe9f5a"
+      "sha256": "d0b57f50e59a574b7d7518e592a60dfdd372b316e69db3d67db1b2ceb90bde98"
     },
     {
       "file": "aurora_reference_maps/runtime/runtime-generated-call-tree.md",
-      "sha256": "a381e549860cc5c25df49dd0a51fdfc1462bbae255ec48a7fbc3f6a55bfc5fc6"
+      "sha256": "6b6fb3fb79006ead88959b3ca76a64fad5648b0aac973172503a25798b30c971"
     },
     {
       "file": "aurora_reference_maps/runtime/runtime-generated-map.md",
-      "sha256": "5b586e7b2268ebed9fefa42b80035bd3f6a485b445cd8af333990b5a38619ba3"
+      "sha256": "8b937b8ea41a39301bf3e5adf940746a19238f7d2908acffeba7468591730e0c"
     },
     {
       "file": "aurora_reference_maps/runtime/runtime-interaction-tree.md",
@@ -251,7 +259,7 @@
     },
     {
       "file": "aurora_reference_maps/runtime/runtime-symbol-index.tsv",
-      "sha256": "3b842e5d33ed666f2a7df5cb1b4e5b7914b05d819b293fd56ad5d5219eaeff90"
+      "sha256": "84b86d481a87da4a72e168dd64b5e7f9ebfdb1d36d4479d8082a258e3d2a4de9"
     },
     {
       "file": "aurora_reference_maps/runtime/search-guide.md",
@@ -259,23 +267,23 @@
     },
     {
       "file": "aurora_reference_maps/ui/ui-deep.md",
-      "sha256": "d6b1b5c7d629cc98f5140f3509d52466455e483f9427f7245c3c414099bacac2"
+      "sha256": "e9c61aa7edb43b09aea15f4fd01dc9d2a78ac198f6458d95b66bf6093c89aae7"
     },
     {
       "file": "aurora_reference_maps/ui/ui-function-skeleton.jsonl",
-      "sha256": "fca7ccde3dc05c9bca45153f06f3c49f20296126947470336d05c70c7f1d82b6"
+      "sha256": "54388f8dfc9263e189f4e794ff979470353e0254a316e8d89b3df01076cfe90e"
     },
     {
       "file": "aurora_reference_maps/ui/ui-generated-call-tree.md",
-      "sha256": "f55936a2c4e49505bd15817cdebcbe503134a298c66773fb7f7a826e31f4fc0c"
+      "sha256": "ba738a8b75f7c71c14ecfcb7295c4e768a9e03b9d2a7d5e8c2f70df55fe7f6da"
     },
     {
       "file": "aurora_reference_maps/ui/ui-generated-map.md",
-      "sha256": "45a1e9fe0e7b5f041b34a0011c1d5dd93b5c466be976a6e5b54cf728655d337d"
+      "sha256": "4d0ff47d4a0d880cdd57095eba6c35a5462ac62a10bacab58383a421ef84c451"
     },
     {
       "file": "aurora_reference_maps/ui/ui-lite.md",
-      "sha256": "c02e2b6432097f248a44a1fae489d56ef3d95b85258e94477125732d75586995"
+      "sha256": "a57a5d3801907467ffb9b8f36beabb9c330799d832a2c11a93ceafd219bc782b"
     },
     {
       "file": "aurora_reference_maps/ui/ui-search-guide.md",
@@ -283,7 +291,7 @@
     },
     {
       "file": "aurora_reference_maps/ui/ui-symbol-index.tsv",
-      "sha256": "38de7166e6c1eb843014e5c5d85b8a2b0be0df1aaa0ad729cd1a278649fffbfd"
+      "sha256": "309dfc785f9476788dfc042460b72a47c00fa8f6d3fbe9f25f9bb377e7aa48ac"
     },
     {
       "file": "aurora_responses_reasoning.py",
@@ -299,7 +307,7 @@
     },
     {
       "file": "aurora_runtime_work.py",
-      "sha256": "9b83a9d97b8fa162ee2a3294ba0e8fc33a710859dfffafda6b458306e7c863f0"
+      "sha256": "1c111f125f688636a09a5c5fbbb997c5df714193893292de941dc7b00041df5d"
     },
     {
       "file": "aurora_scheduler_bakeoff.ps1",
@@ -311,7 +319,7 @@
     },
     {
       "file": "aurora_settings_registry.py",
-      "sha256": "c1eae0e6907c6ee39b49e3eb9ce5a2c2005100941f248616e97bb5ec236c7ad0"
+      "sha256": "3889434347ac543f3e0902e443a338c77fd9de9b359e3abfc6150f69baf9b68c"
     },
     {
       "file": "aurora_settings_transactions.py",
@@ -320,6 +328,10 @@
     {
       "file": "aurora_soak_harness.ps1",
       "sha256": "50f762df22485c765e9d83ecedf5b08319b430af3b87ce5123a32cd9d21bf8d3"
+    },
+    {
+      "file": "aurora_switchboard.py",
+      "sha256": "54c05d83dfd1e0007620da9d9a2f64ba9a117ad8da3d89e6c475cf8ac23dfadf"
     },
     {
       "file": "aurora_validation_console.py",
@@ -367,11 +379,11 @@
     },
     {
       "file": "docs/notes/aurora_current_status.md",
-      "sha256": "a8a7b4cdaedeea9de787a5f95b20702543a8281b2957f1addfff70824011facd"
+      "sha256": "98b12ffb639963df069d4fec49d37c3e5121786aa53a1a30c55c364fdd028dae"
     },
     {
       "file": "docs/notes/aurora_runtime_roadmap.md",
-      "sha256": "5830063cd9e5fbec23eacac79e52009b18b8775bc37836c56af7403c0b1db872"
+      "sha256": "e33c5c3908f198126b2debff4b4e4e989c6e70f059216b37a3c3099e14d823e8"
     },
     {
       "file": "docs/reference-packs/adaptive-reasoning-reference.md",
@@ -531,15 +543,15 @@
     },
     {
       "file": "README.md",
-      "sha256": "26c087688fed06f4c1ae8820199a5c51b90da5adf05c93b6920f183d034fb440"
+      "sha256": "95df78048cdf53fd504e5e2d363659305d416d8232723fe341bb7a4ba84be3be"
     },
     {
       "file": "README_FOR_AI.md",
-      "sha256": "c9e3eca641f4bd599e373a942d4a30be9d4a07218436a3d6ced8dfdabbb79e23"
+      "sha256": "4bace12bfd9c3db1a85eadee2fcff51777b7bb80dfa2d40e4b4b9faa4d13faa0"
     },
     {
       "file": "README_FOR_HUMANS.md",
-      "sha256": "3010fc054489414a8439556ee6451c0c747c3dd4040f0aa38fd82945ccbe58f0"
+      "sha256": "9d55fe4fbba9dd608086e3e7e29a3e06856e62c2361f010be7c30f39df79a870"
     },
     {
       "file": "regenerate_aurora_skill_refs.ps1",
@@ -558,12 +570,16 @@
       "sha256": "d399500a6ec53c838bb1213f4e9390ce068e4f05f12b46cb5792881dc361392c"
     },
     {
+      "file": "tests/offline_operator_scenarios.py",
+      "sha256": "20ca448587acfb0a506a7dfa411a652970a3028ba0edb6df1b62e0b35eaa33d6"
+    },
+    {
       "file": "tests/offline_panel_smoke.py",
-      "sha256": "e4fc0527844248711e97c897ddf91a171aa6330778addef45c2b310c41331fdf"
+      "sha256": "1ca4dd0f8f88ca6003721b9ce97aa8d1427ee9bc4b46dfa84d44c44bab545ac8"
     },
     {
       "file": "tests/offline_responses_smoke.py",
-      "sha256": "e3807effb54cdc1a39b363fd74e3079cff413ba33df89b88fb1bff4b960b3ea1"
+      "sha256": "58f6ea9d44b28fa480d21c40c12883afd6835945eb371a700e79454757c65ada"
     },
     {
       "file": "tests/offline_runtime_smoke.py",
@@ -579,15 +595,15 @@
     },
     {
       "file": "tests/test_aurora_cli_shell.py",
-      "sha256": "bf109d743dd63488cdc9999ff1f6502ef81ba3333946d00bff573828cb31e5ae"
+      "sha256": "86a63ce15d8588745db17cd90f96190a228bb7ca0e406963756ffb508dbd157a"
     },
     {
       "file": "tests/test_aurora_command_catalog.py",
-      "sha256": "2332d5193f3b0389de26e9704672cabb510fafa77cb232b60dcb979bc083ce4b"
+      "sha256": "693a72160f941832917a88079c59ef1a6c266e546c9a5db254b442455c40937a"
     },
     {
       "file": "tests/test_aurora_command_ingress.py",
-      "sha256": "ec1a30116a67b08c02713480b5bd1d7b8d99d67a74b414ac30694b97ed3e2c9c"
+      "sha256": "d4e2e097d3325ffaf8a14d63f45cca8d1131e03faa22e57a929eaa6b0710a568"
     },
     {
       "file": "tests/test_aurora_control_panel_settings_client.py",
@@ -595,15 +611,15 @@
     },
     {
       "file": "tests/test_aurora_control_plane.py",
-      "sha256": "e4c6b90479e9507d2438ff9984337e730358e74c90aab74e60d0b4d657d47b7e"
+      "sha256": "288697e12bf734e961b0ef496b4ba19f5307194b215f5ff97c97d7fdf7b48ef7"
     },
     {
       "file": "tests/test_aurora_conversation.py",
-      "sha256": "67f0628150a659dfa591a06119a7e8a6d842df218f9a630d662f4cadd946b66e"
+      "sha256": "c991461ba079dd6416e765d6d072d32e0c48f981b59e1056e4e84428191508a4"
     },
     {
       "file": "tests/test_aurora_default_profiles.py",
-      "sha256": "9091770e621f76150737c2463cb6fdbd5469c40fb3c0f44d3a990beaec3c40d1"
+      "sha256": "c86a900e9cdc16240365b864e495cb0d031b7ee71a24fc4b4f60ee5011a388f4"
     },
     {
       "file": "tests/test_aurora_desktop_contracts.py",
@@ -615,11 +631,11 @@
     },
     {
       "file": "tests/test_aurora_history_controls.py",
-      "sha256": "d2e6892d827753a93165982111ea3733ea16b165bce61c740a0a14cb6376d898"
+      "sha256": "d3aff66cba2dd678ce3cffb0c95c97ed850a619ea4093d93eef6d198716146fc"
     },
     {
       "file": "tests/test_aurora_inference_plan.py",
-      "sha256": "35386882b180e2cd2e0540f427e8593d8a59e39632536de388bdcb2c88ebb578"
+      "sha256": "9087f0bc6ddcc624abed6bf7a7121f8ffd589b45d7ee6f5410d4f0af3687625a"
     },
     {
       "file": "tests/test_aurora_input_ownership.py",
@@ -627,7 +643,7 @@
     },
     {
       "file": "tests/test_aurora_mcp_server.py",
-      "sha256": "99caf290b33a18aecd820b3aea355ed02bafde81fdffe84297dcd5503c0c39fd"
+      "sha256": "ecb657401ece34c9047ce97ac4e547b0836b5b40d9a0c2df0236421b794102cd"
     },
     {
       "file": "tests/test_aurora_mutation_commands.py",
@@ -651,7 +667,7 @@
     },
     {
       "file": "tests/test_aurora_reference_generation.py",
-      "sha256": "3649d93aeaa73a15bc6a154240e81e4ad59403ba93fbf7fe6502949dfc6e325a"
+      "sha256": "6bb18c9f0e6db71aa8e5b1affcb0060ae78fece3f430b47213c3ef5fba5e9ad0"
     },
     {
       "file": "tests/test_aurora_responses_reasoning.py",
@@ -667,7 +683,7 @@
     },
     {
       "file": "tests/test_aurora_runtime_work.py",
-      "sha256": "ee621813a28f8ccbd195b1642b9a23991cb2269ec442627131146de9b6686358"
+      "sha256": "7508036e3b64e569623436188ac1eb6ef5216dea92a9ee6a3acac12e9896855a"
     },
     {
       "file": "tests/test_aurora_search_dates.py",
@@ -679,15 +695,19 @@
     },
     {
       "file": "tests/test_aurora_setting_commands.py",
-      "sha256": "089c1d5bdcb30dee2d7ec2923b6b6a30571182244ef0eb7cf3ff8e2c8b89f7bd"
+      "sha256": "0de50a35d69209e185ce4c8ce22b24b32aef674e740fb95dcfdd1205f9c42ef3"
     },
     {
       "file": "tests/test_aurora_settings_registry.py",
-      "sha256": "88b69aae1910c5d79e5d2f7e67af880c1e8a3465c49ff411f960d57c15509978"
+      "sha256": "e4a21cb0b6219ee2749fed1f73d8add6566d59cf1de0789e7ae3dec0502060b1"
     },
     {
       "file": "tests/test_aurora_settings_transactions.py",
       "sha256": "56644c965be356df24d627223be5c66a63559a73417fd41e2b03d62834c778e1"
+    },
+    {
+      "file": "tests/test_aurora_switchboard.py",
+      "sha256": "76f1b46f254b81cc756049e9b01797880eb6c4dd6cd0affb8ab3c0c2b08c3eca"
     },
     {
       "file": "tests/test_aurora_validation_console.py",
@@ -715,7 +735,7 @@
     },
     {
       "file": "tools/aurora_maps/generate_maps.py",
-      "sha256": "d2182082d5c27c9622f09ea6cc827312378d5e6392343b55d54900fba496a069"
+      "sha256": "42084c44345fac7b51499e821d4c8eb7a0419362bd663e71295e0bf59c88202f"
     },
     {
       "file": "tools/aurora_maps/PROVENANCE.md",
@@ -731,16 +751,8 @@
     }
   ],
   "privacy_check": {
-    "files_checked": 182,
+    "files_checked": 188,
     "findings": [],
     "scope": "Allowlisted new source tree; no private Git history, state, logs, captures, auth caches or personal profiles. Pattern and configured-secret checks are not a formal security audit."
-  },
-  "verification": {
-    "development_suite": 512,
-    "export_suite": 507,
-    "additional_settings_tests": 5,
-    "native_panel": "23 views; bounded own-window checks",
-    "live": "Sol screen/action -> Astra followup -> Sol restoration; two-turn command discovery",
-    "limitations": "Single Windows host; production background capture and broad gameplay reliability not qualified"
   }
 }

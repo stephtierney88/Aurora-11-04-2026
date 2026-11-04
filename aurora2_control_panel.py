@@ -18,6 +18,7 @@ from aurora_episodic_retrieval import (
 import aurora_retrieval_commands as retrieval_commands
 from aurora_retrieval_results import parse_retrieval_result_arguments
 from aurora_conversation import conversation_text
+from aurora_switchboard import Switchboard, PortalShortcuts
 from aurora_search_query import SEARCH_DEFAULTS, SEARCH_CHOICES, normalize_search_options, search_has_filter
 from aurora_panel_layout import (
     CollapsibleSection, FlowBar, ScrollablePane, clamp_window_geometry,
@@ -2243,6 +2244,10 @@ class AuroraControlPanel(tk.Tk):
         style.configure("SectionTitle.TLabel", background=PANEL, foreground=ACCENT, font=("Segoe UI Semibold", 10))
         style.configure("SectionHint.TLabel", background=PANEL, foreground=MUTED)
         style.configure("Accent.TButton", background=ACCENT, foreground="#08101d")
+        style.configure("SwitchPrepare.TButton", background="#f2cd70", foreground="#17202b", padding=(10, 5))
+        style.map("SwitchPrepare.TButton", background=[("active", "#ffe3a0")])
+        style.configure("SwitchRun.TButton", background="#8ce0b5", foreground="#10241c", padding=(10, 5))
+        style.map("SwitchRun.TButton", background=[("active", "#b4f3d2")])
         style.map("Accent.TButton", background=[("active", "#87bfff")])
         style.configure("Nav.TButton", background="#0f172a", foreground=TEXT, padding=(8, 4), bordercolor=BORDER)
         style.map("Nav.TButton", background=[("active", "#1f314d")], foreground=[("active", TEXT)])
@@ -2385,15 +2390,18 @@ class AuroraControlPanel(tk.Tk):
         self.runtime_orb_button.bind("<ButtonRelease-1>", self._queue_runtime_orb_click)
         self.runtime_orb_button.bind("<Double-Button-1>", self._handle_runtime_orb_double_click)
         ttk.Label(status, textvariable=self.runtime_status_var, style="CardTitle.TLabel").pack(side="left", padx=(0, 12))
-        detail = ttk.Label(status, textvariable=self.compact_status_var, style="CardBody.TLabel", wraplength=900, justify="left")
+        detail = ttk.Label(status, textvariable=self.compact_status_var, style="CardBody.TLabel", wraplength=900, justify="left", cursor="hand2", takefocus=True)
         detail.pack(side="left", fill="x", expand=True)
         detail.bind("<Configure>", lambda event: detail.configure(wraplength=max(160, event.width)))
+        detail.bind("<Button-1>", lambda _event: self.switchboard.focus_models())
+        detail.bind("<Return>", lambda _event: self.switchboard.focus_models())
         actions = FlowBar(strip, style="Card.TFrame")
         actions.pack(fill="x", pady=(6, 0))
         self.runtime_activate_button = actions.add(ttk.Button(actions, text="Start runtime", command=self.start_or_enable_runtime))
         self.runtime_deactive_button = actions.add(ttk.Button(actions, text="Pause inference", command=lambda: self.send_raw("SET_LIVE_MODE(off)")))
         self.runtime_cancel_button = actions.add(ttk.Button(actions, text="Cancel work", command=lambda: self.send_raw("CANCEL_ACTIVE_WORK()")))
         self.runtime_shutdown_button = actions.add(ttk.Button(actions, text="Stop runtime", command=lambda: self.send_raw("SHUTDOWN_RUNTIME()")))
+        actions.add(ttk.Button(actions, text="Reset to preview defaults", command=lambda: self.switchboard.open_defaults()))
         capture = actions.add(ttk.Button(actions, text="Capture now", command=lambda: self.send_raw("REQUEST_SCREENSHOT_CAPTURE(control_panel)")))
         self._register_widget_locks(capture, ["screenshot_interval"], quick=True)
 
@@ -2420,9 +2428,10 @@ class AuroraControlPanel(tk.Tk):
         self.focus_combo.bind("<Return>", self._navigate_from_selector)
         self.focus_combo.bind("<KeyRelease>", self._filter_view_choices)
         self.focus_combo.bind("<Escape>", lambda _event: self._sync_focus_nav_state())
-        for label in ("Conversation", "Dashboard", "Screenshots"):
+        for label in ("The Switchboard", "Dashboard", "Screenshots"):
             button = navigation.add(ttk.Button(navigation, text=label, style="Nav.TButton", command=lambda target=label: self.show_tab(target)))
             self.focus_nav_buttons[label] = button
+        navigation.add(PortalShortcuts(navigation, self, ROOT))
 
         self.content_panes = ttk.Panedwindow(shell, orient="horizontal")
         self.content_panes.pack(fill="both", expand=True)
@@ -2467,6 +2476,7 @@ class AuroraControlPanel(tk.Tk):
         self._build_command_drip_tab()
         self._build_chat_tab()
         self._build_conversation_tab()
+        self._build_switchboard_tab()
         self._build_command_tab()
         self._build_prompt_ledger_tab()
         self._build_agents_tab()
@@ -2499,7 +2509,7 @@ class AuroraControlPanel(tk.Tk):
         self._protect_unfocused_combobox_wheel(self)
 
     def _new_work_page(self, title):
-        page = ScrollablePane(self.notebook, background=BG, padding=10, fit_width=title in {"Dashboard", "Conversation"}, fit_height=title == "Conversation")
+        page = ScrollablePane(self.notebook, background=BG, padding=10, fit_width=title in {"Dashboard", "Conversation", "The Switchboard"}, fit_height=title == "Conversation")
         self.notebook.add(page, text=title)
         self.page_views[title] = page
         return page.inner
@@ -4127,6 +4137,9 @@ class AuroraControlPanel(tk.Tk):
         tools.grid(row=2, column=0, sticky="ew", pady=(0, 8))
         self.conversation_mode_var = tk.StringVar(value="Current context")
         self.conversation_system_var = tk.BooleanVar(value=False)
+        self.conversation_time_var = tk.BooleanVar(value=bool(self.ui_preferences.get("conversation_time", True)))
+        self.conversation_model_var = tk.BooleanVar(value=bool(self.ui_preferences.get("conversation_model", True)))
+        self.conversation_edits_var = tk.BooleanVar(value=bool(self.ui_preferences.get("conversation_edits", True)))
         modes = tools.add(ttk.Combobox(tools, textvariable=self.conversation_mode_var,
             values=("Current context", "Retained messages"), state="readonly", width=20))
         modes.bind("<<ComboboxSelected>>", lambda _event: self.render_conversation())
@@ -4134,6 +4147,8 @@ class AuroraControlPanel(tk.Tk):
         tools.add(ttk.Button(tools, text="Context details", command=lambda: self.show_tab("History Context")))
         tools.add(ttk.Button(tools, text="Latest", command=lambda: self.conversation_text.see(tk.END)))
         tools.add(ttk.Checkbutton(tools, text="System details", variable=self.conversation_system_var, command=self.render_conversation))
+        for label, variable in (("Times", self.conversation_time_var), ("Models", self.conversation_model_var), ("Edits", self.conversation_edits_var)):
+            tools.add(ttk.Checkbutton(tools, text=label, variable=variable, command=self.render_conversation))
         self.restore_last_view_var = tk.BooleanVar(value=bool(self.ui_preferences.get("restore_last_view", False)))
         tools.add(ttk.Checkbutton(tools, text="Reopen last view", variable=self.restore_last_view_var))
         transcript = ttk.Frame(frame)
@@ -4203,7 +4218,8 @@ class AuroraControlPanel(tk.Tk):
                 + ("Eligible conversation now; other prompt material is in Context details." if mode == "current" else "Retained runtime messages, including those outside the current context window.")
                 + (f" {view.get('omitted', 0)} omitted / {view.get('shortened', 0)} shortened by display limits." if view.get('omitted') or view.get('shortened') else "")
             )
-            content = conversation_text({"rows": shown_rows}) or "No conversation messages in this view yet.\n\nSend a message below to begin. System details and historical logs are available above."
+            content = conversation_text({"rows": shown_rows}, show_time=self.conversation_time_var.get(),
+                show_model=self.conversation_model_var.get(), show_edits=self.conversation_edits_var.get()) or "No conversation messages in this view yet.\n\nSend a message below to begin. System details and historical logs are available above."
         revision = (mode, content)
         if revision != self._conversation_revision:
             at_bottom = self.conversation_text.yview()[1] >= 0.98
@@ -4217,6 +4233,11 @@ class AuroraControlPanel(tk.Tk):
             self.conversation_text.see(tk.END) if at_bottom else self.conversation_text.yview_moveto(old_position)
             self._conversation_revision = revision
 
+    def _build_switchboard_tab(self):
+        frame = self._new_work_page("The Switchboard")
+        self.switchboard = Switchboard(frame, self, ROOT)
+        self.switchboard.pack(fill="both", expand=True)
+
     def _build_command_tab(self):
         frame = self._new_work_page("Commands")
         self._add_workflow_status_strip(frame, "commands", "Commands")
@@ -4225,6 +4246,7 @@ class AuroraControlPanel(tk.Tk):
         ttk.Button(controls, text="Recent 40", command=lambda: self.set_log_limit("command", 40)).pack(side="left")
         ttk.Button(controls, text="Recent 200", command=lambda: self.set_log_limit("command", 200)).pack(side="left", padx=(6, 0))
         ttk.Button(controls, text="All", command=lambda: self.set_log_limit("command", None)).pack(side="left", padx=(6, 0))
+        ttk.Button(controls, text="Reset to preview defaults", command=lambda: self.switchboard.open_defaults()).pack(side="left", padx=(6, 0))
         self.command_text = tk.Text(frame, bg=PANEL, fg=TEXT, insertbackground=TEXT, relief="flat", wrap="none")
         self.command_text.pack(fill="both", expand=True)
 
@@ -5208,6 +5230,7 @@ class AuroraControlPanel(tk.Tk):
         show_confirmation=False,
         show_result_dialog=False,
         activity_label="registered settings",
+        inline_results=False,
     ):
         if self.settings_transaction_pending is not None:
             messagebox.showinfo("Aurora 2", "A settings transaction is already waiting for its receipt.", parent=self)
@@ -5281,6 +5304,7 @@ class AuroraControlPanel(tk.Tk):
             "post_commands": list(post_commands or []),
             "show_confirmation": bool(show_confirmation),
             "show_result_dialog": bool(show_result_dialog),
+            "inline_results": bool(inline_results),
             "activity_label": activity_label,
         }
         self.settings_transaction_status_var.set(
@@ -5389,7 +5413,7 @@ class AuroraControlPanel(tk.Tk):
             self.after(250, self.refresh_now)
             self.after(900, self.refresh_now)
 
-        if pending.get("show_result_dialog") or operation == "preview":
+        if (pending.get("show_result_dialog") or operation == "preview") and not pending.get("inline_results"):
             self._open_settings_text_dialog("Aurora Settings Transaction", format_control_panel_settings_receipt(transaction))
         elif pending.get("show_confirmation"):
             if status in CONTROL_PANEL_SETTINGS_SUCCESS_STATUSES:
@@ -5508,10 +5532,10 @@ class AuroraControlPanel(tk.Tk):
         if messagebox.askyesno("Aurora 2", prompt):
             self.send_raw(command)
 
-    def _draw_chat_head_toggle_button(self, pressed):
-        if self.chat_head_toggle_canvas is None:
+    def _draw_chat_head_toggle_button(self, pressed, canvas=None):
+        canvas = canvas if canvas is not None else self.chat_head_toggle_canvas
+        if canvas is None:
             return
-        canvas = self.chat_head_toggle_canvas
         canvas.delete("all")
         fill = CHAT_HEAD_TOGGLE_FILL_ACTIVE if pressed else CHAT_HEAD_TOGGLE_FILL
         border = CHAT_HEAD_HISTORY_ACCENT if pressed else CHAT_HEAD_BORDER
@@ -7332,11 +7356,14 @@ class AuroraControlPanel(tk.Tk):
             hint = f"Double-click the orb to activate with {activation_plan['label']}."
         self.runtime_activation_hint_var.set(hint)
         work = (snapshot.get("work", {}) or {}).get("model_io", {}) or {}
+        active_model = str(work.get("requested_model") or "unknown")
+        last_model = str((snapshot.get("prompt_materials") or {}).get("model") or "unknown")
+        request_label = f"Active request: {active_model}" if work.get("active_network_calls") else f"Last prepared: {last_model}"
         self.compact_status_var.set(
             f"{'Inference enabled' if client_active else 'Inference paused'} · "
-            f"{(snapshot.get('models', {}) or {}).get('text', 'model unknown')} · "
+            f"Primary: {(snapshot.get('models', {}) or {}).get('text', 'model unknown')} · "
             f"{(snapshot.get('models', {}) or {}).get('reasoning_effort', 'effort unknown')} effort · "
-            f"{work.get('state', 'unknown')} · {freshness_text.split('|')[0].strip()}"
+            f"{request_label} · {work.get('state', 'unknown')} · {freshness_text.split('|')[0].strip()} · Model choices ↗"
         )
         self.runtime_activate_button.configure(text="Enable inference" if runtime_active else "Start runtime")
         self.runtime_activate_button.state(["disabled"] if runtime_active and client_active else ["!disabled"])
@@ -7449,13 +7476,19 @@ class AuroraControlPanel(tk.Tk):
         self.ui_preferences.update({"geometry": self._normal_geometry, "maximized": self.state() == "zoomed",
             "settings_mode": self.settings_mode, "active_view": self._get_active_tab_name(),
             "banner_auto_scroll": self.banner_auto_scroll_var.get(),
-            "restore_last_view": self.restore_last_view_var.get()})
+            "restore_last_view": self.restore_last_view_var.get(),
+            "portal_motion": self.portal_motion_var.get()})
+        self.ui_preferences.update({"conversation_time": self.conversation_time_var.get(),
+            "conversation_model": self.conversation_model_var.get(), "conversation_edits": self.conversation_edits_var.get()})
         try:
             save_layout_preferences(LAYOUT_PATH, self.ui_preferences)
         except OSError as error:
             print(f"Could not save panel layout: {error}", file=sys.stderr)
         self._cancel_runtime_orb_click()
         self._stop_runtime_orb_animation()
+        if getattr(self, "_portal_after", None) is not None:
+            self.after_cancel(self._portal_after)
+            self._portal_after = None
         remove_pid_file(CONTROL_PANEL_PID_PATH, expected_pid=os.getpid())
         self.destroy()
 
@@ -8236,6 +8269,8 @@ class AuroraControlPanel(tk.Tk):
         self._set_runtime_banner_text(state.get("runtime_summary", ""))
         self.refresh_overview_summary(state)
         self._update_settings_transaction_surface(state)
+        if hasattr(self, "switchboard") and (active_tab == "The Switchboard" or self.switchboard.pending):
+            self.switchboard.update_state()
         models = state.get("models", {})
         model_catalog = state.get("model_catalog", {})
         model_status = state.get("model_status", {})

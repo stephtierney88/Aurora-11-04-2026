@@ -1,561 +1,562 @@
 # Aurora 2 Runtime Generated Call Tree
 
-## `execute_command_entry` `L33298`
+## `execute_command_entry` `L33362`
 
 - Domain: Command Intake / Dispatch
 - Summary: Preserve request identity and full results on queued and urgent paths.
 - Internal calls:
-  - `handle_commands` `L35288`
-    - `display_message` `L42192`
-    - `execute_desktop_command` `L35851`
-    - `execute_registered_setting_command` `L1667`
-    - `execute_runtime_lock_command` `L1729`
-    - `get_last_command_value` `L26296`
-    - `get_last_key_value` `L26287`
-    - `is_agent_running` `L26270`
-    - `prepare_command_batch` `L5827`
-    - `set_last_command_value` `L26300`
+  - `handle_commands` `L35356`
+    - `display_message` `L42278`
+    - `execute_desktop_command` `L35919`
+    - `execute_registered_setting_command` `L1669`
+    - `execute_runtime_lock_command` `L1731`
+    - `get_last_command_value` `L26311`
+    - `get_last_key_value` `L26302`
+    - `is_agent_running` `L26285`
+    - `prepare_command_batch` `L5829`
+    - `set_last_command_value` `L26315`
 
-## `cancel_active_work_command` `L41481`
+## `cancel_active_work_command` `L41567`
 
 - Domain: Command Intake / Dispatch
 - Summary: No docstring summary.
 - Internal calls:
-  - `append_runtime_feedback` `L6304`
-    - `summarize_runtime_text` `L2783`
-  - `cancel_command_inputs` `L35713`
+  - `append_runtime_feedback` `L6306`
+    - `summarize_runtime_text` `L2785`
+  - `cancel_command_inputs` `L35781`
 
-## `persist_runtime_capture` `L43424`
+## `persist_runtime_capture` `L43515`
 
 - Domain: Other
 - Summary: One immutable image identity shared by history, sidecar, and scheduler.
 - Internal calls:
-  - `build_image_context_capture_reason` `L3146`
-    - `normalize_text_content` `L2757`
-  - `compute_image_fingerprint` `L3053`
-  - `register_turn_scheduler_capture` `L6997`
-    - `compute_image_fingerprint` `L3053`
-    - `normalize_text_content` `L2757`
-    - `set_runtime_value` `L6115`
-  - `remember_screenshot_persist_result` `L28555`
-    - `get_unchanged_screenshot_persist_interval` `L28528`
-    - `normalize_text_content` `L2757`
-    - `set_runtime_value` `L6115`
-  - `set_image_timestamp_value` `L26314`
-  - `set_runtime_value` `L6115`
-  - `write_image_context_sidecar` `L3166`
-    - `_image_context_image_id_from_path` `L3085`
-    - `append_runtime_feedback` `L6304`
-    - `build_image_context_capture_reason` `L3146`
-    - `get_image_context_sidecar_path` `L3092`
-    - `normalize_text_content` `L2757`
-    - `set_runtime_value` `L6115`
-    - `summarize_runtime_text` `L2783`
+  - `build_image_context_capture_reason` `L3148`
+    - `normalize_text_content` `L2759`
+  - `compute_image_fingerprint` `L3055`
+  - `register_turn_scheduler_capture` `L6999`
+    - `compute_image_fingerprint` `L3055`
+    - `normalize_text_content` `L2759`
+    - `set_runtime_value` `L6117`
+  - `remember_screenshot_persist_result` `L28601`
+    - `get_unchanged_screenshot_persist_interval` `L28574`
+    - `normalize_text_content` `L2759`
+    - `set_runtime_value` `L6117`
+  - `set_image_timestamp_value` `L26329`
+  - `set_runtime_value` `L6117`
+  - `write_image_context_sidecar` `L3168`
+    - `_image_context_image_id_from_path` `L3087`
+    - `append_runtime_feedback` `L6306`
+    - `build_image_context_capture_reason` `L3148`
+    - `get_image_context_sidecar_path` `L3094`
+    - `normalize_text_content` `L2759`
+    - `set_runtime_value` `L6117`
+    - `summarize_runtime_text` `L2785`
 
-## `drain_runtime_command_results` `L43473`
+## `drain_runtime_command_results` `L43564`
 
 - Domain: Command Intake / Dispatch
 - Summary: No docstring summary.
 - Internal calls:
-  - `ingest_command_result` `L33867`
-    - `append_command_drip_item` `L31622`
-    - `append_recent_action_intent` `L31512`
-    - `append_recent_executed_action` `L32239`
-    - `append_runtime_feedback` `L6304`
-    - `build_command_drip_item` `L31593`
-    - `display_message` `L42192`
-    - `get_last_command_value` `L26296`
-    - `get_last_key_value` `L26287`
-    - `normalize_text_content` `L2757`
-    - `record_mutation_terminal_result` `L24851`
-    - `sanitize_sensitive_command_text` `L2359`
-    - `sanitize_sensitive_payload` `L2377`
-    - `set_last_command_value` `L26300`
-    - `set_last_key_value` `L26291`
-    - `set_runtime_value` `L6115`
-    - `summarize_command_batch` `L28877`
-    - `summarize_runtime_text` `L2783`
-    - `write_command_execution_log` `L24708`
-  - `mark_turn_scheduler_command_result_pending` `L6978`
-    - `get_demand_capture_settle_seconds` `L6897`
-    - `request_demand_capture` `L6921`
-    - `set_runtime_value` `L6115`
-  - `should_request_turn_after_command_result` `L7016`
-    - `normalize_text_content` `L2757`
-    - `split_commands_preserving_parentheses` `L35266`
-  - `update_pinned_information` `L34656`
-    - `construct_hierarchical_tasks_text` `L34479`
-    - `get_chat_history_store` `L25920`
-    - `normalize_memory_item` `L30989`
-  - `write_control_panel_state_snapshot` `L24670`
-    - `append_runtime_feedback` `L6304`
-    - `build_control_panel_state_snapshot` `L24662`
-    - `set_runtime_value` `L6115`
-    - `summarize_runtime_text` `L2783`
+  - `ingest_command_result` `L33935`
+    - `append_command_drip_item` `L31686`
+    - `append_recent_action_intent` `L31576`
+    - `append_recent_executed_action` `L32303`
+    - `append_runtime_feedback` `L6306`
+    - `build_command_drip_item` `L31657`
+    - `display_message` `L42278`
+    - `get_last_command_value` `L26311`
+    - `get_last_key_value` `L26302`
+    - `normalize_text_content` `L2759`
+    - `record_mutation_terminal_result` `L24862`
+    - `sanitize_sensitive_command_text` `L2361`
+    - `sanitize_sensitive_payload` `L2379`
+    - `set_last_command_value` `L26315`
+    - `set_last_key_value` `L26306`
+    - `set_runtime_value` `L6117`
+    - `summarize_command_batch` `L28925`
+    - `summarize_runtime_text` `L2785`
+    - `write_command_execution_log` `L24719`
+  - `mark_turn_scheduler_command_result_pending` `L6980`
+    - `get_demand_capture_settle_seconds` `L6899`
+    - `request_demand_capture` `L6923`
+    - `set_runtime_value` `L6117`
+  - `should_request_turn_after_command_result` `L7018`
+    - `normalize_text_content` `L2759`
+    - `split_commands_preserving_parentheses` `L35334`
+  - `update_pinned_information` `L34724`
+    - `construct_hierarchical_tasks_text` `L34547`
+    - `get_chat_history_store` `L25931`
+    - `normalize_memory_item` `L31053`
+  - `write_control_panel_state_snapshot` `L24681`
+    - `append_runtime_feedback` `L6306`
+    - `build_control_panel_state_snapshot` `L24673`
+    - `set_runtime_value` `L6117`
+    - `summarize_runtime_text` `L2785`
 
-## `drain_runtime_processed_capture` `L43442`
+## `drain_runtime_processed_capture` `L43533`
 
 - Domain: Worker Lifecycle / Shutdown
 - Summary: No docstring summary.
 - Internal calls:
-  - `append_runtime_feedback` `L6304`
-    - `summarize_runtime_text` `L2783`
-  - `compute_image_object_fingerprint` `L3071`
-  - `drain_queue_latest` `L25226`
-  - `persist_runtime_capture` `L43424`
-    - `build_image_context_capture_reason` `L3146`
-    - `compute_image_fingerprint` `L3053`
-    - `register_turn_scheduler_capture` `L6997`
-    - `remember_screenshot_persist_result` `L28555`
-    - `set_image_timestamp_value` `L26314`
-    - `set_runtime_value` `L6115`
-    - `write_image_context_sidecar` `L3166`
-  - `remember_screenshot_persist_result` `L28555`
-    - `get_unchanged_screenshot_persist_interval` `L28528`
-    - `normalize_text_content` `L2757`
-    - `set_runtime_value` `L6115`
-  - `should_persist_processed_screenshot` `L28535`
-    - `get_unchanged_screenshot_persist_interval` `L28528`
-    - `normalize_text_content` `L2757`
-  - `store_image` `L30818`
+  - `append_runtime_feedback` `L6306`
+    - `summarize_runtime_text` `L2785`
+  - `compute_image_object_fingerprint` `L3073`
+  - `drain_queue_latest` `L25237`
+  - `persist_runtime_capture` `L43515`
+    - `build_image_context_capture_reason` `L3148`
+    - `compute_image_fingerprint` `L3055`
+    - `register_turn_scheduler_capture` `L6999`
+    - `remember_screenshot_persist_result` `L28601`
+    - `set_image_timestamp_value` `L26329`
+    - `set_runtime_value` `L6117`
+    - `write_image_context_sidecar` `L3168`
+  - `remember_screenshot_persist_result` `L28601`
+    - `get_unchanged_screenshot_persist_interval` `L28574`
+    - `normalize_text_content` `L2759`
+    - `set_runtime_value` `L6117`
+  - `should_persist_processed_screenshot` `L28581`
+    - `get_unchanged_screenshot_persist_interval` `L28574`
+    - `normalize_text_content` `L2759`
+  - `store_image` `L30882`
 
-## `service_runtime_control_during_model_wait` `L2497`
+## `service_runtime_control_during_model_wait` `L2499`
 
 - Domain: Startup / Config / Modes
 - Summary: Service ingress/receipts without recursively scheduling another model turn.
 - Internal calls:
-  - `drain_runtime_command_results` `L43473`
-    - `ingest_command_result` `L33867`
-    - `mark_turn_scheduler_command_result_pending` `L6978`
-    - `should_request_turn_after_command_result` `L7016`
-    - `update_pinned_information` `L34656`
-    - `write_control_panel_state_snapshot` `L24670`
-  - `drain_runtime_processed_capture` `L43442`
-    - `append_runtime_feedback` `L6304`
-    - `compute_image_object_fingerprint` `L3071`
-    - `drain_queue_latest` `L25226`
-    - `persist_runtime_capture` `L43424`
-    - `remember_screenshot_persist_result` `L28555`
-    - `should_persist_processed_screenshot` `L28535`
-    - `store_image` `L30818`
-  - `poll_external_reply_bridges` `L25201`
-    - `ingest_external_drop_file` `L24903`
-    - `poll_external_inbox_messages` `L24933`
-  - `write_control_panel_state_snapshot` `L24670`
-    - `append_runtime_feedback` `L6304`
-    - `build_control_panel_state_snapshot` `L24662`
-    - `set_runtime_value` `L6115`
-    - `summarize_runtime_text` `L2783`
+  - `drain_runtime_command_results` `L43564`
+    - `ingest_command_result` `L33935`
+    - `mark_turn_scheduler_command_result_pending` `L6980`
+    - `should_request_turn_after_command_result` `L7018`
+    - `update_pinned_information` `L34724`
+    - `write_control_panel_state_snapshot` `L24681`
+  - `drain_runtime_processed_capture` `L43533`
+    - `append_runtime_feedback` `L6306`
+    - `compute_image_object_fingerprint` `L3073`
+    - `drain_queue_latest` `L25237`
+    - `persist_runtime_capture` `L43515`
+    - `remember_screenshot_persist_result` `L28601`
+    - `should_persist_processed_screenshot` `L28581`
+    - `store_image` `L30882`
+  - `poll_external_reply_bridges` `L25212`
+    - `ingest_external_drop_file` `L24914`
+    - `poll_external_inbox_messages` `L24944`
+  - `write_control_panel_state_snapshot` `L24681`
+    - `append_runtime_feedback` `L6306`
+    - `build_control_panel_state_snapshot` `L24673`
+    - `set_runtime_value` `L6117`
+    - `summarize_runtime_text` `L2785`
 
-## `post_openai_model_request` `L2508`
+## `post_openai_model_request` `L2510`
 
 - Domain: Startup / Config / Modes
 - Summary: No docstring summary.
 - Internal calls:
-  - `perform_model_http_request` `L2457`
-  - `update_auth_runtime_state` `L2398`
-    - `normalize_auth_mode` `L1563`
-    - `normalize_text_content` `L2757`
+  - `perform_model_http_request` `L2459`
+  - `update_auth_runtime_state` `L2400`
+    - `normalize_auth_mode` `L1564`
+    - `normalize_text_content` `L2759`
 
-## `main` `L43492`
+## `main` `L43583`
 
 - Domain: Worker Lifecycle / Shutdown
 - Summary: No docstring summary.
 - Internal calls:
-  - `Context` `L42958`
-  - `append_runtime_feedback` `L6304`
-    - `summarize_runtime_text` `L2783`
-  - `AgentState.attach_command_handles` `L993`
-    - `AgentState.bind_globals` `L929`
-  - `AgentState.bind_globals` `L929`
-  - `Context.close` `L42984`
-    - `cleanup_queue_resource` `L25209`
-  - `drain_runtime_command_results` `L43473`
-    - `ingest_command_result` `L33867`
-    - `mark_turn_scheduler_command_result_pending` `L6978`
-    - `should_request_turn_after_command_result` `L7016`
-    - `update_pinned_information` `L34656`
-    - `write_control_panel_state_snapshot` `L24670`
-  - `drain_runtime_processed_capture` `L43442`
-    - `append_runtime_feedback` `L6304`
-    - `compute_image_object_fingerprint` `L3071`
-    - `drain_queue_latest` `L25226`
-    - `persist_runtime_capture` `L43424`
-    - `remember_screenshot_persist_result` `L28555`
-    - `should_persist_processed_screenshot` `L28535`
-    - `store_image` `L30818`
-  - `enqueue_or_execute_command` `L33315`
-    - `execute_command_entry` `L33298`
-    - `ingest_command_result` `L33867`
-    - `is_urgent_control_command` `L33287`
-    - `prepare_command_batch` `L5827`
-  - `ensure_episodic_memory_store` `L6320`
-  - `ensure_external_bridge_files` `L24752`
-  - `get_input_queue_store` `L26266`
-  - `ingest_command_result` `L33867`
-    - `append_command_drip_item` `L31622`
-    - `append_recent_action_intent` `L31512`
-    - `append_recent_executed_action` `L32239`
-    - `append_runtime_feedback` `L6304`
-    - `build_command_drip_item` `L31593`
-    - `display_message` `L42192`
-    - `get_last_command_value` `L26296`
-    - `get_last_key_value` `L26287`
-    - `normalize_text_content` `L2757`
-    - `record_mutation_terminal_result` `L24851`
-    - `sanitize_sensitive_command_text` `L2359`
-    - `sanitize_sensitive_payload` `L2377`
-    - `set_last_command_value` `L26300`
-    - `set_last_key_value` `L26291`
-    - `set_runtime_value` `L6115`
-    - `summarize_command_batch` `L28877`
-    - `summarize_runtime_text` `L2783`
-    - `write_command_execution_log` `L24708`
-  - `initialize_application` `L28641`
-    - `append_runtime_feedback` `L6304`
-    - `initiate_and_handoff` `L28695`
-    - `send_prompt_to_chatgpt` `L30284`
-    - `update_chat_history` `L30681`
-  - `initialize_episodic_memory_runtime_state` `L6501`
-    - `_apply_episodic_snapshot_runtime_record` `L6484`
-    - `_get_episodic_embedding_cache_entry_count` `L6413`
-    - `set_runtime_value` `L6115`
-  - `initialize_game_profile_runtime_state` `L6312`
-    - `set_runtime_value` `L6115`
-  - `initialize_overlay` `L29441`
-    - `add_colored_tile_grid_v3` `L29177`
-    - `add_dot_grid_with_labels` `L29399`
-    - `get_scaled_key_points` `L28890`
-    - `get_scaled_tile_geometry` `L28903`
-  - `initialize_smoke_test_state` `L32918`
-  - `initialize_turn_scheduler_runtime_state` `L6748`
-    - `refresh_turn_scheduler_profile_state` `L6737`
-    - `set_runtime_value` `L6115`
-  - `is_agent_running` `L26270`
-  - `is_command` `L34992`
-    - `is_known_command` `L35224`
-  - `launch_control_panel` `L37489`
-    - `append_runtime_feedback` `L6304`
-    - `get_control_panel_process_status` `L1543`
-    - `write_pid_file` `L1524`
-  - `load_external_bridge_state` `L24760`
-    - `create_default_external_bridge_state` `L2683`
-    - `ensure_external_bridge_files` `L24752`
-  - `load_font` `L28480`
-  - `maybe_run_due_inference_turn` `L30203`
-    - `evaluate_turn_scheduler` `L7038`
-    - `get_input_queue_store` `L26266`
-    - `handle_queued_input` `L30163`
-    - `mark_turn_scheduler_dispatch` `L7113`
-    - `normalize_text_content` `L2757`
-  - `maybe_run_smoke_test_step` `L32934`
-    - `append_runtime_feedback` `L6304`
-    - `approve_pending_command` `L41625`
-    - `build_smoke_test_model_command_script` `L32706`
-    - `classify_smoke_test_screen_state` `L32858`
-    - `get_active_game_profile_label` `L6256`
-    - `get_latest_runtime_screenshot_path` `L32768`
-    - `get_pending_command_store` `L25924`
-    - `get_point_xy` `L28862`
-    - `get_window_client_center` `L25337`
-    - `locate_emulator_focus_point` `L32785`
-    - `merge_recent_context_items` `L31858`
-    - `route_assistant_commands` `L33602`
-    - `set_agent_running` `L26274`
-    - `set_runtime_value` `L6115`
-    - `write_command_execution_log` `L24708`
-  - `maybe_write_periodic_episodic_snapshot` `L27000`
-    - `append_episodic_snapshot` `L26973`
-  - `monitor_and_restart_processes` `L43004`
-    - `safe_print` `L28588`
-    - `set_runtime_value` `L6115`
-    - `start_process` `L42931`
-  - `normalize_action_mode` `L5733`
-    - `normalize_memory_item` `L30989`
-  - `poll_external_reply_bridges` `L25201`
-    - `ingest_external_drop_file` `L24903`
-    - `poll_external_inbox_messages` `L24933`
-  - `release_windows_single_instance_mutex` `L1490`
-  - `remove_pid_file` `L1530`
-    - `read_pid_file` `L1516`
-  - `AgentState.reset` `L872`
-    - `create_default_route_state` `L841`
-    - `create_default_runtime_state` `L635`
-    - `create_empty_next_inference_plan` `L820`
-  - `safe_print` `L28588`
-  - `set_agent_running` `L26274`
-    - `cancel_command_inputs` `L35713`
-  - `set_execution_mode` `L37552`
-    - `append_runtime_feedback` `L6304`
-    - `require_runtime_setting_unlocked` `L1614`
-  - `start_process` `L42931`
-  - `summarize_runtime_text` `L2783`
-    - `normalize_text_content` `L2757`
-  - `terminate_launched_control_panel` `L37519`
-    - `remove_pid_file` `L1530`
-  - `update_pinned_information` `L34656`
-    - `construct_hierarchical_tasks_text` `L34479`
-    - `get_chat_history_store` `L25920`
-    - `normalize_memory_item` `L30989`
-  - `write_control_panel_state_snapshot` `L24670`
-    - `append_runtime_feedback` `L6304`
-    - `build_control_panel_state_snapshot` `L24662`
-    - `set_runtime_value` `L6115`
-    - `summarize_runtime_text` `L2783`
-  - `write_pid_file` `L1524`
+  - `Context` `L43045`
+  - `append_runtime_feedback` `L6306`
+    - `summarize_runtime_text` `L2785`
+  - `AgentState.attach_command_handles` `L994`
+    - `AgentState.bind_globals` `L930`
+  - `AgentState.bind_globals` `L930`
+  - `Context.close` `L43071`
+    - `cleanup_queue_resource` `L25220`
+  - `drain_runtime_command_results` `L43564`
+    - `ingest_command_result` `L33935`
+    - `mark_turn_scheduler_command_result_pending` `L6980`
+    - `should_request_turn_after_command_result` `L7018`
+    - `update_pinned_information` `L34724`
+    - `write_control_panel_state_snapshot` `L24681`
+  - `drain_runtime_processed_capture` `L43533`
+    - `append_runtime_feedback` `L6306`
+    - `compute_image_object_fingerprint` `L3073`
+    - `drain_queue_latest` `L25237`
+    - `persist_runtime_capture` `L43515`
+    - `remember_screenshot_persist_result` `L28601`
+    - `should_persist_processed_screenshot` `L28581`
+    - `store_image` `L30882`
+  - `enqueue_or_execute_command` `L33379`
+    - `execute_command_entry` `L33362`
+    - `ingest_command_result` `L33935`
+    - `is_urgent_control_command` `L33351`
+    - `prepare_command_batch` `L5829`
+  - `ensure_episodic_memory_store` `L6322`
+  - `ensure_external_bridge_files` `L24763`
+  - `get_input_queue_store` `L26281`
+  - `ingest_command_result` `L33935`
+    - `append_command_drip_item` `L31686`
+    - `append_recent_action_intent` `L31576`
+    - `append_recent_executed_action` `L32303`
+    - `append_runtime_feedback` `L6306`
+    - `build_command_drip_item` `L31657`
+    - `display_message` `L42278`
+    - `get_last_command_value` `L26311`
+    - `get_last_key_value` `L26302`
+    - `normalize_text_content` `L2759`
+    - `record_mutation_terminal_result` `L24862`
+    - `sanitize_sensitive_command_text` `L2361`
+    - `sanitize_sensitive_payload` `L2379`
+    - `set_last_command_value` `L26315`
+    - `set_last_key_value` `L26306`
+    - `set_runtime_value` `L6117`
+    - `summarize_command_batch` `L28925`
+    - `summarize_runtime_text` `L2785`
+    - `write_command_execution_log` `L24719`
+  - `initialize_application` `L28687`
+    - `append_runtime_feedback` `L6306`
+    - `initiate_and_handoff` `L28743`
+    - `send_prompt_to_chatgpt` `L30332`
+    - `set_runtime_value` `L6117`
+    - `update_chat_history` `L30737`
+  - `initialize_episodic_memory_runtime_state` `L6503`
+    - `_apply_episodic_snapshot_runtime_record` `L6486`
+    - `_get_episodic_embedding_cache_entry_count` `L6415`
+    - `set_runtime_value` `L6117`
+  - `initialize_game_profile_runtime_state` `L6314`
+    - `set_runtime_value` `L6117`
+  - `initialize_overlay` `L29489`
+    - `add_colored_tile_grid_v3` `L29225`
+    - `add_dot_grid_with_labels` `L29447`
+    - `get_scaled_key_points` `L28938`
+    - `get_scaled_tile_geometry` `L28951`
+  - `initialize_smoke_test_state` `L32982`
+  - `initialize_turn_scheduler_runtime_state` `L6750`
+    - `refresh_turn_scheduler_profile_state` `L6739`
+    - `set_runtime_value` `L6117`
+  - `is_agent_running` `L26285`
+  - `is_command` `L35060`
+    - `is_known_command` `L35292`
+  - `launch_control_panel` `L37575`
+    - `append_runtime_feedback` `L6306`
+    - `get_control_panel_process_status` `L1544`
+    - `write_pid_file` `L1525`
+  - `load_external_bridge_state` `L24771`
+    - `create_default_external_bridge_state` `L2685`
+    - `ensure_external_bridge_files` `L24763`
+  - `load_font` `L28522`
+  - `maybe_run_due_inference_turn` `L30251`
+    - `evaluate_turn_scheduler` `L7040`
+    - `get_input_queue_store` `L26281`
+    - `handle_queued_input` `L30211`
+    - `mark_turn_scheduler_dispatch` `L7115`
+    - `normalize_text_content` `L2759`
+  - `maybe_run_smoke_test_step` `L32998`
+    - `append_runtime_feedback` `L6306`
+    - `approve_pending_command` `L41711`
+    - `build_smoke_test_model_command_script` `L32770`
+    - `classify_smoke_test_screen_state` `L32922`
+    - `get_active_game_profile_label` `L6258`
+    - `get_latest_runtime_screenshot_path` `L32832`
+    - `get_pending_command_store` `L25935`
+    - `get_point_xy` `L28910`
+    - `get_window_client_center` `L25348`
+    - `locate_emulator_focus_point` `L32849`
+    - `merge_recent_context_items` `L31922`
+    - `route_assistant_commands` `L33670`
+    - `set_agent_running` `L26289`
+    - `set_runtime_value` `L6117`
+    - `write_command_execution_log` `L24719`
+  - `maybe_write_periodic_episodic_snapshot` `L27015`
+    - `append_episodic_snapshot` `L26988`
+  - `monitor_and_restart_processes` `L43091`
+    - `safe_print` `L28634`
+    - `set_runtime_value` `L6117`
+    - `start_process` `L43018`
+  - `normalize_action_mode` `L5735`
+    - `normalize_memory_item` `L31053`
+  - `poll_external_reply_bridges` `L25212`
+    - `ingest_external_drop_file` `L24914`
+    - `poll_external_inbox_messages` `L24944`
+  - `release_windows_single_instance_mutex` `L1491`
+  - `remove_pid_file` `L1531`
+    - `read_pid_file` `L1517`
+  - `AgentState.reset` `L873`
+    - `create_default_route_state` `L842`
+    - `create_default_runtime_state` `L636`
+    - `create_empty_next_inference_plan` `L821`
+  - `safe_print` `L28634`
+  - `set_agent_running` `L26289`
+    - `cancel_command_inputs` `L35781`
+  - `set_execution_mode` `L37638`
+    - `append_runtime_feedback` `L6306`
+    - `require_runtime_setting_unlocked` `L1615`
+  - `start_process` `L43018`
+  - `summarize_runtime_text` `L2785`
+    - `normalize_text_content` `L2759`
+  - `terminate_launched_control_panel` `L37605`
+    - `remove_pid_file` `L1531`
+  - `update_pinned_information` `L34724`
+    - `construct_hierarchical_tasks_text` `L34547`
+    - `get_chat_history_store` `L25931`
+    - `normalize_memory_item` `L31053`
+  - `write_control_panel_state_snapshot` `L24681`
+    - `append_runtime_feedback` `L6306`
+    - `build_control_panel_state_snapshot` `L24673`
+    - `set_runtime_value` `L6117`
+    - `summarize_runtime_text` `L2785`
+  - `write_pid_file` `L1525`
 
-## `handle_commands` `L35288`
+## `handle_commands` `L35356`
 
 - Domain: Command Intake / Dispatch
 - Summary: No docstring summary.
 - Internal calls:
-  - `display_message` `L42192`
-    - `print_console_safe` `L42181`
-  - `execute_desktop_command` `L35851`
-    - `desktop_command_arguments` `L35609`
-    - `display_message` `L42192`
-  - `execute_registered_setting_command` `L1667`
-    - `display_message` `L42192`
-    - `observe_registered_setting` `L1660`
-  - `execute_runtime_lock_command` `L1729`
-    - `build_registered_settings_runtime_state` `L1621`
-  - `get_last_command_value` `L26296`
-  - `get_last_key_value` `L26287`
-  - `is_agent_running` `L26270`
-  - `prepare_command_batch` `L5827`
-    - `desktop_command_arguments` `L35609`
-    - `expand_structured_memory_command` `L6065`
-    - `is_unprefixed_gameboy_command` `L5961`
-    - `is_unprefixed_pyag_command` `L5973`
-    - `normalize_action_mode` `L5733`
-    - `parse_command_signature` `L6055`
-    - `resolve_desktop_action_context` `L35581`
-  - `set_last_command_value` `L26300`
+  - `display_message` `L42278`
+    - `print_console_safe` `L42267`
+  - `execute_desktop_command` `L35919`
+    - `desktop_command_arguments` `L35677`
+    - `display_message` `L42278`
+  - `execute_registered_setting_command` `L1669`
+    - `display_message` `L42278`
+    - `observe_registered_setting` `L1662`
+  - `execute_runtime_lock_command` `L1731`
+    - `build_registered_settings_runtime_state` `L1622`
+  - `get_last_command_value` `L26311`
+  - `get_last_key_value` `L26302`
+  - `is_agent_running` `L26285`
+  - `prepare_command_batch` `L5829`
+    - `desktop_command_arguments` `L35677`
+    - `expand_structured_memory_command` `L6067`
+    - `is_unprefixed_gameboy_command` `L5963`
+    - `is_unprefixed_pyag_command` `L5975`
+    - `normalize_action_mode` `L5735`
+    - `parse_command_signature` `L6057`
+    - `resolve_desktop_action_context` `L35649`
+  - `set_last_command_value` `L26315`
 
-## `poll_external_inbox_messages` `L24933`
-
-- Domain: External Operator Bridge
-- Summary: No docstring summary.
-- Internal calls:
-  - `append_runtime_feedback` `L6304`
-    - `summarize_runtime_text` `L2783`
-  - `can_dispatch_external_raw_command` `L5862`
-    - `can_dispatch_external_single_command` `L5802`
-    - `prepare_command_batch` `L5827`
-  - `enqueue_or_execute_command` `L33315`
-    - `execute_command_entry` `L33298`
-    - `ingest_command_result` `L33867`
-    - `is_urgent_control_command` `L33287`
-    - `prepare_command_batch` `L5827`
-  - `ensure_external_bridge_files` `L24752`
-  - `get_command_name_key` `L5776`
-    - `normalize_memory_item` `L30989`
-    - `parse_command_signature_raw` `L5765`
-  - `get_input_queue_store` `L26266`
-  - `get_mutation_admission_journal` `L24808`
-  - `is_external_mutation_command` `L24831`
-    - `prepare_command_batch` `L5827`
-  - `normalize_text_content` `L2757`
-  - `prepare_command_batch` `L5827`
-    - `desktop_command_arguments` `L35609`
-    - `expand_structured_memory_command` `L6065`
-    - `is_unprefixed_gameboy_command` `L5961`
-    - `is_unprefixed_pyag_command` `L5973`
-    - `normalize_action_mode` `L5733`
-    - `parse_command_signature` `L6055`
-    - `resolve_desktop_action_context` `L35581`
-  - `record_mutation_terminal_result` `L24851`
-    - `append_runtime_feedback` `L6304`
-    - `get_mutation_admission_journal` `L24808`
-    - `summarize_runtime_text` `L2783`
-  - `sanitize_sensitive_command_text` `L2359`
-    - `normalize_text_content` `L2757`
-  - `save_external_bridge_state` `L24778`
-    - `ensure_external_bridge_files` `L24752`
-  - `summarize_runtime_text` `L2783`
-    - `normalize_text_content` `L2757`
-  - `touch_last_interaction` `L26282`
-  - `write_command_execution_log` `L24708`
-    - `safe_print` `L28588`
-    - `sanitize_sensitive_record` `L2391`
-  - `write_external_bridge_log` `L24788`
-    - `ensure_external_bridge_files` `L24752`
-    - `safe_print` `L28588`
-    - `sanitize_sensitive_record` `L2391`
-  - `write_mutation_decision_command_receipt` `L24841`
-    - `write_command_execution_log` `L24708`
-
-## `poll_external_reply_bridges` `L25201`
+## `poll_external_inbox_messages` `L24944`
 
 - Domain: External Operator Bridge
 - Summary: No docstring summary.
 - Internal calls:
-  - `ingest_external_drop_file` `L24903`
-    - `append_external_message_record` `L24862`
-    - `ensure_external_bridge_files` `L24752`
-    - `normalize_text_content` `L2757`
-    - `save_external_bridge_state` `L24778`
-    - `write_external_bridge_log` `L24788`
-  - `poll_external_inbox_messages` `L24933`
-    - `append_runtime_feedback` `L6304`
-    - `can_dispatch_external_raw_command` `L5862`
-    - `enqueue_or_execute_command` `L33315`
-    - `ensure_external_bridge_files` `L24752`
-    - `get_command_name_key` `L5776`
-    - `get_input_queue_store` `L26266`
-    - `get_mutation_admission_journal` `L24808`
-    - `is_external_mutation_command` `L24831`
-    - `normalize_text_content` `L2757`
-    - `prepare_command_batch` `L5827`
-    - `record_mutation_terminal_result` `L24851`
-    - `sanitize_sensitive_command_text` `L2359`
-    - `save_external_bridge_state` `L24778`
-    - `summarize_runtime_text` `L2783`
-    - `touch_last_interaction` `L26282`
-    - `write_command_execution_log` `L24708`
-    - `write_external_bridge_log` `L24788`
-    - `write_mutation_decision_command_receipt` `L24841`
+  - `append_runtime_feedback` `L6306`
+    - `summarize_runtime_text` `L2785`
+  - `can_dispatch_external_raw_command` `L5864`
+    - `can_dispatch_external_single_command` `L5804`
+    - `prepare_command_batch` `L5829`
+  - `enqueue_or_execute_command` `L33379`
+    - `execute_command_entry` `L33362`
+    - `ingest_command_result` `L33935`
+    - `is_urgent_control_command` `L33351`
+    - `prepare_command_batch` `L5829`
+  - `ensure_external_bridge_files` `L24763`
+  - `get_command_name_key` `L5778`
+    - `normalize_memory_item` `L31053`
+    - `parse_command_signature_raw` `L5767`
+  - `get_input_queue_store` `L26281`
+  - `get_mutation_admission_journal` `L24819`
+  - `is_external_mutation_command` `L24842`
+    - `prepare_command_batch` `L5829`
+  - `normalize_text_content` `L2759`
+  - `prepare_command_batch` `L5829`
+    - `desktop_command_arguments` `L35677`
+    - `expand_structured_memory_command` `L6067`
+    - `is_unprefixed_gameboy_command` `L5963`
+    - `is_unprefixed_pyag_command` `L5975`
+    - `normalize_action_mode` `L5735`
+    - `parse_command_signature` `L6057`
+    - `resolve_desktop_action_context` `L35649`
+  - `record_mutation_terminal_result` `L24862`
+    - `append_runtime_feedback` `L6306`
+    - `get_mutation_admission_journal` `L24819`
+    - `summarize_runtime_text` `L2785`
+  - `sanitize_sensitive_command_text` `L2361`
+    - `normalize_text_content` `L2759`
+  - `save_external_bridge_state` `L24789`
+    - `ensure_external_bridge_files` `L24763`
+  - `summarize_runtime_text` `L2785`
+    - `normalize_text_content` `L2759`
+  - `touch_last_interaction` `L26297`
+  - `write_command_execution_log` `L24719`
+    - `safe_print` `L28634`
+    - `sanitize_sensitive_record` `L2393`
+  - `write_external_bridge_log` `L24799`
+    - `ensure_external_bridge_files` `L24763`
+    - `safe_print` `L28634`
+    - `sanitize_sensitive_record` `L2393`
+  - `write_mutation_decision_command_receipt` `L24852`
+    - `write_command_execution_log` `L24719`
 
-## `write_control_panel_state_snapshot` `L24670`
+## `poll_external_reply_bridges` `L25212`
+
+- Domain: External Operator Bridge
+- Summary: No docstring summary.
+- Internal calls:
+  - `ingest_external_drop_file` `L24914`
+    - `append_external_message_record` `L24873`
+    - `ensure_external_bridge_files` `L24763`
+    - `normalize_text_content` `L2759`
+    - `save_external_bridge_state` `L24789`
+    - `write_external_bridge_log` `L24799`
+  - `poll_external_inbox_messages` `L24944`
+    - `append_runtime_feedback` `L6306`
+    - `can_dispatch_external_raw_command` `L5864`
+    - `enqueue_or_execute_command` `L33379`
+    - `ensure_external_bridge_files` `L24763`
+    - `get_command_name_key` `L5778`
+    - `get_input_queue_store` `L26281`
+    - `get_mutation_admission_journal` `L24819`
+    - `is_external_mutation_command` `L24842`
+    - `normalize_text_content` `L2759`
+    - `prepare_command_batch` `L5829`
+    - `record_mutation_terminal_result` `L24862`
+    - `sanitize_sensitive_command_text` `L2361`
+    - `save_external_bridge_state` `L24789`
+    - `summarize_runtime_text` `L2785`
+    - `touch_last_interaction` `L26297`
+    - `write_command_execution_log` `L24719`
+    - `write_external_bridge_log` `L24799`
+    - `write_mutation_decision_command_receipt` `L24852`
+
+## `write_control_panel_state_snapshot` `L24681`
 
 - Domain: UI Export Boundary
 - Summary: No docstring summary.
 - Internal calls:
-  - `append_runtime_feedback` `L6304`
-    - `summarize_runtime_text` `L2783`
-  - `build_control_panel_state_snapshot` `L24662`
-    - `_build_control_panel_state_snapshot_unlocked` `L24196`
-  - `set_runtime_value` `L6115`
-  - `summarize_runtime_text` `L2783`
-    - `normalize_text_content` `L2757`
+  - `append_runtime_feedback` `L6306`
+    - `summarize_runtime_text` `L2785`
+  - `build_control_panel_state_snapshot` `L24673`
+    - `_build_control_panel_state_snapshot_unlocked` `L24201`
+  - `set_runtime_value` `L6117`
+  - `summarize_runtime_text` `L2785`
+    - `normalize_text_content` `L2759`
 
-## `monitor_and_restart_processes` `L43004`
+## `monitor_and_restart_processes` `L43091`
 
 - Domain: Worker Lifecycle / Shutdown
 - Summary: No docstring summary.
 - Internal calls:
-  - `safe_print` `L28588`
-  - `set_runtime_value` `L6115`
-  - `start_process` `L42931`
+  - `safe_print` `L28634`
+  - `set_runtime_value` `L6117`
+  - `start_process` `L43018`
 
-## `handle_queued_input` `L30163`
+## `handle_queued_input` `L30211`
 
 - Domain: Screenshot / Vision / Gameplay
 - Summary: No docstring summary.
 - Internal calls:
-  - `get_input_queue_store` `L26266`
-  - `send_prompt_to_chatgpt` `L30284`
-    - `append_runtime_feedback` `L6304`
-    - `build_agent_state_snapshot` `L26533`
-    - `build_base_system_prompt` `L28375`
-    - `build_prompt_inclusion_effects` `L9030`
-    - `build_prompt_inclusion_payload_messages` `L9110`
-    - `build_recent_history_messages` `L28343`
-    - `build_visual_user_prompt` `L28423`
-    - `compute_image_fingerprint` `L3053`
-    - `display_message` `L42192`
-    - `encode_image_to_base64` `L29455`
-    - `ensure_default_pinned_message` `L28336`
-    - `get_recent_prompt_history` `L28325`
-    - `increment_inference_counter` `L26319`
-    - `infer_turn_model_controls` `L7509`
-    - `maybe_build_episodic_planning_context` `L28135`
-    - `normalize_auth_mode` `L1563`
-    - `normalize_memory_item` `L30989`
-    - `normalize_text_content` `L2757`
-    - `post_openai_turn_request` `L2532`
-    - `process_assistant_response` `L34355`
-    - `safe_print` `L28588`
-    - `set_runtime_value` `L6115`
-    - `summarize_runtime_text` `L2783`
-    - `update_chat_history` `L30681`
-    - `uses_max_completion_tokens` `L3588`
-    - `write_chat_history_log` `L24731`
-    - `write_command_execution_log` `L24708`
+  - `get_input_queue_store` `L26281`
+  - `send_prompt_to_chatgpt` `L30332`
+    - `append_runtime_feedback` `L6306`
+    - `build_agent_state_snapshot` `L26548`
+    - `build_base_system_prompt` `L28390`
+    - `build_prompt_inclusion_effects` `L9032`
+    - `build_prompt_inclusion_payload_messages` `L9112`
+    - `build_recent_history_messages` `L28358`
+    - `build_visual_user_prompt` `L28459`
+    - `compute_image_fingerprint` `L3055`
+    - `display_message` `L42278`
+    - `encode_image_to_base64` `L29503`
+    - `ensure_default_pinned_message` `L28351`
+    - `get_recent_prompt_history` `L28340`
+    - `increment_inference_counter` `L26334`
+    - `infer_turn_model_controls` `L7511`
+    - `maybe_build_episodic_planning_context` `L28150`
+    - `normalize_auth_mode` `L1564`
+    - `normalize_memory_item` `L31053`
+    - `normalize_text_content` `L2759`
+    - `post_openai_turn_request` `L2534`
+    - `process_assistant_response` `L34423`
+    - `safe_print` `L28634`
+    - `set_runtime_value` `L6117`
+    - `summarize_runtime_text` `L2785`
+    - `update_chat_history` `L30737`
+    - `uses_max_completion_tokens` `L3590`
+    - `write_chat_history_log` `L24742`
+    - `write_command_execution_log` `L24719`
 
-## `maybe_run_smoke_test_step` `L32934`
+## `maybe_run_smoke_test_step` `L32998`
 
 - Domain: Other
 - Summary: No docstring summary.
 - Internal calls:
-  - `append_runtime_feedback` `L6304`
-    - `summarize_runtime_text` `L2783`
-  - `approve_pending_command` `L41625`
-    - `execute_pending_approval` `L26002`
-  - `build_smoke_test_model_command_script` `L32706`
-    - `get_active_game_profile_label` `L6256`
-    - `get_point_xy` `L28862`
-    - `get_smoke_test_cycle_key` `L32760`
-    - `normalize_memory_item` `L30989`
-  - `classify_smoke_test_screen_state` `L32858`
-    - `encode_image_to_base64` `L29455`
-    - `get_active_game_profile_label` `L6256`
-    - `normalize_text_content` `L2757`
-    - `post_openai_chat_completions` `L2528`
-    - `summarize_runtime_text` `L2783`
-    - `supports_temperature_override` `L3668`
-    - `uses_max_completion_tokens` `L3588`
-  - `get_active_game_profile_label` `L6256`
-    - `get_active_game_profile` `L6252`
-  - `get_latest_runtime_screenshot_path` `L32768`
-    - `normalize_text_content` `L2757`
-  - `get_pending_command_store` `L25924`
-  - `get_point_xy` `L28862`
-    - `coerce_optional_int` `L28841`
-  - `get_window_client_center` `L25337`
-    - `POINT` `L29481`
-    - `RECT` `L29764`
-    - `find_window_handle_by_title` `L25314`
-    - `normalize_text_content` `L2757`
-  - `locate_emulator_focus_point` `L32785`
-    - `encode_image_to_base64` `L29455`
-    - `normalize_text_content` `L2757`
-    - `post_openai_chat_completions` `L2528`
-    - `summarize_runtime_text` `L2783`
-    - `supports_temperature_override` `L3668`
-    - `uses_max_completion_tokens` `L3588`
-  - `merge_recent_context_items` `L31858`
-    - `normalize_memory_item` `L30989`
-  - `route_assistant_commands` `L33602`
-    - `append_command_drip_item` `L31622`
-    - `append_command_drip_note` `L31632`
-    - `append_recent_action_intent` `L31512`
-    - `append_recent_command_proposal` `L31530`
-    - `append_runtime_feedback` `L6304`
-    - `build_command_drip_item` `L31593`
-    - `build_semantic_command_identity` `L32301`
-    - `classify_assistant_command` `L32286`
-    - `display_message` `L42192`
-    - `enqueue_or_execute_command` `L33315`
-    - `evaluate_assistant_command_policy` `L33128`
-    - `evaluate_pending_command_policy` `L25936`
-    - `get_pending_command_store` `L25924`
-    - `infer_operating_context` `L26447`
-    - `infer_pending_queue_directive` `L26060`
-    - `is_non_action_command_text` `L31908`
-    - `normalize_memory_item` `L30989`
-    - `prepare_command_batch` `L5827`
-    - `queue_pending_model_command` `L33385`
-    - `sanitize_sensitive_command_text` `L2359`
-    - `set_runtime_value` `L6115`
-    - `summarize_runtime_text` `L2783`
-    - `supersede_conflicting_pending_entries` `L32425`
-  - `set_agent_running` `L26274`
-    - `cancel_command_inputs` `L35713`
-  - `set_runtime_value` `L6115`
-  - `write_command_execution_log` `L24708`
-    - `safe_print` `L28588`
-    - `sanitize_sensitive_record` `L2391`
+  - `append_runtime_feedback` `L6306`
+    - `summarize_runtime_text` `L2785`
+  - `approve_pending_command` `L41711`
+    - `execute_pending_approval` `L26014`
+  - `build_smoke_test_model_command_script` `L32770`
+    - `get_active_game_profile_label` `L6258`
+    - `get_point_xy` `L28910`
+    - `get_smoke_test_cycle_key` `L32824`
+    - `normalize_memory_item` `L31053`
+  - `classify_smoke_test_screen_state` `L32922`
+    - `encode_image_to_base64` `L29503`
+    - `get_active_game_profile_label` `L6258`
+    - `normalize_text_content` `L2759`
+    - `post_openai_chat_completions` `L2530`
+    - `summarize_runtime_text` `L2785`
+    - `supports_temperature_override` `L3670`
+    - `uses_max_completion_tokens` `L3590`
+  - `get_active_game_profile_label` `L6258`
+    - `get_active_game_profile` `L6254`
+  - `get_latest_runtime_screenshot_path` `L32832`
+    - `normalize_text_content` `L2759`
+  - `get_pending_command_store` `L25935`
+  - `get_point_xy` `L28910`
+    - `coerce_optional_int` `L28889`
+  - `get_window_client_center` `L25348`
+    - `POINT` `L29529`
+    - `RECT` `L29812`
+    - `find_window_handle_by_title` `L25325`
+    - `normalize_text_content` `L2759`
+  - `locate_emulator_focus_point` `L32849`
+    - `encode_image_to_base64` `L29503`
+    - `normalize_text_content` `L2759`
+    - `post_openai_chat_completions` `L2530`
+    - `summarize_runtime_text` `L2785`
+    - `supports_temperature_override` `L3670`
+    - `uses_max_completion_tokens` `L3590`
+  - `merge_recent_context_items` `L31922`
+    - `normalize_memory_item` `L31053`
+  - `route_assistant_commands` `L33670`
+    - `append_command_drip_item` `L31686`
+    - `append_command_drip_note` `L31696`
+    - `append_recent_action_intent` `L31576`
+    - `append_recent_command_proposal` `L31594`
+    - `append_runtime_feedback` `L6306`
+    - `build_command_drip_item` `L31657`
+    - `build_semantic_command_identity` `L32365`
+    - `classify_assistant_command` `L32350`
+    - `display_message` `L42278`
+    - `enqueue_or_execute_command` `L33379`
+    - `evaluate_assistant_command_policy` `L33192`
+    - `evaluate_pending_command_policy` `L25947`
+    - `get_pending_command_store` `L25935`
+    - `infer_operating_context` `L26462`
+    - `infer_pending_queue_directive` `L26072`
+    - `is_non_action_command_text` `L31972`
+    - `normalize_memory_item` `L31053`
+    - `prepare_command_batch` `L5829`
+    - `queue_pending_model_command` `L33451`
+    - `sanitize_sensitive_command_text` `L2361`
+    - `set_runtime_value` `L6117`
+    - `summarize_runtime_text` `L2785`
+    - `supersede_conflicting_pending_entries` `L32489`
+  - `set_agent_running` `L26289`
+    - `cancel_command_inputs` `L35781`
+  - `set_runtime_value` `L6117`
+  - `write_command_execution_log` `L24719`
+    - `safe_print` `L28634`
+    - `sanitize_sensitive_record` `L2393`
 
-## `shutdown_runtime_command` `L41471`
+## `shutdown_runtime_command` `L41557`
 
 - Domain: Command Intake / Dispatch
 - Summary: No docstring summary.
 - Internal calls:
-  - `append_runtime_feedback` `L6304`
-    - `summarize_runtime_text` `L2783`
-  - `display_message` `L42192`
-    - `print_console_safe` `L42181`
-  - `set_agent_running` `L26274`
-    - `cancel_command_inputs` `L35713`
+  - `append_runtime_feedback` `L6306`
+    - `summarize_runtime_text` `L2785`
+  - `display_message` `L42278`
+    - `print_console_safe` `L42267`
+  - `set_agent_running` `L26289`
+    - `cancel_command_inputs` `L35781`
 
