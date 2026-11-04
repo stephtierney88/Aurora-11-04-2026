@@ -1,5 +1,6 @@
 import contextlib
 import io
+import json
 import os
 import subprocess
 import sys
@@ -36,6 +37,21 @@ class PreflightTests(unittest.TestCase):
             self.assertEqual(aurora_preflight.main(["--quiet"]), 2)
         self.assertIn("example_dependency", error.getvalue())
         self.assertIn("test-python", error.getvalue())
+
+    def test_display_unknown_is_not_a_calibration_success(self):
+        with patch.object(aurora_preflight.os, "name", "posix"):
+            report = aurora_preflight.inspect_display_environment()
+        self.assertEqual(report["status"], "unsupported_platform")
+        self.assertEqual(report["captures_taken"], 0)
+        self.assertFalse(report["input_sent"])
+        self.assertIn("not a verified", report["coordinate_space"])
+
+    def test_display_json_keeps_import_failure_and_unknown_geometry(self):
+        with patch.object(aurora_preflight, "inspect_environment", return_value={"missing": ["dependency"]}), \
+             patch.object(aurora_preflight, "inspect_display_environment", return_value={"status": "unknown"}), \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(aurora_preflight.main(["--display", "--json"]), 2)
+        self.assertEqual(json.loads(output.getvalue())["display"]["status"], "unknown")
 
 
 if __name__ == "__main__":

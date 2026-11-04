@@ -1,5 +1,9 @@
 # Aurora 2 Runtime Overview
 
+## November 4 — display onboarding / Implementation 25
+
+`aurora_preflight.inspect_display_environment` reads caller geometry without runtime import/capture/input; its result does not establish runtime coordinate calibration. `aurora_panel_layout.fit_popout_window` clamps selected popouts and handles negative monitor origins through absolute WinAPI placement. Main paused GUI startup uses a 2-second capture interval; other profiles and all capabilities remain. See the human/AI setup checklist for startup scale, resized screenshot versus desktop coordinates and incomplete mixed-DPI support. Runtime import-time capture and per-frame transform provenance remain roadmap work.
+
 ## November 4 — assistant game routing / Implementation 24
 
 `infer_pending_queue_directive` preserves authored namespaces until `prepare_command_batch` freezes the action route. The actual assistant/pending-wrapper path now retains GB mapping independently of current mode; internal canonical PYAG dispatch spelling must not become a new explicit desktop route. 360 bindings are unchanged. Guarded scenario evidence confirms goal/history operations and remaining G1 persistence gaps. The bounded FireRed test verified one native movement and Sol/Astra/restoration, then stopped on scene-classifier false positives (`upper`/`pp`, negated battle text). Evidence-aware classification and G1 precede more gameplay qualification; full details are in Implementation 24.

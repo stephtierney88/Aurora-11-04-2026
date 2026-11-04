@@ -7,11 +7,11 @@
     },
     {
       "file": ".gitignore",
-      "sha256": "ad11aae0b83fa43f3cf7ea2e50a134bbd23a9f541ccf6392ee18271e4c4c390c"
+      "sha256": "504707c141a3ca7479260bdf6f5544e54dd9a2a04d3e48e48b9c07af26445f58"
     },
     {
       "file": "AGENTS.md",
-      "sha256": "013ad44c71dfad519047f0d77d524dc9c230f0b41efb01cac278e295021a149a"
+      "sha256": "d4b857e71029a1f5df81f8f79099e1ca396644a64668fe8dbe82441c1bd13ae2"
     },
     {
       "file": "aurora-mcp.cmd",
@@ -27,7 +27,7 @@
     },
     {
       "file": "aurora2_control_panel.py",
-      "sha256": "6c595b9489e7d20a7eed519ac9cb3d615d09593b4684c0ac402eb8f5593669da"
+      "sha256": "bdebffd85055d8a16ed5d8d56ba400341a547fa0aa6e07e351e4a09ae383652f"
     },
     {
       "file": "aurora2_init.txt",
@@ -107,7 +107,7 @@
     },
     {
       "file": "aurora_panel_layout.py",
-      "sha256": "55db5c23576bc2f56e1e4b9ecaeb1d20b77e3318221e78896f8a56d7be74eee1"
+      "sha256": "6302f1da5534452c59f597c198bce1341da44619dcf747d75d7e04a957ca907c"
     },
     {
       "file": "aurora_pending_commands.py",
@@ -119,7 +119,7 @@
     },
     {
       "file": "aurora_preflight.py",
-      "sha256": "f538e0668f24c6d1d881a725181177ef73d31fe558eb4f77edcddedb9e4119e1"
+      "sha256": "056381f17e5740bb711d7df704d3e8490d7666fe5e832f9ae61632cd0c6fc5ce"
     },
     {
       "file": "aurora_reference_maps/commands/commands-high.md",
@@ -143,7 +143,7 @@
     },
     {
       "file": "aurora_reference_maps/manifest.json",
-      "sha256": "eccab87dedc7d5153a0d4cbf79698ec4cda4d20a2b5fed956933e69735a539b4"
+      "sha256": "3e2f550cfc1c723451ebf3529cf7aeff36c25a94073770702395421869298f94"
     },
     {
       "file": "aurora_reference_maps/reference_packs/adaptive-reasoning-reference.md",
@@ -231,11 +231,11 @@
     },
     {
       "file": "aurora_reference_maps/runtime/control-plane-function-skeleton.jsonl",
-      "sha256": "5a98f85df8a0154968645629bcbe3dc4541715acd81e20f5502a1f180c655501"
+      "sha256": "b5e3cc94b3ff1485dfd4d59f7f64c280277a18c396b8d6e47b423d90fb3488c7"
     },
     {
       "file": "aurora_reference_maps/runtime/overview.md",
-      "sha256": "7748070be36057722dfa0b38709083afe2d8778cad96f15623cd30d76fa0eec0"
+      "sha256": "ac959d306b6e2129c7a8dc4f7e9daeea0141591aacd6dbb7b80f865a036ccbf7"
     },
     {
       "file": "aurora_reference_maps/runtime/runtime-domains.md",
@@ -271,19 +271,19 @@
     },
     {
       "file": "aurora_reference_maps/ui/ui-function-skeleton.jsonl",
-      "sha256": "54388f8dfc9263e189f4e794ff979470353e0254a316e8d89b3df01076cfe90e"
+      "sha256": "2cd88fbcf38403b9ea096e82f94ec3c317c9cae2f6e8dd44aaac6889fa6b35dd"
     },
     {
       "file": "aurora_reference_maps/ui/ui-generated-call-tree.md",
-      "sha256": "ba738a8b75f7c71c14ecfcb7295c4e768a9e03b9d2a7d5e8c2f70df55fe7f6da"
+      "sha256": "c98207137ee1b473da148aec17135cf412edccdfb33d4c4cef23a2bf4426b42f"
     },
     {
       "file": "aurora_reference_maps/ui/ui-generated-map.md",
-      "sha256": "4d0ff47d4a0d880cdd57095eba6c35a5462ac62a10bacab58383a421ef84c451"
+      "sha256": "9a7e6d65ffc83439a2b5b8594a49befc6d487658baad2273399299de3854b2fa"
     },
     {
       "file": "aurora_reference_maps/ui/ui-lite.md",
-      "sha256": "a57a5d3801907467ffb9b8f36beabb9c330799d832a2c11a93ceafd219bc782b"
+      "sha256": "4740733cc6aabaabd1b0b2ec2dab789e99f35b861173b4d7b381ca17b2e6efc0"
     },
     {
       "file": "aurora_reference_maps/ui/ui-search-guide.md",
@@ -291,7 +291,7 @@
     },
     {
       "file": "aurora_reference_maps/ui/ui-symbol-index.tsv",
-      "sha256": "309dfc785f9476788dfc042460b72a47c00fa8f6d3fbe9f25f9bb377e7aa48ac"
+      "sha256": "a2111c15f8efafccffbf5d341f14beb73c1b7e11fe3846503d2c3993f0d884df"
     },
     {
       "file": "aurora_responses_reasoning.py",
@@ -379,11 +379,11 @@
     },
     {
       "file": "docs/notes/aurora_current_status.md",
-      "sha256": "98b12ffb639963df069d4fec49d37c3e5121786aa53a1a30c55c364fdd028dae"
+      "sha256": "7613cf4ddf2101f5fe44f9fb25416c91f529ec357b5622e59ffb5b5f44fc335d"
     },
     {
       "file": "docs/notes/aurora_runtime_roadmap.md",
-      "sha256": "e33c5c3908f198126b2debff4b4e4e989c6e70f059216b37a3c3099e14d823e8"
+      "sha256": "292ff92b14198ff6d7e8498159af281ae85ec4d32590ca6a284f161c13ee43bb"
     },
     {
       "file": "docs/reference-packs/adaptive-reasoning-reference.md",
@@ -543,15 +543,15 @@
     },
     {
       "file": "README.md",
-      "sha256": "95df78048cdf53fd504e5e2d363659305d416d8232723fe341bb7a4ba84be3be"
+      "sha256": "e2813c13b59d40d0ceeb1f7d26dadafe8032f664799d565fe449355100b14f4c"
     },
     {
       "file": "README_FOR_AI.md",
-      "sha256": "4bace12bfd9c3db1a85eadee2fcff51777b7bb80dfa2d40e4b4b9faa4d13faa0"
+      "sha256": "754514f346a9e0228e1fc8f2ac5abb6b81477ef6b7d3f4b99c8d875f9f03e713"
     },
     {
       "file": "README_FOR_HUMANS.md",
-      "sha256": "9d55fe4fbba9dd608086e3e7e29a3e06856e62c2361f010be7c30f39df79a870"
+      "sha256": "6328bc524d5d3158522f5a22383c796988f8a3afbe2d40c2ff4486cd690675d8"
     },
     {
       "file": "regenerate_aurora_skill_refs.ps1",
@@ -651,7 +651,7 @@
     },
     {
       "file": "tests/test_aurora_panel_layout.py",
-      "sha256": "d2d74795952e45a8aaf6c80ff2c2978cffe5c4edc1faaea93870094ebb0b7ea3"
+      "sha256": "38bdc719f72fd3eb4baa28b164f48abd4088932aabbdc50953ad9bda5a6df2bc"
     },
     {
       "file": "tests/test_aurora_pending_commands.py",
@@ -659,7 +659,7 @@
     },
     {
       "file": "tests/test_aurora_preflight.py",
-      "sha256": "8011a61d75b28737a3ee0d1ac0e93c4dc61851a788786f68098a646510d5b4ab"
+      "sha256": "e6015171f7f911907da6229d50b12aeca094ed87eade1dec3238306c5074eb1d"
     },
     {
       "file": "tests/test_aurora_prompt_guidance.py",

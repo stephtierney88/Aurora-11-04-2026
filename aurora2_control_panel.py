@@ -22,7 +22,7 @@ from aurora_switchboard import Switchboard, PortalShortcuts
 from aurora_search_query import SEARCH_DEFAULTS, SEARCH_CHOICES, normalize_search_options, search_has_filter
 from aurora_panel_layout import (
     CollapsibleSection, FlowBar, ScrollablePane, clamp_window_geometry,
-    load_layout_preferences, monitor_work_areas, save_layout_preferences,
+    load_layout_preferences, monitor_work_areas, save_layout_preferences, fit_popout_window,
 )
 
 from aurora_control_plane import (
@@ -1696,7 +1696,7 @@ def launch_runtime_process(with_ui=True, paused=False):
     if with_ui:
         command.append("--with-ui")
     if paused:
-        command.extend(["--offline", "--no-ui", "--no-live-init", "--no-smoke-test", "--no-sound", "--execution-mode", "safe", "--action-mode", "none"])
+        command.extend(["--offline", "--no-ui", "--no-live-init", "--no-smoke-test", "--no-sound", "--execution-mode", "safe", "--action-mode", "none", "--screenshot-interval", "2.0"])
 
     creationflags = 0
     if os.name == "nt":
@@ -4879,8 +4879,8 @@ class AuroraControlPanel(tk.Tk):
 
         self.dashboard_popout_window = tk.Toplevel(self)
         self.dashboard_popout_window.title("Aurora Operator Dashboard")
-        self.dashboard_popout_window.geometry("1120x760")
-        self.dashboard_popout_window.minsize(760, 520)
+        geometry = fit_popout_window(self.dashboard_popout_window, 1120, 760, self)
+        self.dashboard_popout_window.minsize(min(760, geometry["width"]), min(520, geometry["height"]))
         self.dashboard_popout_window.configure(bg=BG)
         self.dashboard_popout_window.protocol("WM_DELETE_WINDOW", self.close_dashboard_popout)
         self.dashboard_popout_window.bind(
@@ -5432,9 +5432,7 @@ class AuroraControlPanel(tk.Tk):
         window = tk.Toplevel(self)
         self.settings_transaction_dialog = window
         window.title(title)
-        geometry = clamp_window_geometry({"width": 920, "height": height,
-            "x": self.winfo_x() + 24, "y": self.winfo_y() + 24}, self._work_areas)
-        window.geometry(f"{geometry['width']}x{geometry['height']}+{geometry['x']}+{geometry['y']}")
+        geometry = fit_popout_window(window, 920, height, self)
         window.minsize(min(680, geometry["width"]), min(420, geometry["height"]))
         window.configure(bg=BG)
         ttk.Button(window, text="Close (Esc)", command=window.destroy).pack(side="bottom", anchor="e", padx=12, pady=(0, 10))
@@ -6494,7 +6492,7 @@ class AuroraControlPanel(tk.Tk):
             return
         self.banner_window = tk.Toplevel(self)
         self.banner_window.title("Aurora Runtime Banner")
-        self.banner_window.geometry("1200x180")
+        fit_popout_window(self.banner_window, 1200, 180, self)
         self.banner_window.configure(bg=BG)
         def close_banner_window(_event=None):
             if self.banner_window is not None and self.banner_window.winfo_exists():
@@ -9070,7 +9068,7 @@ class AuroraControlPanel(tk.Tk):
             return
         self.popout_window = tk.Toplevel(self)
         self.popout_window.title("Aurora Screenshot Viewer")
-        self.popout_window.geometry("1380x920")
+        fit_popout_window(self.popout_window, 1380, 920, self)
         self.popout_window.configure(bg=BG)
         self.popout_window.protocol("WM_DELETE_WINDOW", self.close_screenshot_popout)
         self.popout_window.bind("<Escape>", lambda _event: self.close_screenshot_popout())
@@ -9166,7 +9164,7 @@ class AuroraControlPanel(tk.Tk):
             return
         self.memory_popout_window = tk.Toplevel(self)
         self.memory_popout_window.title("Aurora Image Memory Viewer")
-        self.memory_popout_window.geometry("1380x920")
+        fit_popout_window(self.memory_popout_window, 1380, 920, self)
         self.memory_popout_window.configure(bg=BG)
         self.memory_popout_window.protocol("WM_DELETE_WINDOW", self.close_image_memory_popout)
         self.memory_popout_window.bind("<Escape>", lambda _event: self.close_image_memory_popout())

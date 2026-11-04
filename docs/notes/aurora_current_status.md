@@ -27,6 +27,8 @@ This starts the runtime with inference off and no implicit action mapping. The m
 
 ## Conversation and context
 
+Before desktop actions on another PC, run `aurora_preflight.py --display --json` and follow the AI README's display/preset checklist. Panel/popout sizing adapts to work areas, but legacy screenshot resizing and mouse coordinates need calibration, especially with different DPI or multiple monitors. Main paused GUI startup uses a 2-second capture interval; reset chooses request-only. The full settings and command arsenal remain available. This is not universal automatic screen adaptation.
+
 - **Conversation → Current context** is the currently eligible conversation window from runtime memory. Messages disappear when deleted, decayed or outside that window. System details are an optional display checkbox. This is not a dump of the complete API prompt.
 - **Retained messages** includes messages still held by the runtime but outside the current window.
 - **Historical log** opens the existing Chat log view, including older events. **Context details** exposes memory/prompt organization.

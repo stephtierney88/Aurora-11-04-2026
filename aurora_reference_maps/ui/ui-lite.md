@@ -1,5 +1,9 @@
 # Aurora 2 Control Panel Lite Map
 
+## November 4 — display onboarding / Implementation 25
+
+`aurora_preflight.inspect_display_environment` reads caller geometry without runtime import/capture/input; its result does not establish runtime coordinate calibration. `aurora_panel_layout.fit_popout_window` clamps selected popouts and handles negative monitor origins through absolute WinAPI placement. Main paused GUI startup uses a 2-second capture interval; other profiles and all capabilities remain. See the human/AI setup checklist for startup scale, resized screenshot versus desktop coordinates and incomplete mixed-DPI support. Runtime import-time capture and per-frame transform provenance remain roadmap work.
+
 November 4 final acceptance: the friend-preview guides now distinguish working in-memory goal/history commands from broken goal persistence and unsupported range deletion/full horizons. The bounded FireRed run verified one mapped input and Sol/Astra restoration but stopped on a scene-classifier error; the Switchboard's displayed scene is a heuristic state, not verified visual truth. See Implementation 24; no new UI control or binding is claimed.
 
 ## November 4 — The Switchboard / Implementation 23

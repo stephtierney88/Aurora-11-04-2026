@@ -83,6 +83,37 @@ def clamp_window_geometry(saved, work_areas):
             "y": max(top + 8, min(y, bottom - height - 48))}
 
 
+def fit_popout_window(window, width, height, parent=None):
+    """Size to today's monitor work area and place using absolute coordinates."""
+    areas = monitor_work_areas((0, 0, window.winfo_screenwidth(), window.winfo_screenheight()))
+    saved = {"width": width, "height": height}
+    if parent is not None:
+        saved.update(x=parent.winfo_x() + 24, y=parent.winfo_y() + 24)
+    geometry = clamp_window_geometry(saved, areas)
+    window.geometry(f"{geometry['width']}x{geometry['height']}")
+
+    def place():
+        if not window.winfo_exists():
+            return
+        try:
+            from ctypes import wintypes
+            user32 = ctypes.windll.user32
+            user32.GetAncestor.argtypes = [wintypes.HWND, wintypes.UINT]
+            user32.GetAncestor.restype = wintypes.HWND
+            user32.SetWindowPos.argtypes = [wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int,
+                                           ctypes.c_int, ctypes.c_int, wintypes.UINT]
+            handle = user32.GetAncestor(window.winfo_id(), 2)
+            if not user32.SetWindowPos(handle, None, geometry['x'], geometry['y'], 0, 0, 0x0015):
+                raise OSError("Window placement failed")
+        except (AttributeError, OSError):
+            # Tk negative offsets mean distance from the right/bottom, not an
+            # absolute virtual-desktop origin. Fall back to a reachable monitor.
+            fallback = clamp_window_geometry(saved, [a for a in areas if a[0] >= 0 and a[1] >= 0] or [(0, 0, 1280, 720)])
+            window.geometry(f"{fallback['width']}x{fallback['height']}+{max(0, fallback['x'])}+{max(0, fallback['y'])}")
+    window.after_idle(place)
+    return geometry
+
+
 class ScrollablePane(ttk.Frame):
     """An independently scrolling page that never clips its required controls."""
     def __init__(self, parent, *, background, padding=10, fit_width=False, fit_height=False):

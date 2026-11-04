@@ -7,7 +7,7 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import aurora2_control_panel as panel
-from aurora_panel_layout import clamp_window_geometry, load_layout_preferences, save_layout_preferences
+from aurora_panel_layout import clamp_window_geometry, load_layout_preferences, save_layout_preferences, fit_popout_window
 
 
 class Value:
@@ -22,6 +22,40 @@ class Value:
 
 
 class LayoutTests(unittest.TestCase):
+    def test_popout_uses_absolute_negative_monitor_coordinates(self):
+        window = Mock()
+        window.winfo_screenwidth.return_value = 1280
+        window.winfo_screenheight.return_value = 720
+        parent = SimpleNamespace(winfo_x=lambda: -1200, winfo_y=lambda: 20)
+        user32 = Mock()
+        with patch("aurora_panel_layout.monitor_work_areas", return_value=[(-1280, 0, 0, 720)]), \
+             patch("aurora_panel_layout.ctypes.windll", SimpleNamespace(user32=user32), create=True):
+            geometry = fit_popout_window(window, 1380, 920, parent)
+            window.after_idle.call_args.args[0]()
+        self.assertLess(geometry["x"], 0)
+        self.assertLessEqual(geometry["height"], 656)
+        self.assertEqual(user32.SetWindowPos.call_args.args[2:4], (geometry["x"], geometry["y"]))
+        self.assertEqual(window.geometry.call_count, 1)  # No ambiguous Tk negative-offset placement.
+
+    def test_popout_fallback_stays_on_reachable_primary_monitor(self):
+        window = Mock()
+        window.winfo_screenwidth.return_value = 1280
+        window.winfo_screenheight.return_value = 720
+        parent = SimpleNamespace(winfo_x=lambda: -1200, winfo_y=lambda: 20)
+        with patch("aurora_panel_layout.monitor_work_areas", return_value=[(-1280, 0, 0, 720), (0, 0, 1280, 720)]), \
+             patch("aurora_panel_layout.ctypes.windll", SimpleNamespace(), create=True):
+            fit_popout_window(window, 1380, 920, parent)
+            window.after_idle.call_args.args[0]()
+        self.assertRegex(window.geometry.call_args.args[0], r"^1248x656\+\d+\+\d+$")
+
+    def test_closed_popout_does_not_place_a_destroyed_window(self):
+        window = Mock()
+        window.winfo_exists.return_value = False
+        with patch("aurora_panel_layout.monitor_work_areas", return_value=[(0, 0, 1280, 720)]):
+            fit_popout_window(window, 1000, 800)
+            window.after_idle.call_args.args[0]()
+        self.assertEqual(window.geometry.call_count, 1)
+
     def test_removed_monitor_and_oversized_window_stay_reachable(self):
         result = clamp_window_geometry({"x": 5000, "y": -2000, "width": 4000, "height": 3000},
                                        [(0, 0, 1280, 720)])

@@ -19,6 +19,8 @@ Configure your own OpenAI API key through your normal secure environment setup. 
 
 ## Your first conversation
 
+On a different PC, also run `.\.venv\Scripts\python.exe aurora_preflight.py --display --json`. It reports monitor work areas and the diagnostic process's DPI awareness without taking a screenshot or sending input. Ask your setup AI to check the running runtime's screen settings before trying clicks; this report is not automatic coordinate calibration.
+
 1. Open the panel. It starts on **Conversation**. Use **Maximize window** if space is tight.
 2. Select **Start runtime**. This starts a worker with inference paused, safe execution policy and no implicit gameplay mapping. It does not start paid inference.
 3. Open **Advanced settings** to inspect models and execution policy. **Hide settings** returns to chat; **Dock settings** keeps settings alongside it. Search helps find a section. The new routine default is Sol low; the review model is Astra medium. Saved settings can differ.
@@ -28,6 +30,14 @@ Configure your own OpenAI API key through your normal secure environment setup. 
 Enabling inference starts an agent loop, not a guaranteed single billable reply. Screenshot/timer scheduling and automatic review settings can cause further turns. Keep early experiments short, inspect Dashboard/runtime details, and pause when done. `safe` execution and action mode are different controls: action mode `none` removes implicit prefixes; explicit GB/PYAG capabilities still exist and execution policy determines what may run.
 
 The older orb double-click still applies its activation profile and enables inference. Use the labeled main buttons for the simpler workflow.
+
+The defaults are a starting posture, not a reduced command set. Advanced settings retain Assist/Auto execution and PYAG/GB action modes, model overrides, capture controls and saved profiles. Change them deliberately and inspect the effective receipt. Main **Start runtime** now uses a 2-second capture interval; the legacy direct-runtime default remains 0.12 seconds and the orb activation profile uses 15 seconds. **Reset to preview defaults** selects request-only capture. Saved settings and environment overrides can differ; the Switchboard shows the effective state. Capture timing and paid inference timing are independent.
+
+## Moving to another monitor or PC
+
+The main panel sizes to monitor work areas and has scrollbars; dashboard, settings, banner and image popouts now clamp to the current work area too. Maximize or use the scrollbars if a dense page needs more space. Mixed-DPI layouts and a second PC still need hands-on verification.
+
+Desktop targeting is less portable than the panel layout. The legacy capture path resizes to 1366×768 and calculates scale from startup dimensions. PYAG coordinates are desktop coordinates, not automatically converted from that resized image. Other aspect ratios, display scaling, negative monitor origins, changed monitor layouts and game overlays need checking. Restart and recalibrate after display changes; do not trust an old screenshot or saved tile grid. Have your setup AI verify one fresh capture and one harmless test-window target before broader actions. The runtime currently samples a screenshot during import, even before capture workers start; importing it is not a capture-free diagnostic. Preflight avoids importing it.
 
 ## The Switchboard
 

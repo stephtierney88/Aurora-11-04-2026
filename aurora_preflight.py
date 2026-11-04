@@ -5,12 +5,42 @@ import argparse
 import ast
 import importlib.util
 import json
+import os
 import site
 import sys
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent
+
+
+def inspect_display_environment() -> dict:
+    """Read caller-visible geometry without capturing pixels or importing Aurora."""
+    result = {"status": "unknown", "coordinate_space": "preflight process; not a verified runtime input/capture transform",
+              "captures_taken": 0, "input_sent": False,
+              "verification": "Compare with the running runtime and a deliberate fresh test capture before coordinate input."}
+    if os.name != "nt":
+        return dict(result, status="unsupported_platform")
+    try:
+        import ctypes
+        from aurora_panel_layout import monitor_work_areas
+        user32 = ctypes.windll.user32
+        primary = [user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)]
+        virtual = [user32.GetSystemMetrics(code) for code in (76, 77, 78, 79)]
+        awareness = "unknown"
+        try:
+            user32.GetThreadDpiAwarenessContext.restype = ctypes.c_void_p
+            user32.GetAwarenessFromDpiAwarenessContext.argtypes = [ctypes.c_void_p]
+            awareness = {0: "unaware", 1: "system", 2: "per_monitor"}.get(
+                user32.GetAwarenessFromDpiAwarenessContext(user32.GetThreadDpiAwarenessContext()), "unknown")
+        except (AttributeError, OSError):
+            pass
+        result.update(status="observed" if all(value > 0 for value in primary) else "unknown",
+                      primary_size=primary, virtual_desktop=dict(zip(("x", "y", "width", "height"), virtual)),
+                      monitor_work_areas=monitor_work_areas((0, 0, *primary)), caller_dpi_awareness=awareness)
+    except (AttributeError, OSError) as error:
+        result["error"] = type(error).__name__
+    return result
 
 
 def required_modules(source: Path) -> list[str]:
@@ -57,8 +87,11 @@ def main(argv=None) -> int:
     parser.add_argument("--surface", choices=("runtime", "panel"), default="runtime")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--quiet", action="store_true", help="Print only errors.")
+    parser.add_argument("--display", action="store_true", help="Include read-only monitor geometry; no screenshot or input.")
     args = parser.parse_args(argv)
     result = inspect_environment(args.surface)
+    if args.display:
+        result["display"] = inspect_display_environment()
     if args.json:
         print(json.dumps(result, indent=2))
     elif result["missing"]:
@@ -69,6 +102,8 @@ def main(argv=None) -> int:
     elif not args.quiet:
         print(f"Aurora {args.surface}: imports resolved using {result['executable']}")
         print(result["scope"])
+        if args.display:
+            print(json.dumps(result["display"], indent=2))
     return 2 if result["missing"] else 0
 
 
