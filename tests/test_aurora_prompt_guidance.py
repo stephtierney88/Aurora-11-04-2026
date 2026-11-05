@@ -34,7 +34,8 @@ class PromptGuidanceTests(unittest.TestCase):
         fn = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "publish_command_discovery")
         displayed, history = [], []
         scope = {"display_message": lambda *args: displayed.append(args),
-                 "update_chat_history": lambda *args: history.append(args), "COMMAND_DISCOVERY_CONTEXT": True}
+                 "update_chat_history": lambda *args: history.append(args), "COMMAND_DISCOVERY_CONTEXT": True,
+                 "READBACK_WAKE_ENABLED": False, "TASK_CONTINUATION_MODE": "legacy"}
         exec(compile(ast.Module(body=[fn], type_ignores=[]), "discovery", "exec"), scope)
         scope["publish_command_discovery"](False, "Signature: LOOKUP_COMMAND(name, high)")
         self.assertIn("Signature: LOOKUP_COMMAND", history[0][1])
@@ -51,6 +52,22 @@ class PromptGuidanceTests(unittest.TestCase):
         self.assertGreater(len(legacy), 12000)
         for name in ("SEARCH_COMMANDS", "LOOKUP_COMMAND", "SET_NEXT_INFERENCE", "REQUEST_SCREENSHOT_CAPTURE"):
             self.assertIn(name, current)
+
+    def test_screenshot_turn_guidance_matches_profile_without_single_step_conflict(self):
+        tree = ast.parse((ROOT / "aurora2.py").read_text(encoding="utf-8-sig"))
+        names = {"LEGACY_SCREENSHOT_REVIEW_PROMPT", "DEFAULT_SCREENSHOT_REVIEW_PROMPT"}
+        nodes = [node for node in tree.body if isinstance(node, ast.Assign)
+                 and any(isinstance(target, ast.Name) and target.id in names for target in node.targets)]
+        for profile in ("current", "legacy"):
+            scope = {"INIT_PROMPT_PROFILE": profile}
+            exec(compile(ast.Module(body=nodes, type_ignores=[]), "screenshot-prompt", "exec"), scope)
+            prompt = scope["DEFAULT_SCREENSHOT_REVIEW_PROMPT"]
+            if profile == "legacy":
+                self.assertIn("at most one", prompt)
+            else:
+                self.assertIn("2-4 actions", prompt)
+                self.assertNotIn("at most one", prompt)
+                self.assertIn("REQUEST_SCREENSHOT_CAPTURE", prompt)
 
     def test_main_enable_preserves_settings_and_start_is_paused(self):
         tree = ast.parse((ROOT / "aurora2_control_panel.py").read_text(encoding="utf-8-sig"))

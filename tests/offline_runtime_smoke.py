@@ -65,6 +65,13 @@ from pathlib import Path
 import socket
 import sys
 from types import SimpleNamespace
+from PIL import Image, ImageGrab
+
+import_capture_calls = []
+def synthetic_import_capture(*args, **kwargs):
+    import_capture_calls.append(True)
+    return Image.new("RGB", (1280, 720), "black")
+ImageGrab.grab = synthetic_import_capture
 
 # Guard import-time network activity too (cold token vocabulary / IPv6 probe).
 socket.has_ipv6 = False
@@ -83,6 +90,7 @@ sys.modules["tiktoken"] = SimpleNamespace(get_encoding=lambda *a, **kw: fixture_
 CONTRACT_FIXTURE = '''import time
 from pathlib import Path
 import aurora2 as runtime
+runtime.CAPTURE_GEOMETRY_POLICY = "legacy"  # Native queries disabled in generic synthetic fixtures.
 runtime.get_foreground_window_title = lambda: "Aurora offline fixture"
 
 def idle_worker(*args):
@@ -122,8 +130,8 @@ def run_smoke(simulate_model=False, contracts_only=False) -> dict:
     with tempfile.TemporaryDirectory(dir=ROOT, prefix=".aurora-ingress-smoke-") as folder:
         work = Path(folder).resolve()
         assert ROOT.resolve() in work.parents
-        for name in ("aurora2.py", "aurora2_control_panel.py", "aurora_preflight.py",
-                     "aurora_runtime_work.py", "aurora_input_ownership.py", "aurora_responses_reasoning.py", "aurora_capture_store.py", "aurora_panel_layout.py",
+        for name in ("aurora_task_continuation.py", "aurora_delivery_receipts.py", "aurora_gameplay_scene.py", "aurora_goal_store.py", "aurora_conversation_navigator.py", "aurora2.py", "aurora2_control_panel.py", "aurora_preflight.py",
+                     "aurora_runtime_work.py", "aurora_input_ownership.py", "aurora_responses_reasoning.py", "aurora_capture_store.py", "aurora_capture_provenance.py", "aurora_capture_geometry.py", "aurora_panel_layout.py",
                      "aurora_command_protocol.py", "aurora_command_contracts.py", "aurora_default_profiles.py", "aurora_pending_commands.py", "aurora_history_controls.py", "aurora_episodic_retrieval.py", "aurora_search_query.py", "aurora_retrieval_results.py", "aurora_retrieval_commands.py", "aurora_conversation.py", "aurora_control_plane.py", "aurora_codex_oauth.py",
                      "aurora_settings_registry.py", "aurora_settings_transactions.py", "launch_aurora2.cmd"):
             shutil.copy2(ROOT / name, work / name)
@@ -222,9 +230,16 @@ def run_smoke(simulate_model=False, contracts_only=False) -> dict:
                         rejected = wait_receipt(request)
                         assert rejected["status"] == "rejected" and rejected["executed_commands"] == [], rejected
                     send("TASKS()", "tasks-alias")
-                    assert wait_receipt("tasks-alias")["status"] == "processed"
+                    tasks = wait_receipt("tasks-alias")
+                    assert tasks["status"] == "failed" and tasks["executed_commands"] == [], tasks
+                    assert tasks["memory_command_results"][0]["effect_status"] == "not_started", tasks
+                    assert "unimplemented legacy placeholder" in tasks["memory_command_results"][0]["reason"], tasks
                     send("SET_TIME_LOGGING(invalid)", "handler-failure")
-                    assert wait_receipt("handler-failure")["status"] == "failed"
+                    invalid_boolean = wait_receipt("handler-failure")
+                    assert invalid_boolean["status"] == "failed" and invalid_boolean["executed_commands"] == [], invalid_boolean
+                    send("SET_SHOW_AI_TEXT(invalid); SET_TIME_LOGGING(on)", "reviewed-boolean-invalid")
+                    invalid_reviewed = wait_receipt("reviewed-boolean-invalid")
+                    assert invalid_reviewed["status"] == "rejected" and invalid_reviewed["executed_commands"] == [], invalid_reviewed
                     desktop_batch = 'pyag:focus_window("fixture missing"); pyag:type("never sent"); SET_TIME_LOGGING(on)'
                     send(desktop_batch, "desktop-failure")
                     failure = wait_receipt("desktop-failure")

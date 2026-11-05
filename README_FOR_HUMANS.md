@@ -1,110 +1,104 @@
 # Aurora: start here
 
-Aurora is an experimental Windows assistant that can chat, inspect screenshots, remember context and propose desktop or gameplay actions. The Control Panel is the simplest starting point. Its advanced settings and command arsenal remain available, but you do not need to learn them all at once.
+Aurora is an experimental Windows desktop agent. **Control Panel → Conversation** is the simplest entry point; the Switchboard, shell and Advanced settings retain the full controls. This guide describes the November 5, 2026 snapshot. For an older download, follow [UPGRADING](UPGRADING.md) first.
 
 ## Install and open
 
-Use Windows and Python 3.11 with Tkinter. Open PowerShell in this repository:
+Use Windows and Python 3.11 or 3.12 with Tkinter. The examples select 3.11; use `py -3.12` instead if that is your installed version. Open PowerShell in the new repository folder:
 
 ```powershell
 py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-preview.txt
 .\.venv\Scripts\python.exe aurora_preflight.py --json
+.\.venv\Scripts\python.exe aurora_preflight.py --surface panel --display --json
 .\launch_aurora2_ui.cmd
 ```
 
-If you already have a suitable environment, set `AURORA_PYTHON` to its Python executable. The launcher prefers that override, then this folder's `.venv`, then the established Anaconda environment if present, then PATH Python.
+Activation is unnecessary with those explicit paths. Resolve missing Python/Tkinter/imports before enabling the agent. Display preflight reads monitor geometry without taking a screenshot or sending input.
 
-Configure your own OpenAI API key through your normal secure environment setup. Aurora accepts `OPENAI_API_KEY`; the older `OPENAI_2023_API_KEY` takes precedence if both exist. Launch from an environment containing the key. Never paste it into Aurora chat, a README or Git. API calls use your API billing; OAuth code exists but subscription access is not verified for this preview.
+The launcher prefers `AURORA_PYTHON`, this folder's `.venv`, the historical Anaconda location, then PATH. If an old override points elsewhere:
+
+```powershell
+$env:AURORA_PYTHON = (Resolve-Path .\.venv\Scripts\python.exe).Path
+.\launch_aurora2_ui.cmd
+```
+
+## Choose your connection
+
+**API:** configure `OPENAI_API_KEY` through your normal secure environment setup and select `api_key`. The older `OPENAI_2023_API_KEY` also works and takes precedence if both exist. Launch from that environment. Never paste keys into chat, source or Git. This route uses API billing.
+
+**ChatGPT subscription:** click **Sign in / OpenAI**, finish browser login yourself, return to the connection dialog, check account/models, then explicitly apply `openai_chatgpt` in Agent controls. Sign-in does not enable inference or switch billing by itself. Aurora stores its own Windows-protected registration outside this checkout; do not copy another app's auth files or share the cache.
+
+Real subscription inference and Sol → Astra → Sol restoration passed on the development account. Your plan/model access can differ. Long-session refresh/account switching still needs qualification. There is no automatic subscription-to-API billing fallback.
 
 ## Your first conversation
 
-On a different PC, also run `.\.venv\Scripts\python.exe aurora_preflight.py --display --json`. It reports monitor work areas and the diagnostic process's DPI awareness without taking a screenshot or sending input. Ask your setup AI to check the running runtime's screen settings before trying clicks; this report is not automatic coordinate calibration.
+1. Open the panel and select **Start runtime**. This starts paused, with safe execution and no implicit action mapping.
+2. Expand **Agent controls**. Check auth, models and effective modes. Routine defaults are `gpt-6.1-sol` low and `gpt-6-astra` medium for review; saved settings and account access may differ.
+3. Send one short task using **Send message** or Ctrl+Enter. Enter adds a newline. **Awaiting reply / Outbox** keeps queued text visible while paused.
+4. Select **Enable inference**, inspect the response and **Pause inference** when finished.
+5. Before desktop actions, inspect proposals and deliberately choose execution/action settings. Safe/Assist/Auto, action mapping and inference are separate controls.
 
-1. Open the panel. It starts on **Conversation**. Use **Maximize window** if space is tight.
-2. Select **Start runtime**. This starts a worker with inference paused, safe execution policy and no implicit gameplay mapping. It does not start paid inference.
-3. Open **Advanced settings** to inspect models and execution policy. **Hide settings** returns to chat; **Dock settings** keeps settings alongside it. Search helps find a section. The new routine default is Sol low; the review model is Astra medium. Saved settings can differ.
-4. Write a short task and select **Send message**, or press Ctrl+Enter. Enter inserts a new line. Your message queues locally; it appears in the conversation when its inference turn begins.
-5. Select **Enable inference** when ready for paid requests. It keeps the current settings. Start with a simple text question. Check the response and use **Pause inference** when finished.
+Enabling inference starts an agent loop, not a guaranteed single request. Timers, screenshots and reviews can cause more calls. Optional bounded tasks limit new model calls by turns/time; they are not a dollar cap or instant remote cancellation.
 
-Enabling inference starts an agent loop, not a guaranteed single billable reply. Screenshot/timer scheduling and automatic review settings can cause further turns. Keep early experiments short, inspect Dashboard/runtime details, and pause when done. `safe` execution and action mode are different controls: action mode `none` removes implicit prefixes; explicit GB/PYAG capabilities still exist and execution policy determines what may run.
-
-The older orb double-click still applies its activation profile and enables inference. Use the labeled main buttons for the simpler workflow.
-
-The defaults are a starting posture, not a reduced command set. Advanced settings retain Assist/Auto execution and PYAG/GB action modes, model overrides, capture controls and saved profiles. Change them deliberately and inspect the effective receipt. Main **Start runtime** now uses a 2-second capture interval; the legacy direct-runtime default remains 0.12 seconds and the orb activation profile uses 15 seconds. **Reset to preview defaults** selects request-only capture. Saved settings and environment overrides can differ; the Switchboard shows the effective state. Capture timing and paid inference timing are independent.
-
-## Moving to another monitor or PC
-
-The main panel sizes to monitor work areas and has scrollbars; dashboard, settings, banner and image popouts now clamp to the current work area too. Maximize or use the scrollbars if a dense page needs more space. Mixed-DPI layouts and a second PC still need hands-on verification.
-
-Desktop targeting is less portable than the panel layout. The legacy capture path resizes to 1366×768 and calculates scale from startup dimensions. PYAG coordinates are desktop coordinates, not automatically converted from that resized image. Other aspect ratios, display scaling, negative monitor origins, changed monitor layouts and game overlays need checking. Restart and recalibrate after display changes; do not trust an old screenshot or saved tile grid. Have your setup AI verify one fresh capture and one harmless test-window target before broader actions. The runtime currently samples a screenshot during import, even before capture workers start; importing it is not a capture-free diagnostic. Preflight avoids importing it.
-
-## The Switchboard
-
-Open **The Switchboard** beside the View selector. The simple flow map opens first, with observed models, review cadence, modes and timing above it. **Overview**, **Switches**, **Commands** and **Init · contents** jump to the relevant section. Everything scrolls inside the workspace; runtime controls and one Conversation / Popout chat pair remain above it.
-
-- **Switches:** adjust a draft, choose **Preview switches**, then **Apply switches**. Read the receipt and observed value. **Undo last settings apply** uses the shared versioned rollback service; it can reject if someone else changed the settings. More settings are tucked into expandable sections, and the full Advanced settings remain available.
-- **Model choices:** editable Primary, Vision and Review selectors sit above the flow map. Choose **Apply model choices** to apply only those model/effort drafts. Clicking the model summary in the main header opens these selectors. The header distinguishes configured Primary, an active requested model, and the last prepared request; catalog membership alone does not prove your account can use a model.
-- **Lost in the settings?** **Reset to preview defaults** is available in the persistent controls, Switchboard header, command desk and Commands view. It opens a before/after review of 22 controls; **Validate reset** is read-only, **Apply preview defaults** resets the session, and Undo uses the same rollback service. The baseline pauses inference, selects safe execution with action mode none, Sol low / Astra, and screenshots on request. Authentication, game profile, chat/files, saved custom profiles and other Advanced settings remain unchanged. Use **Cancel work** for pending/in-flight work and Recovery for System/Personal profile restoration. This is a bounded setup reset, not a full factory wipe.
-- **Screenshots:** `heartbeat` keeps the original periodic capture behavior; `request_only` captures only for due requests. The request switch controls whether commands can ask for a fresh frame. With requests only and demand capture disabled, no new capture is expected. A frame already in flight may finish. The seconds dial is convenient from 0.1–60; the entry accepts the full valid range. Idle capture may be slower than the configured interval.
-- **Inference timing is separate:** turn scheduling can call a paid model when inference is enabled. A request-only screenshot setting does not disable model-turn heartbeats. Pause inference to stop new requests.
-- **Command desk:** search any of the 360 source-derived bindings and filter by subsystem. **Yellow Prepare selected** fills the editor without sending. Replace every `<placeholder>`. **Green Run selected** immediately queues a complete no-argument command; commands needing arguments first become drafts. **Run command draft** sends your edited batch. Locks, policy and runtime validation still apply. Queued is not proof of execution; inspect the receipt and Dashboard.
-- **Flow map:** choose Overview, Groups or Functions. Solid routes are enabled by observed configuration; dashed routes are inactive or unknown. Labeled loops distinguish screenshot cadence from turn cadence. This is a topology/status view, not a live trace or proof that an action succeeded. Click a node to inspect its subsystem.
-- **Context nodes:** hover System text, Init, Conversation, Working memory or Screenshot for a preview; click for a scrollable contents viewer. Init and conversation describe currently exported runtime data. System, memory, retrieval and last user-prompt text describe the last prepared request, with time and clipping disclosed. Before any request they remain unavailable. Preparation does not prove provider delivery, and the latest screenshot may differ from the one last sent.
-
-The Portal ring rotates clockwise beside the chat shortcut. **Animate Portal icon** disables motion without removing the shortcuts. Settings changes apply to the runtime session; saving personal defaults is a separate explicit action.
-
-## Button reference
-
-| Control | Effect |
+| Control | Meaning |
 | --- | --- |
-| Start runtime | Start the worker with inference paused |
-| Enable inference | Allow model requests using current settings |
-| Pause inference | Stop new model requests; it is not the work-cancellation control |
-| Cancel work | Cancel active work through the runtime service |
-| Stop runtime | Shut down the worker |
-| Reset to preview defaults | Review and restore the 22 Switchboard defaults for this session |
-| Capture now | Request a screenshot; inspect the result before relying on it |
-| Quick start | Open short guidance inside the panel |
+| Pause inference | Prevent new inference; inspect already-running work separately. |
+| Cancel work | Cancel active model/command work locally and release owned held inputs where possible. Does not delete queued chat or guarantee remote cancellation. |
+| Stop runtime | Shut down the worker. Closing a chat popout/panel alone is not a substitute. |
+| Reset to preview defaults | Review/apply a 35-control paused/safe/action-none baseline with Sol low/Astra, request-only capture and compatibility continuation settings. Credentials, files, history and saved profiles survive. |
 
-Closing the panel is not the same as stopping the worker. Stop runtime when you want the agent to end. The View selector exposes Pending, Recovery, Commands and the other operator pages.
+Reset is under **Panel options**, Switchboard and Commands. Same-session Undo is version-checked. Use Cancel separately for active work; inspect pending proposals too. The older orb double-click applies its activation profile and enables inference; labeled buttons are simpler for first use.
 
-## Which conversation am I seeing?
+## Conversation and mini-preview
 
-**Current context** shows currently eligible conversation from runtime memory. A deleted, decayed or out-of-window message disappears from this view. It does not show every system instruction, memory block or image payload sent to the provider. **System details** reveals system rows in this view; **Context details** explains other prompt material.
+**Current context** shows currently eligible conversation, not the entire exact API request. **Retained messages** and **Historical log** expose other material. A deleted/decayed row can remain in an archive without remaining in current model context. Model-window estimates are approximate.
 
-**Retained messages** shows conversation still stored in the runtime, including messages outside the current selection. **Historical log** opens the old Chat log view, which can contain events no longer in current memory. Sending while paused queues a message; it does not turn inference on. This queue is session-local, not a durable outbox.
+The mini-preview defaults to readable text. Scroll, click an excerpt to jump, dock left/right, collapse or pop out. Closing its popout returns it to the dock. **View options** includes the legacy colored map and metadata controls. Sender/model, timestamp, pin/decay and edited-by details are available; missing provenance stays unknown.
 
-Message times, assistant model labels and last-edit attribution are visible by default. **Times**, **Models** and **Edits** toggle their display and are remembered by the panel. New timestamps include a timezone offset; older rows keep their legacy time or unknown attribution. A provider-reported model is shown when available; otherwise the requested model is labeled as such. Edits retain the original author/time and show the recorded editor separately. These labels are provenance, not a complete immutable edit history.
+Select a retained text message and choose **Edit / pin…**. Stale revisions fail visibly; reopen rather than overwrite. Generated/managed rows, historical revisions and clipped text can be read-only. The command `PIN(text)` creates a new pinned row. Exact-timestamp deletion exists; date-range deletion does not.
 
-## Shell-only option
+Outbox distinguishes queued, runtime receipt, prepared, request started and usable response. Do not resend simply because a reply is slow. Outbox/queued-input recovery is still session-local; durable restart, queued cancellation and controlled retry remain unfinished.
 
-For a paused, safe runtime without the panel:
+“Decay 10 min” is an age threshold checked when history is appended, not a continuous timer. Pinned/important rows and images have separate retention. Archive views and snapshot age matter.
+
+## Switchboard and smoother flow
+
+**The Switchboard** shows observed models, cadence, modes and a simple flow graph. Hover/click context nodes for loaded Init, prepared prompt components and screenshot metadata. It describes configuration, not a complete execution trace.
+
+- Adjust drafts → **Preview switches** → **Apply switches** → inspect receipts. Amber means not applied. **Undo last settings apply** uses versioned rollback.
+- Model selectors apply only their model/effort drafts. The header distinguishes configured primary, active requested model and last prepared request. One-turn overrides are useful for a temporary Astra burst; verify restoration.
+- Yellow prepares a command; green submits it. Submission is not proof of execution.
+- **Command-driven preset** selects request-only capture, demand enabled, per-capture scheduling, zero periodic turn heartbeat and optional `task_flow` policy. It does not enable Auto or inference.
+- **Task continuation & prompt delivery** offers bounded turns/time, readback wake and optional duplicate-Init removal. Reviewed receipt scope is also available through Advanced settings/commands. These options do not grant permissions or change billing.
+
+Several commands may run from one response. Use short batches on a clear path and fresh observations at uncertain transitions. Command-driven capture can avoid unnecessary heartbeat waits; interpreting its image still takes a new model call.
+
+## Before clicking on another PC
+
+Run display preflight, then verify one fresh capture and one harmless target with your setup AI. Verified capture carries frame identity, acquisition time, origin, dimensions and image-to-desktop geometry. Guarded worker tests cover this path; native mixed-DPI/input calibration is still incomplete. Mouse commands use literal desktop coordinates, not automatic conversion from a resized image.
+
+Check capture target, display layout/DPI, foreground focus, emulator keys and game speed. Recheck after window/monitor changes. Legacy capture remains available with unknown calibration. Optional request timeout/attempt limits default to zero (legacy unlimited); a blocked OS call can finish after cancellation.
+
+Capture and inference timing are independent. Paused GUI startup uses a 2-second capture interval, direct legacy startup 0.12 seconds, the orb profile 15 seconds, and preview reset request-only. Inspect effective state.
+
+## Shell and validation console
+
+For shell-only operation, start a paused worker in one terminal:
 
 ```powershell
 .\.venv\Scripts\python.exe aurora2.py --offline --no-live-init --no-smoke-test --no-sound --action-mode none --execution-mode safe --no-ui
 ```
 
-Use `aurora_cli.py status`, `aurora_cli.py doctor` and `aurora_cli.py commands` from a second terminal to inspect it. Ask your coding assistant to explain the command syntax and inference gate before enabling a paid loop. The GUI is the recommended first route.
+In another terminal in the same folder:
 
-## If something is confusing
+```powershell
+.\.venv\Scripts\python.exe aurora_cli.py status
+.\.venv\Scripts\python.exe aurora_cli.py shell
+.\.venv\Scripts\python.exe aurora_cli.py commands screenshot --limit 10
+.\.venv\Scripts\python.exe aurora_cli.py command "SHOW_RUNTIME()"
+```
 
-- No response: check runtime active, inference enabled, provider credentials/access, locks and Dashboard errors. Do not repeatedly press Send; the earlier message may be queued.
-- Actions did not happen: inspect Pending and the command receipt. A proposal or accepted command is not proof of visible success. The initial safe policy deliberately restricts actions.
-- Controls seem cut off: maximize, expand settings, and use the scrollbars. Compact views retain the full controls. The native Tk interface still has limited accessibility metadata and some dense advanced pages.
-- Wrong model: inspect effective settings and personal defaults. The main Enable button keeps your settings; the orb shortcut applies an activation profile.
-- A setting changed but the prompt did not: Live Init affects the next initialization, not an immediate reload. See the AI guide for exact prompt selection.
+The operator shell controls Aurora; it is not an OS shell. `launch_aurora_validation.cmd` opens the local command/offline-validation console. Browsing commands does not call a model.
 
-## What has actually been tested?
-
-Screenshot timing has two controls in the Switchboard: **heartbeat** captures periodically, while **demand capture** permits `REQUEST_SCREENSHOT_CAPTURE(reason, 0)` to request a fresh frame sooner. Both can be enabled; **request_only** removes periodic captures. Model-turn scheduling is separate. Reset to preview defaults selects request-only capture. A queued request is not proof the model has seen a new image; inspect its timestamp and receipt. Multiple commands per response are supported. The final Pokemon test deliberately used one short input per turn and five-second test pacing; those are not general Aurora limits.
-
-**Final Pokemon check:** an 83-second copied-save run verified one visible game movement, goal labels/four horizon updates, and Sol calling Astra when stuck then returning to Sol. It stopped because Aurora incorrectly classified a bedroom as a battle. Gameplay is still experimental. Goal save/load and nested goal IDs are also confirmed broken; use disposable sessions and do not rely on that path for durable plans. Message review, edits and exact-timestamp deletion work; date-range deletion and near/extra-long horizons are not implemented. The assistant game-routing bug found during testing was fixed, with all 526 existing tests passing afterward.
-
-The November 4 Switchboard update passed 526 automated tests and an isolated native panel check across 24 views, including drafts, settings preview/apply/rollback and raw-command receipts. A guarded three-turn fake-provider test verified prompt-text export and effort restoration without API calls. The preceding preview also passed a fresh virtual-environment install and guarded runtime checks. Its bounded paid test used Sol to recognize a screen token and click a test button, Astra to inspect the changed image, then restored Sol low. Current policy held the commands and the fixture explicitly approved them. That follow-up capture used a fixture adapter; production background-capture acceptance is still a follow-up.
-
-This is useful friend-preview evidence, not broad desktop reliability, current Pokemon qualification, cross-platform support or a second-PC install guarantee. Start in a harmless test window. Screenshots can contain private information, so choose the visible workspace deliberately.
-
-The final Switchboard live check also verified the loaded Init marker, actual exported prompt text and message/edit model attribution. Provider-returned IDs matched Sol -> Astra -> Sol. It used explicit native-widget coordinates for the successful click: two screenshot-only coordinate attempts were rejected, so visual targeting remains experimental. Five paid requests across these final attempts cost about $0.11 by reported tokens and documented rates (estimate, not an invoice); two additional focus failures made no API request.
-
-Give your coding assistant [README_FOR_AI.md](README_FOR_AI.md) for architecture, prompts, discovery, tests and limitations. No public-release ETA is promised.
+A controlled ten-minute FireRed test made useful battle/navigation progress. Website screenshot/click/type primitives are available, but validate one task at a time. No unattended-reliability or universal-screen-calibration claim is made. See [Release notes](RELEASE_NOTES.md) and [roadmap](docs/notes/aurora_runtime_roadmap.md).

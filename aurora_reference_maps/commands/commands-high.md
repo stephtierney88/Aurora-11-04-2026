@@ -4,33 +4,62 @@ Help signatures are documentation; only contracts marked pre_dispatch are valida
 
 ### ADD_APRIORITY_GOAL
 
-- Signature: `ADD_APRIORITY_GOAL(goal_text)` (help_text)
-- Summary: Add a new open-ended goal.
+- Signature: `ADD_APRIORITY_GOAL(text)` (reviewed_contract)
+- Summary: Add non-empty text to the named memory list, retaining its existing deduplication/retention policy.
 - Handler: `add_apriority_goal_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: apriority_tasks
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "text", "required": true, "type": "string", "variadic": false}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+- Verification: Scoped before/after fingerprints, bounded readback and explicit changed/unchanged/uncertain result; not a full-memory concurrency guarantee.
+- Failure policy: Validate syntax before batch effects; runtime failures stop the tail. Applied effects are not automatically rolled back or replayed.
 
 ### ADD_GOAL
 
-- Signature: `ADD_GOAL(goal_text; priority; significance)` (help_text)
-- Summary: Add a new goal with priority and significance.
+- Signature: `ADD_GOAL(goal_text[, priority, significance])` (reviewed_contract)
+- Summary: Add a goal with opaque priority/significance labels; duplicates are unchanged, not relabeled. Accepts comma fields or one semicolon-delimited argument.
 - Handler: `add_goal_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: goals_list
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "text", "required": true, "type": "string", "variadic": false}`
+- Parameter: `{"default": "No Priority", "name": "priority", "required": false, "type": "string"}`
+- Parameter: `{"default": "No Significance", "name": "significance", "required": false, "type": "string"}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+- Verification: Scoped before/after fingerprints, bounded readback and explicit changed/unchanged/uncertain result; not a full-memory concurrency guarantee.
+- Failure policy: Validate syntax before batch effects; runtime failures stop the tail. Applied effects are not automatically rolled back or replayed.
 
 ### ADD_JOURNAL
 
-- Signature: `ADD_JOURNAL(entry)` (help_text)
-- Summary: Append a continuity/journal note.
+- Signature: `ADD_JOURNAL(text)` (reviewed_contract)
+- Summary: Add non-empty text to the named memory list, retaining its existing deduplication/retention policy.
 - Handler: `add_journal_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: journal_entries
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "text", "required": true, "type": "string", "variadic": false}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+- Verification: Scoped before/after fingerprints, bounded readback and explicit changed/unchanged/uncertain result; not a full-memory concurrency guarantee.
+- Failure policy: Validate syntax before batch effects; runtime failures stop the tail. Applied effects are not automatically rolled back or replayed.
 
 ### ADD_MODEL
 
@@ -44,23 +73,41 @@ Help signatures are documentation; only contracts marked pre_dispatch are valida
 
 ### ADD_OVERARCHING_GOAL
 
-- Signature: `ADD_OVERARCHING_GOAL(goal_text)` (help_text)
-- Summary: Add a long-horizon mission or strategic objective.
+- Signature: `ADD_OVERARCHING_GOAL(text)` (reviewed_contract)
+- Summary: Add non-empty text to the named memory list, retaining its existing deduplication/retention policy.
 - Handler: `add_overarching_goal_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: overarching_goals
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "text", "required": true, "type": "string", "variadic": false}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+- Verification: Scoped before/after fingerprints, bounded readback and explicit changed/unchanged/uncertain result; not a full-memory concurrency guarantee.
+- Failure policy: Validate syntax before batch effects; runtime failures stop the tail. Applied effects are not automatically rolled back or replayed.
 
 ### ADD_UNKNOWN_PRIORITY
 
-- Signature: `ADD_UNKNOWN_PRIORITY(goal_text)` (help_text)
-- Summary: Add a candidate goal whose priority is still unknown.
+- Signature: `ADD_UNKNOWN_PRIORITY(text)` (reviewed_contract)
+- Summary: Add non-empty text to the named memory list, retaining its existing deduplication/retention policy.
 - Handler: `add_unknown_priority_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: unknown_priority_candidates
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "text", "required": true, "type": "string", "variadic": false}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+- Verification: Scoped before/after fingerprints, bounded readback and explicit changed/unchanged/uncertain result; not a full-memory concurrency guarantee.
+- Failure policy: Validate syntax before batch effects; runtime failures stop the tail. Applied effects are not automatically rolled back or replayed.
 
 ### APPEND_AGENT_HISTORY
 
@@ -553,13 +600,22 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### COMPLETE_GOAL
 
-- Signature: `COMPLETE_GOAL(goal_id)` (help_text)
-- Summary: Mark a goal as completed.
+- Signature: `COMPLETE_GOAL(goal_id)` (reviewed_contract)
+- Summary: Complete the exact recursive goal ID; a missing ID fails, repeated completion is unchanged.
 - Handler: `complete_goal_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: goals_list
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"minimum": 1, "name": "goal_id", "required": true, "type": "integer"}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+- Verification: Scoped before/after fingerprints, bounded readback and explicit changed/unchanged/uncertain result; not a full-memory concurrency guarantee.
+- Failure policy: Validate syntax before batch effects; runtime failures stop the tail. Applied effects are not automatically rolled back or replayed.
 
 ### DELETE_MSG
 
@@ -827,13 +883,20 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### LOAD_TASKS
 
-- Signature: `LOAD_TASKS(...)` (placeholder)
-- Summary: Inspect the handler; detailed usage has not been reviewed.
+- Signature: `LOAD_TASKS([path])` (reviewed_contract)
+- Summary: Save a validated recursive task snapshot atomically, or validate and restore a complete snapshot. Does not undo live actions.
 - Handler: `load_tasks_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Save a validated recursive task snapshot atomically, or validate and restore a complete snapshot. Does not undo live actions.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"default": "pinned_tasks.json", "name": "path", "required": false, "type": "string"}`
+
+- Result protocol: `aurora_goal_file_result_v1`
+- Receipt field: `goal_file_results`
 
 ### LOCK_OPERATOR_ACCESS
 
@@ -1908,13 +1971,20 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### SAVE_TASKS
 
-- Signature: `SAVE_TASKS(...)` (placeholder)
-- Summary: Inspect the handler; detailed usage has not been reviewed.
+- Signature: `SAVE_TASKS([path])` (reviewed_contract)
+- Summary: Save a validated recursive task snapshot atomically, or validate and restore a complete snapshot. Does not undo live actions.
 - Handler: `save_tasks_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Save a validated recursive task snapshot atomically, or validate and restore a complete snapshot. Does not undo live actions.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"default": "pinned_tasks.json", "name": "path", "required": false, "type": "string"}`
+
+- Result protocol: `aurora_goal_file_result_v1`
+- Receipt field: `goal_file_results`
 
 ### SEARCH_COMMANDS
 
@@ -2000,23 +2070,39 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### SET_ADD_IMSGS_TO_HISTORY
 
-- Signature: `SET_ADD_IMSGS_TO_HISTORY(on|off)` (help_text)
-- Summary: Explicitly control important-message history retention.
+- Signature: `SET_ADD_IMSGS_TO_HISTORY([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_add_imsgs_to_history_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_ADD_UMSGS_TO_HISTORY
 
-- Signature: `SET_ADD_UMSGS_TO_HISTORY(on|off)` (help_text)
-- Summary: Explicitly control unimportant-message history retention.
+- Signature: `SET_ADD_UMSGS_TO_HISTORY([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_add_umsgs_to_history_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_AGENT_SUGGESTION_APPROVAL
 
@@ -2048,6 +2134,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
 
+### SET_ASSISTANT_POLICY
+
+- Signature: `SET_ASSISTANT_POLICY([value])` (reviewed_contract)
+- Summary: Set runtime.assistant_policy, or omit value to read it. Task flow admits discovery, enabled capture requests, one-turn plans, bounded GB overworld movement and battle menu steps in Auto. Legacy keeps previous review decisions.
+- Handler: `set_assistant_policy_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read runtime.assistant_policy when omitted; otherwise set it in this runtime session. Task flow admits discovery, enabled capture requests, one-turn plans, bounded GB overworld movement and battle menu steps in Auto. Legacy keeps previous review decisions. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["legacy", "task_flow"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `runtime.assistant_policy`
+- Runtime lock: execution
+- Apply timing: immediate
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
 ### SET_AUTH_MODE
 
 - Signature: `SET_AUTH_MODE([value])` (reviewed_contract)
@@ -2060,7 +2170,7 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
 
-- Parameter: `{"enum": ["api_key", "codex_oauth", "auto"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+- Parameter: `{"enum": ["api_key", "openai_chatgpt", "codex_oauth", "auto"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
 
 - Registered setting: `auth.mode`
 - Runtime lock: auth
@@ -2074,23 +2184,39 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### SET_AUTO_DYNAMIC_INFERENCE
 
-- Signature: `SET_AUTO_DYNAMIC_INFERENCE(on|off)` (help_text)
-- Summary: Allow Aurora to adapt the next turn's model settings automatically.
+- Signature: `SET_AUTO_DYNAMIC_INFERENCE([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_auto_dynamic_inference_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_AUTO_PROMPT
 
-- Signature: `SET_AUTO_PROMPT(on|off)` (help_text)
-- Summary: Explicitly enable or disable auto prompting.
+- Signature: `SET_AUTO_PROMPT([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_auto_prompt_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_BATTLE_REASONING_EFFORT
 
@@ -2112,6 +2238,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
 
+### SET_CAPTURE_GEOMETRY_POLICY
+
+- Signature: `SET_CAPTURE_GEOMETRY_POLICY([value])` (reviewed_contract)
+- Summary: Set capture.geometry_policy, or omit value to read it. Verified captures an explicit physical rectangle; legacy keeps startup scaling and default desktop grabs.
+- Handler: `set_capture_geometry_policy_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read capture.geometry_policy when omitted; otherwise set it in this runtime session. Verified captures an explicit physical rectangle; legacy keeps startup scaling and default desktop grabs. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["verified", "legacy"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `capture.geometry_policy`
+- Runtime lock: screenshot_interval
+- Apply timing: next_acquisition
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
 ### SET_CAPTURE_MODE
 
 - Signature: `SET_CAPTURE_MODE([value])` (reviewed_contract)
@@ -2129,6 +2279,102 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Registered setting: `capture.mode`
 - Runtime lock: screenshot_interval
 - Apply timing: next_capture_cycle
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_CAPTURE_PROVENANCE_POLICY
+
+- Signature: `SET_CAPTURE_PROVENANCE_POLICY([value])` (reviewed_contract)
+- Summary: Set capture.provenance_policy, or omit value to read it. Verified requires pixels acquired after the action settle boundary; legacy retains counter/clock freshness checks.
+- Handler: `set_capture_provenance_policy_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read capture.provenance_policy when omitted; otherwise set it in this runtime session. Verified requires pixels acquired after the action settle boundary; legacy retains counter/clock freshness checks. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["verified", "legacy"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `capture.provenance_policy`
+- Runtime lock: screenshot_interval
+- Apply timing: next_scheduler_check
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_CAPTURE_REQUEST_ATTEMPTS
+
+- Signature: `SET_CAPTURE_REQUEST_ATTEMPTS([value])` (reviewed_contract)
+- Summary: Set capture.request_max_attempts, or omit value to read it. Maximum acquisition attempts for one request; zero preserves unlimited retries. Legacy drawing recapture shares its parent's attempt.
+- Handler: `set_capture_request_attempts_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read capture.request_max_attempts when omitted; otherwise set it in this runtime session. Maximum acquisition attempts for one request; zero preserves unlimited retries. Legacy drawing recapture shares its parent's attempt. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"minimum": 0, "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "integer"}`
+
+- Registered setting: `capture.request_max_attempts`
+- Runtime lock: screenshot_interval
+- Apply timing: next_capture_request
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_CAPTURE_REQUEST_TIMEOUT
+
+- Signature: `SET_CAPTURE_REQUEST_TIMEOUT([value])` (reviewed_contract)
+- Summary: Set capture.request_timeout_seconds, or omit value to read it. Total monotonic deadline from request admission through settle, acquisition, drawing and publication. Zero preserves unlimited waiting.
+- Handler: `set_capture_request_timeout_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read capture.request_timeout_seconds when omitted; otherwise set it in this runtime session. Total monotonic deadline from request admission through settle, acquisition, drawing and publication. Zero preserves unlimited waiting. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"finite": true, "minimum": 0.0, "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "number"}`
+
+- Registered setting: `capture.request_timeout_seconds`
+- Runtime lock: screenshot_interval
+- Apply timing: next_capture_request
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_CAPTURE_TARGET
+
+- Signature: `SET_CAPTURE_TARGET([value])` (reviewed_contract)
+- Summary: Set capture.target, or omit value to read it. Choose primary monitor, virtual desktop or foreground window for verified geometry.
+- Handler: `set_capture_target_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read capture.target when omitted; otherwise set it in this runtime session. Choose primary monitor, virtual desktop or foreground window for verified geometry. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["legacy_options", "primary", "virtual", "foreground"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `capture.target`
+- Runtime lock: screenshot_interval
+- Apply timing: next_verified_acquisition
 - Related effects: See setting metadata for application timing.
 
 - Result protocol: `aurora_setting_command_result_v1`
@@ -2188,13 +2434,21 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### SET_CHAT_HEAD_TOPMOST
 
-- Signature: `SET_CHAT_HEAD_TOPMOST(on|off)` (help_text)
-- Summary: Control whether the chat-head windows stay topmost.
+- Signature: `SET_CHAT_HEAD_TOPMOST([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_chat_head_topmost_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_CHAT_LOG_ECHO
 
@@ -2228,23 +2482,39 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED
 
-- Signature: `SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED(on|off)` (help_text)
-- Summary: Show or hide likely dropped candidates in the drip tree.
+- Signature: `SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_command_drip_show_likely_dropped_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_COMMAND_DRIP_SHOW_VARIANTS
 
-- Signature: `SET_COMMAND_DRIP_SHOW_VARIANTS(on|off)` (help_text)
-- Summary: Show or hide near-miss command variants in the drip tree.
+- Signature: `SET_COMMAND_DRIP_SHOW_VARIANTS([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_command_drip_show_variants_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_CONTEXT_MARK_APPROVAL
 
@@ -2342,13 +2612,21 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### SET_EPISODIC_MEMORY
 
-- Signature: `SET_EPISODIC_MEMORY(on|off)` (help_text)
-- Summary: Enable or disable compact episodic snapshot writing.
+- Signature: `SET_EPISODIC_MEMORY([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_episodic_memory_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_EPISODIC_MEMORY_INTERVAL
 
@@ -2362,23 +2640,39 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### SET_EPISODIC_MEMORY_PERIODIC
 
-- Signature: `SET_EPISODIC_MEMORY_PERIODIC(on|off)` (help_text)
-- Summary: Enable or disable periodic episodic snapshot writes.
+- Signature: `SET_EPISODIC_MEMORY_PERIODIC([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_episodic_memory_periodic_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_EPISODIC_MEMORY_SCENE_TRIGGER
 
-- Signature: `SET_EPISODIC_MEMORY_SCENE_TRIGGER(on|off)` (help_text)
-- Summary: Enable or disable scene-change episodic snapshot writes.
+- Signature: `SET_EPISODIC_MEMORY_SCENE_TRIGGER([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_episodic_memory_scene_trigger_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_EPISODIC_PLANNING_ASSIST
 
@@ -2434,6 +2728,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
 - Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
 
+### SET_GAMEPLAY_SCENE_POLICY
+
+- Signature: `SET_GAMEPLAY_SCENE_POLICY([value])` (reviewed_contract)
+- Summary: Set game.scene_policy, or omit value to read it. Evidence uses fresh model observation/scene sections with token boundaries and conflict checks. Legacy retains mixed-context substring inference.
+- Handler: `set_gameplay_scene_policy_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read game.scene_policy when omitted; otherwise set it in this runtime session. Evidence uses fresh model observation/scene sections with token boundaries and conflict checks. Legacy retains mixed-context substring inference. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["evidence", "legacy"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `game.scene_policy`
+- Runtime lock: action
+- Apply timing: next_scene_evaluation
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
 ### SET_GAME_PROFILE
 
 - Signature: `SET_GAME_PROFILE([value])` (reviewed_contract)
@@ -2451,6 +2769,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Registered setting: `game.profile`
 - Runtime lock: none
 - Apply timing: next_gameplay_reasoning
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_GOAL_SAVE_FORMAT
+
+- Signature: `SET_GOAL_SAVE_FORMAT([value])` (reviewed_contract)
+- Summary: Set goals.save_format, or omit value to read it. Versioned saves add a schema envelope; legacy preserves the existing task document shape. Both use recursive IDs, validation and atomic replacement.
+- Handler: `set_goal_save_format_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read goals.save_format when omitted; otherwise set it in this runtime session. Versioned saves add a schema envelope; legacy preserves the existing task document shape. Both use recursive IDs, validation and atomic replacement. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["versioned", "legacy"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `goals.save_format`
+- Runtime lock: execution
+- Apply timing: next_explicit_save
 - Related effects: See setting metadata for application timing.
 
 - Result protocol: `aurora_setting_command_result_v1`
@@ -2494,23 +2836,63 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### SET_IMPORTANT_MESSAGES
 
-- Signature: `SET_IMPORTANT_MESSAGES(on|off)` (help_text)
-- Summary: Explicitly enable or disable important messages.
+- Signature: `SET_IMPORTANT_MESSAGES([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_important_messages_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_IMSGS_DECAY_CHECK
 
-- Signature: `SET_IMSGS_DECAY_CHECK(on|off)` (help_text)
-- Summary: Explicitly control important-message decay checks.
+- Signature: `SET_IMSGS_DECAY_CHECK([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_imsgs_decay_check_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
+
+### SET_INIT_DELIVERY
+
+- Signature: `SET_INIT_DELIVERY([value])` (reviewed_contract)
+- Summary: Set context.init_delivery, or omit value to read it. System once omits exact Init history copies only when the full text is already in the system prompt. Stored history is preserved.
+- Handler: `set_init_delivery_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read context.init_delivery when omitted; otherwise set it in this runtime session. System once omits exact Init history copies only when the full text is already in the system prompt. Stored history is preserved. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["legacy", "system_once"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `context.init_delivery`
+- Runtime lock: live_init
+- Apply timing: next_model_turn
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
 
 ### SET_KEYPOINT_GRID
 
@@ -2650,7 +3032,7 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
 
-- Parameter: `{"accepted_aliases": {"detail": "image_detail", "latest_detail": "latest_image_detail", "reasoning": "reasoning_effort", "summary": "summary_mode", "verbosity_level": "verbosity"}, "assignment": ["=", ":"], "keys": ["reasoning_effort", "verbosity", "image_detail", "latest_image_detail", "temperature", "model", "text_model", "vision_model", "reasoning_model", "summary_mode", "note", "target_turn"], "name": "options", "omitted": "read_current_plan", "option_schema": {"additionalProperties": false, "properties": {"image_detail": {"enum": ["low", "high", "auto", "original"], "setting_contract": "vision.image_detail", "type": "string"}, "latest_image_detail": {"enum": ["low", "high", "auto", "original"], "setting_contract": "vision.image_detail", "type": "string"}, "model": {"setting_contract": "model.text", "type": "string"}, "note": {"type": "string"}, "reasoning_effort": {"enum": ["minimal", "none", "low", "medium", "high", "xhigh", "max"], "setting_contract": "inference.reasoning_effort", "type": "string"}, "reasoning_model": {"setting_contract": "model.reasoning", "type": "string"}, "summary_mode": {"enum": ["auto", "none", "brief", "detailed"], "type": "string"}, "target_turn": {"default": 0, "maximum": 9223372036854775807, "minimum": 0, "type": "integer", "zero": "next_turn"}, "temperature": {"finite": true, "maximum": 2.0, "minimum": 0.0, "setting_contract": "inference.temperature", "type": "number"}, "text_model": {"setting_contract": "model.text", "type": "string"}, "verbosity": {"enum": ["low", "medium", "high"], "setting_contract": "inference.verbosity", "type": "string"}, "vision_model": {"setting_contract": "model.vision", "type": "string"}}, "type": "object"}, "required": false, "separators": ["semicolon", "newline", "separate command arguments"], "type": "string", "variadic": true}`
+- Parameter: `{"accepted_aliases": {"detail": "image_detail", "latest_detail": "latest_image_detail", "reasoning": "reasoning_effort", "summary": "summary_mode", "verbosity_level": "verbosity"}, "assignment": ["=", ":"], "keys": ["service_tier", "reasoning_effort", "verbosity", "image_detail", "latest_image_detail", "temperature", "model", "text_model", "vision_model", "reasoning_model", "summary_mode", "note", "target_turn"], "name": "options", "omitted": "read_current_plan", "option_schema": {"additionalProperties": false, "properties": {"image_detail": {"enum": ["low", "high", "auto", "original"], "setting_contract": "vision.image_detail", "type": "string"}, "latest_image_detail": {"enum": ["low", "high", "auto", "original"], "setting_contract": "vision.image_detail", "type": "string"}, "model": {"setting_contract": "model.text", "type": "string"}, "note": {"type": "string"}, "reasoning_effort": {"enum": ["minimal", "none", "low", "medium", "high", "xhigh", "max"], "setting_contract": "inference.reasoning_effort", "type": "string"}, "reasoning_model": {"setting_contract": "model.reasoning", "type": "string"}, "service_tier": {"enum": ["regular", "priority", "ultrafast"], "setting_contract": "inference.service_tier", "type": "string"}, "summary_mode": {"enum": ["auto", "none", "brief", "detailed"], "type": "string"}, "target_turn": {"default": 0, "maximum": 9223372036854775807, "minimum": 0, "type": "integer", "zero": "next_turn"}, "temperature": {"finite": true, "maximum": 2.0, "minimum": 0.0, "setting_contract": "inference.temperature", "type": "number"}, "text_model": {"setting_contract": "model.text", "type": "string"}, "verbosity": {"enum": ["low", "medium", "high"], "setting_contract": "inference.verbosity", "type": "string"}, "vision_model": {"setting_contract": "model.vision", "type": "string"}}, "type": "object"}, "required": false, "separators": ["semicolon", "newline", "separate command arguments"], "type": "string", "variadic": true}`
 
 - Result protocol: `aurora_inference_plan_result_v1`
 - Receipt field: `inference_plan_results`
@@ -2726,6 +3108,54 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Aliases: none
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
+
+### SET_READBACK_SCOPE
+
+- Signature: `SET_READBACK_SCOPE([value])` (reviewed_contract)
+- Summary: Set scheduler.readback_scope, or omit value to read it. Discovery preserves history-based lookup delivery; reviewed additionally includes bounded task-correlated settings, goals, history and retrieval receipts.
+- Handler: `set_readback_scope_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read scheduler.readback_scope when omitted; otherwise set it in this runtime session. Discovery preserves history-based lookup delivery; reviewed additionally includes bounded task-correlated settings, goals, history and retrieval receipts. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["discovery", "reviewed"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `scheduler.readback_scope`
+- Runtime lock: reasoning
+- Apply timing: next_receipt_and_request
+- Related effects: A scheduler profile changes its timing/wake bundle; manual scheduler values may change the profile readback.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_READBACK_WAKE
+
+- Signature: `SET_READBACK_WAKE([value])` (reviewed_contract)
+- Summary: Set scheduler.readback_wake_enabled, or omit value to read it. Wake a follow-up for eligible discovery or reviewed receipt data, according to readback scope. Requires bounded task mode.
+- Handler: `set_readback_wake_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read scheduler.readback_wake_enabled when omitted; otherwise set it in this runtime session. Wake a follow-up for eligible discovery or reviewed receipt data, according to readback scope. Requires bounded task mode. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "true", "1", "yes", "off", "false", "0", "no"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Registered setting: `scheduler.readback_wake_enabled`
+- Runtime lock: reasoning
+- Apply timing: immediate_scheduler
+- Related effects: A scheduler profile changes its timing/wake bundle; manual scheduler values may change the profile readback.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
 
 ### SET_REASONING_EFFORT
 
@@ -2839,6 +3269,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
 - Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
 
+### SET_SERVICE_TIER
+
+- Signature: `SET_SERVICE_TIER([value])` (reviewed_contract)
+- Summary: Set inference.service_tier, or omit value to read it. Requested service priority, independent of reasoning effort. Regular omits acceleration; subscription catalog must advertise other tiers.
+- Handler: `set_service_tier_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read inference.service_tier when omitted; otherwise set it in this runtime session. Requested service priority, independent of reasoning effort. Regular omits acceleration; subscription catalog must advertise other tiers. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_aliases": {"fast": "priority"}, "enum": ["regular", "priority", "ultrafast"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `inference.service_tier`
+- Runtime lock: reasoning
+- Apply timing: next_model_turn
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
 ### SET_SESSION_REASONING_EFFORT
 
 - Signature: `SET_SESSION_REASONING_EFFORT([value])` (reviewed_contract)
@@ -2865,43 +3319,75 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### SET_SHOW_AI_COMMANDS
 
-- Signature: `SET_SHOW_AI_COMMANDS(on|off)` (help_text)
-- Summary: Explicitly control AI command visibility.
+- Signature: `SET_SHOW_AI_COMMANDS([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_show_ai_commands_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_SHOW_AI_TEXT
 
-- Signature: `SET_SHOW_AI_TEXT(on|off)` (help_text)
-- Summary: Explicitly control AI text visibility.
+- Signature: `SET_SHOW_AI_TEXT([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_show_ai_text_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_SHOW_USER_COMMANDS
 
-- Signature: `SET_SHOW_USER_COMMANDS(on|off)` (help_text)
-- Summary: Explicitly control user command visibility.
+- Signature: `SET_SHOW_USER_COMMANDS([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_show_user_commands_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_SHOW_USER_TEXT
 
-- Signature: `SET_SHOW_USER_TEXT(on|off)` (help_text)
-- Summary: Explicitly control user text visibility.
+- Signature: `SET_SHOW_USER_TEXT([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_show_user_text_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_SOUND_EFFECTS
 
@@ -2932,6 +3418,78 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Aliases: none
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
+
+### SET_TASK_CONTINUATION
+
+- Signature: `SET_TASK_CONTINUATION([value])` (reviewed_contract)
+- Summary: Set task.continuation_mode, or omit value to read it. Bounded limits all model slots/wake reasons in one task; legacy retains unrestricted scheduler behavior.
+- Handler: `set_task_continuation_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read task.continuation_mode when omitted; otherwise set it in this runtime session. Bounded limits all model slots/wake reasons in one task; legacy retains unrestricted scheduler behavior. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["legacy", "bounded"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `task.continuation_mode`
+- Runtime lock: execution
+- Apply timing: immediate
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_TASK_MAX_MODEL_TURNS
+
+- Signature: `SET_TASK_MAX_MODEL_TURNS([value])` (reviewed_contract)
+- Summary: Set task.max_model_turns, or omit value to read it. Maximum model-turn admissions, across primary/review slots. Latched at the next task start.
+- Handler: `set_task_max_model_turns_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read task.max_model_turns when omitted; otherwise set it in this runtime session. Maximum model-turn admissions, across primary/review slots. Latched at the next task start. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"maximum": 10000, "minimum": 1, "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "integer"}`
+
+- Registered setting: `task.max_model_turns`
+- Runtime lock: execution
+- Apply timing: next_task
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_TASK_MAX_SECONDS
+
+- Signature: `SET_TASK_MAX_SECONDS([value])` (reviewed_contract)
+- Summary: Set task.max_seconds, or omit value to read it. Elapsed-time admission limit; late model responses cannot launch new commands. Latched at next task start.
+- Handler: `set_task_max_seconds_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read task.max_seconds when omitted; otherwise set it in this runtime session. Elapsed-time admission limit; late model responses cannot launch new commands. Latched at next task start. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"finite": true, "maximum": 86400, "minimum": 1, "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "number"}`
+
+- Registered setting: `task.max_seconds`
+- Runtime lock: execution
+- Apply timing: next_task
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
 
 ### SET_TEMPERATURE
 
@@ -3052,16 +3610,16 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 ### SET_TURN_HEARTBEAT_SECONDS
 
 - Signature: `SET_TURN_HEARTBEAT_SECONDS([value])` (reviewed_contract)
-- Summary: Set scheduler.heartbeat_seconds, or omit value to read it. Maximum quiet interval before the scheduler heartbeat can wake a turn.
+- Summary: Set scheduler.heartbeat_seconds, or omit value to read it. Maximum quiet interval before a heartbeat can wake a turn; zero explicitly disables periodic model turns.
 - Handler: `set_turn_heartbeat_seconds_command`
 - Binding: runtime
 - Aliases: none
 - Parameter validation: pre_dispatch
-- Effects: Read scheduler.heartbeat_seconds when omitted; otherwise set it in this runtime session. Maximum quiet interval before the scheduler heartbeat can wake a turn. Saved defaults are unchanged.
+- Effects: Read scheduler.heartbeat_seconds when omitted; otherwise set it in this runtime session. Maximum quiet interval before a heartbeat can wake a turn; zero explicitly disables periodic model turns. Saved defaults are unchanged.
 
 Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
 
-- Parameter: `{"finite": true, "minimum": 0.25, "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "number"}`
+- Parameter: `{"finite": true, "minimum": 0.0, "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "number"}`
 
 - Registered setting: `scheduler.heartbeat_seconds`
 - Runtime lock: reasoning
@@ -3171,23 +3729,39 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### SET_UMSGS_DECAY_CHECK
 
-- Signature: `SET_UMSGS_DECAY_CHECK(on|off)` (help_text)
-- Summary: Explicitly control unimportant-message decay checks.
+- Signature: `SET_UMSGS_DECAY_CHECK([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_umsgs_decay_check_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_UNIMPORTANT_MESSAGES
 
-- Signature: `SET_UNIMPORTANT_MESSAGES(on|off)` (help_text)
-- Summary: Explicitly enable or disable unimportant messages.
+- Signature: `SET_UNIMPORTANT_MESSAGES([on|off])` (reviewed_contract)
+- Summary: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - Handler: `set_unimportant_messages_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"], "name": "enabled", "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Result protocol: `boolean_handler_result`
+- Verification: Query or inspect runtime state; no versioned setting receipt is implied.
+- Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
 ### SET_VISION_MODEL
 
@@ -4232,13 +4806,21 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### TASKS
 
-- Signature: `TASKS(...)` (placeholder)
-- Summary: Inspect the handler; detailed usage has not been reviewed.
+- Signature: `TASKS()` (reviewed_contract)
+- Summary: Unimplemented legacy placeholder: reports failure and stops the batch tail; does not start inference.
 - Handler: `tasks_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: unsupported
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+- Verification: Scoped before/after fingerprints, bounded readback and explicit changed/unchanged/uncertain result; not a full-memory concurrency guarantee.
+- Failure policy: Validate syntax before batch effects; runtime failures stop the tail. Applied effects are not automatically rolled back or replayed.
 
 ### TOGGLE_ADD_IMSGS_TO_HISTORY
 
@@ -4507,33 +5089,82 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### UPDATE_LONG_TERM_CONTEXT
 
-- Signature: `UPDATE_LONG_TERM_CONTEXT(items)` (help_text)
-- Summary: Set long-horizon strategic context; separate with semicolons.
+- Signature: `UPDATE_LONG_TERM_CONTEXT(text...)` (reviewed_contract)
+- Summary: Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it.
 - Handler: `update_long_term_context_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: long_term_context
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "text", "required": true, "type": "string", "variadic": true}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+- Verification: Scoped before/after fingerprints, bounded readback and explicit changed/unchanged/uncertain result; not a full-memory concurrency guarantee.
+- Failure policy: Validate syntax before batch effects; runtime failures stop the tail. Applied effects are not automatically rolled back or replayed.
+
+### UPDATE_MESSAGE
+
+- Signature: `UPDATE_MESSAGE(message_id, revision, text_json_base64url, on|off|keep)` (reviewed_contract)
+- Summary: Use the current conversation ID/revision and base64url-encoded JSON text. Stale/missing/ambiguous IDs fail without mutation. Managed protection cannot be changed. Existing timestamp EDIT_MSGS and PIN(text) remain available.
+- Handler: `update_message_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Atomically edit/pin one retained text message through the shared history authority.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "message_id", "required": true, "type": "string"}`
+- Parameter: `{"name": "revision", "required": true, "type": "string"}`
+- Parameter: `{"name": "text_json_base64url", "required": true, "type": "string"}`
+- Parameter: `{"enum": ["on", "off", "keep"], "name": "pin", "required": true, "type": "string"}`
+
+- Result protocol: `aurora_history_command_result_v1`
+- Receipt field: `history_command_results`
+- Verification: Before/after history versions and message readback.
+- Failure policy: Validate before effects; stale edits stop the raw batch; cancel stale model work on change.
 
 ### UPDATE_MID_TERM_CONTEXT
 
-- Signature: `UPDATE_MID_TERM_CONTEXT(items)` (help_text)
-- Summary: Set the medium-horizon context or plan; separate with semicolons.
+- Signature: `UPDATE_MID_TERM_CONTEXT(text...)` (reviewed_contract)
+- Summary: Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it.
 - Handler: `update_mid_term_context_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: mid_term_context
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "text", "required": true, "type": "string", "variadic": true}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+- Verification: Scoped before/after fingerprints, bounded readback and explicit changed/unchanged/uncertain result; not a full-memory concurrency guarantee.
+- Failure policy: Validate syntax before batch effects; runtime failures stop the tail. Applied effects are not automatically rolled back or replayed.
 
 ### UPDATE_NOTES
 
-- Signature: `UPDATE_NOTES(items)` (help_text)
-- Summary: Set stable notes/reminders; separate with semicolons.
+- Signature: `UPDATE_NOTES(text)` (reviewed_contract)
+- Summary: Replace the semicolon-delimited notes list; explicit empty text clears it.
 - Handler: `update_notes_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: notes
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "text", "required": true, "type": "string", "variadic": false}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+- Verification: Scoped before/after fingerprints, bounded readback and explicit changed/unchanged/uncertain result; not a full-memory concurrency guarantee.
+- Failure policy: Validate syntax before batch effects; runtime failures stop the tail. Applied effects are not automatically rolled back or replayed.
 
 ### UPDATE_PARTY
 
@@ -4547,23 +5178,41 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 ### UPDATE_PINNED_IMMEDIATE
 
-- Signature: `UPDATE_PINNED_IMMEDIATE(actions)` (help_text)
-- Summary: Set the immediate next actions; separate with semicolons.
+- Signature: `UPDATE_PINNED_IMMEDIATE(text...)` (reviewed_contract)
+- Summary: Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it.
 - Handler: `update_pinned_immediate_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: pinned_immediate_actions
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "text", "required": true, "type": "string", "variadic": true}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+- Verification: Scoped before/after fingerprints, bounded readback and explicit changed/unchanged/uncertain result; not a full-memory concurrency guarantee.
+- Failure policy: Validate syntax before batch effects; runtime failures stop the tail. Applied effects are not automatically rolled back or replayed.
 
 ### UPDATE_PINNED_SHORT_TERM
 
-- Signature: `UPDATE_PINNED_SHORT_TERM(actions)` (help_text)
-- Summary: Set the soon-ish action list; separate with semicolons.
+- Signature: `UPDATE_PINNED_SHORT_TERM(text...)` (reviewed_contract)
+- Summary: Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it.
 - Handler: `update_pinned_short_term_command`
 - Binding: runtime
 - Aliases: none
-- Parameter validation: legacy_handler
-- Effects: not_reviewed
+- Parameter validation: pre_dispatch
+- Effects: pinned_short_term_actions
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "text", "required": true, "type": "string", "variadic": true}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+- Verification: Scoped before/after fingerprints, bounded readback and explicit changed/unchanged/uncertain result; not a full-memory concurrency guarantee.
+- Failure policy: Validate syntax before batch effects; runtime failures stop the tail. Applied effects are not automatically rolled back or replayed.
 
 ### UPDATE_RECENT_MOVEMENT_RESULTS
 

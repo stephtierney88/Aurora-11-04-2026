@@ -1,312 +1,314 @@
 # Aurora 2 UI Generated Call Tree
 
-## `AuroraControlPanel._build_ui` `L2408`
+## `AuroraControlPanel._build_ui` `L2467`
 
 - Domain: Layout / Tabs
 - Summary: No docstring summary.
 - Internal calls:
-  - `AuroraControlPanel._apply_settings_mode` `L2670`
-    - `AuroraControlPanel._schedule_sash_clamp` `L2692`
-  - `AuroraControlPanel._build_agents_tab` `L4340`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.send_raw` `L5064`
-    - `AuroraControlPanel.show_tab` `L14010`
-  - `AuroraControlPanel._build_chat_tab` `L4117`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.set_log_limit` `L8832`
-  - `AuroraControlPanel._build_command_drip_tab` `L4097`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.send_raw` `L5064`
-  - `AuroraControlPanel._build_command_tab` `L4241`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.set_log_limit` `L8832`
-  - `AuroraControlPanel._build_context_files_tab` `L4640`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.show_tab` `L14010`
-  - `AuroraControlPanel._build_conversation_tab` `L4129`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.render_conversation` `L4205`
-    - `AuroraControlPanel.show_tab` `L14010`
-  - `AuroraControlPanel._build_dashboard_tab` `L3671`
-    - `AuroraControlPanel._dashboard_detail_widget` `L3760`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel._write_text` `L13995`
-    - `AuroraControlPanel.open_dashboard_popout` `L4873`
-    - `AuroraControlPanel.refresh_dashboard` `L4950`
-  - `AuroraControlPanel._build_episodic_tab` `L3823`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._build_episodic_search_filters` `L6087`
-    - `AuroraControlPanel._build_episodic_visual_search` `L6130`
-    - `AuroraControlPanel._draw_episodic_score_results` `L6231`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.send_raw` `L5064`
-  - `AuroraControlPanel._build_feedback_card` `L3613`
-    - `AuroraControlPanel.show_tab` `L14010`
-  - `AuroraControlPanel._build_help_tab` `L4841`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel._write_text` `L13995`
-  - `AuroraControlPanel._build_history_context_tab` `L4459`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.send_raw` `L5064`
-    - `AuroraControlPanel.show_tab` `L14010`
-  - `AuroraControlPanel._build_image_context_index_tab` `L4535`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.send_raw` `L5064`
-    - `AuroraControlPanel.show_tab` `L14010`
-  - `AuroraControlPanel._build_image_memory_tab` `L4803`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.open_image_memory_popout` `L9157`
-    - `AuroraControlPanel.step_image_memory` `L7313`
-  - `AuroraControlPanel._build_live_harness_tab` `L4564`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.apply_operator_profile` `L6606`
-    - `AuroraControlPanel.send_raw` `L5064`
-    - `AuroraControlPanel.show_tab` `L14010`
-  - `AuroraControlPanel._build_memory_tab` `L3810`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._new_work_page` `L2511`
-  - `AuroraControlPanel._build_overview_tab` `L3634`
-    - `AuroraControlPanel._new_work_page` `L2511`
-  - `AuroraControlPanel._build_pending_tab` `L4026`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.send_raw` `L5064`
-  - `AuroraControlPanel._build_portal_intake_tab` `L4488`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.send_raw` `L5064`
-    - `AuroraControlPanel.show_tab` `L14010`
-  - `AuroraControlPanel._build_prompt_ledger_tab` `L4253`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.send_raw` `L5064`
-    - `AuroraControlPanel.show_tab` `L14010`
-  - `AuroraControlPanel._build_quick_controls` `L2567`
-    - `AuroraControlPanel._draw_chat_head_toggle_button` `L5533`
-    - `AuroraControlPanel._new_settings_section` `L2517`
-    - `AuroraControlPanel._register_widget_locks` `L2227`
-    - `AuroraControlPanel.send_raw` `L5064`
-  - `AuroraControlPanel._build_raw_tab` `L4852`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._new_work_page` `L2511`
-  - `AuroraControlPanel._build_responses_shadow_tab` `L4598`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.send_raw` `L5064`
-    - `AuroraControlPanel.show_tab` `L14010`
-  - `AuroraControlPanel._build_runtime_status_strip` `L2381`
-    - `AuroraControlPanel._load_runtime_orb_assets` `L2273`
-    - `AuroraControlPanel._register_widget_locks` `L2227`
-    - `AuroraControlPanel.send_raw` `L5064`
-  - `AuroraControlPanel._build_screenshots_tab` `L4764`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.open_screenshot_popout` `L9061`
-    - `AuroraControlPanel.step_screenshot` `L7294`
-  - `AuroraControlPanel._build_settings_card` `L2735`
-    - `AuroraControlPanel._new_settings_section` `L2517`
-    - `AuroraControlPanel._register_widget_locks` `L2227`
-    - `AuroraControlPanel.apply_additional_settings` `L6899`
-    - `AuroraControlPanel.apply_model_preset` `L6540`
-    - `AuroraControlPanel.apply_operator_profile` `L6606`
-    - `AuroraControlPanel.apply_overlay_preset` `L6587`
-    - `AuroraControlPanel.apply_settings` `L6911`
-    - `AuroraControlPanel.apply_stateful_model_preset` `L6574`
-    - `AuroraControlPanel.send_raw` `L5064`
-    - `AuroraControlPanel.show_tab` `L14010`
-  - `AuroraControlPanel._build_settings_safety_tab` `L4661`
-    - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.apply_operator_profile` `L6606`
-    - `AuroraControlPanel.confirm_and_send_raw` `L5529`
-    - `AuroraControlPanel.send_raw` `L5064`
-    - `AuroraControlPanel.show_tab` `L14010`
-  - `AuroraControlPanel._build_sidebar_runtime_details` `L2550`
-    - `AuroraControlPanel._adjust_banner_offset` `L6422`
-    - `AuroraControlPanel._new_settings_section` `L2517`
-    - `AuroraControlPanel._render_runtime_banner` `L6438`
-    - `AuroraControlPanel.open_banner_dialog` `L6488`
-  - `AuroraControlPanel._build_switchboard_tab` `L4236`
-    - `AuroraControlPanel._new_work_page` `L2511`
-  - `AuroraControlPanel._build_visual_context_tab` `L4514`
-    - `AuroraControlPanel._new_work_page` `L2511`
-    - `AuroraControlPanel.show_tab` `L14010`
-  - `AuroraControlPanel._expand_all_settings` `L2531`
-  - `AuroraControlPanel._protect_unfocused_combobox_wheel` `L2660`
-  - `AuroraControlPanel._sync_focus_nav_state` `L14025`
-    - `AuroraControlPanel._get_active_tab_name` `L14096`
-  - `AuroraControlPanel.show_tab` `L14010`
-    - `AuroraControlPanel._apply_settings_mode` `L2670`
-    - `AuroraControlPanel._sync_focus_nav_state` `L14025`
+  - `AuroraControlPanel._apply_header_layout` `L2444`
+  - `AuroraControlPanel._apply_settings_mode` `L2743`
+    - `AuroraControlPanel._schedule_sash_clamp` `L2765`
+  - `AuroraControlPanel._build_agents_tab` `L4527`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.send_raw` `L5234`
+    - `AuroraControlPanel.show_tab` `L14200`
+  - `AuroraControlPanel._build_chat_tab` `L4232`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.set_log_limit` `L9012`
+  - `AuroraControlPanel._build_command_drip_tab` `L4212`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.send_raw` `L5234`
+  - `AuroraControlPanel._build_command_tab` `L4428`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.set_log_limit` `L9012`
+  - `AuroraControlPanel._build_context_files_tab` `L4827`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.show_tab` `L14200`
+  - `AuroraControlPanel._build_conversation_tab` `L4244`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.render_conversation` `L4385`
+    - `AuroraControlPanel.show_tab` `L14200`
+  - `AuroraControlPanel._build_dashboard_tab` `L3744`
+    - `AuroraControlPanel._dashboard_detail_widget` `L3842`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel._write_text` `L14175`
+    - `AuroraControlPanel.open_dashboard_popout` `L5060`
+    - `AuroraControlPanel.refresh_dashboard` `L5137`
+  - `AuroraControlPanel._build_episodic_tab` `L3938`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._build_episodic_search_filters` `L6257`
+    - `AuroraControlPanel._build_episodic_visual_search` `L6300`
+    - `AuroraControlPanel._draw_episodic_score_results` `L6401`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.send_raw` `L5234`
+  - `AuroraControlPanel._build_feedback_card` `L3686`
+    - `AuroraControlPanel.show_tab` `L14200`
+  - `AuroraControlPanel._build_help_tab` `L5028`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel._write_text` `L14175`
+  - `AuroraControlPanel._build_history_context_tab` `L4646`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.send_raw` `L5234`
+    - `AuroraControlPanel.show_tab` `L14200`
+  - `AuroraControlPanel._build_image_context_index_tab` `L4722`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.send_raw` `L5234`
+    - `AuroraControlPanel.show_tab` `L14200`
+  - `AuroraControlPanel._build_image_memory_tab` `L4990`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.open_image_memory_popout` `L9337`
+    - `AuroraControlPanel.step_image_memory` `L7483`
+  - `AuroraControlPanel._build_live_harness_tab` `L4751`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.apply_operator_profile` `L6776`
+    - `AuroraControlPanel.send_raw` `L5234`
+    - `AuroraControlPanel.show_tab` `L14200`
+  - `AuroraControlPanel._build_memory_tab` `L3925`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._new_work_page` `L2584`
+  - `AuroraControlPanel._build_overview_tab` `L3707`
+    - `AuroraControlPanel._new_work_page` `L2584`
+  - `AuroraControlPanel._build_pending_tab` `L4141`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.send_raw` `L5234`
+  - `AuroraControlPanel._build_portal_intake_tab` `L4675`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.send_raw` `L5234`
+    - `AuroraControlPanel.show_tab` `L14200`
+  - `AuroraControlPanel._build_prompt_ledger_tab` `L4440`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.send_raw` `L5234`
+    - `AuroraControlPanel.show_tab` `L14200`
+  - `AuroraControlPanel._build_quick_controls` `L2640`
+    - `AuroraControlPanel._draw_chat_head_toggle_button` `L5703`
+    - `AuroraControlPanel._new_settings_section` `L2590`
+    - `AuroraControlPanel._register_widget_locks` `L2247`
+    - `AuroraControlPanel.send_raw` `L5234`
+  - `AuroraControlPanel._build_raw_tab` `L5039`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._new_work_page` `L2584`
+  - `AuroraControlPanel._build_responses_shadow_tab` `L4785`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.send_raw` `L5234`
+    - `AuroraControlPanel.show_tab` `L14200`
+  - `AuroraControlPanel._build_runtime_status_strip` `L2410`
+    - `AuroraControlPanel._load_runtime_orb_assets` `L2302`
+    - `AuroraControlPanel._register_widget_locks` `L2247`
+    - `AuroraControlPanel.send_raw` `L5234`
+  - `AuroraControlPanel._build_screenshots_tab` `L4951`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.open_screenshot_popout` `L9241`
+    - `AuroraControlPanel.step_screenshot` `L7464`
+  - `AuroraControlPanel._build_settings_card` `L2808`
+    - `AuroraControlPanel._new_settings_section` `L2590`
+    - `AuroraControlPanel._register_widget_locks` `L2247`
+    - `AuroraControlPanel.apply_additional_settings` `L7069`
+    - `AuroraControlPanel.apply_model_preset` `L6710`
+    - `AuroraControlPanel.apply_operator_profile` `L6776`
+    - `AuroraControlPanel.apply_overlay_preset` `L6757`
+    - `AuroraControlPanel.apply_settings` `L7081`
+    - `AuroraControlPanel.apply_stateful_model_preset` `L6744`
+    - `AuroraControlPanel.send_raw` `L5234`
+    - `AuroraControlPanel.show_tab` `L14200`
+  - `AuroraControlPanel._build_settings_safety_tab` `L4848`
+    - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.apply_operator_profile` `L6776`
+    - `AuroraControlPanel.confirm_and_send_raw` `L5699`
+    - `AuroraControlPanel.send_raw` `L5234`
+    - `AuroraControlPanel.show_tab` `L14200`
+  - `AuroraControlPanel._build_sidebar_runtime_details` `L2623`
+    - `AuroraControlPanel._adjust_banner_offset` `L6592`
+    - `AuroraControlPanel._new_settings_section` `L2590`
+    - `AuroraControlPanel._render_runtime_banner` `L6608`
+    - `AuroraControlPanel.open_banner_dialog` `L6658`
+  - `AuroraControlPanel._build_switchboard_tab` `L4423`
+    - `AuroraControlPanel._new_work_page` `L2584`
+  - `AuroraControlPanel._build_visual_context_tab` `L4701`
+    - `AuroraControlPanel._new_work_page` `L2584`
+    - `AuroraControlPanel.show_tab` `L14200`
+  - `AuroraControlPanel._expand_all_settings` `L2604`
+  - `AuroraControlPanel._protect_unfocused_combobox_wheel` `L2733`
+  - `AuroraControlPanel._sync_focus_nav_state` `L14215`
+    - `AuroraControlPanel._get_active_tab_name` `L14286`
+  - `AuroraControlPanel.show_tab` `L14200`
+    - `AuroraControlPanel._apply_settings_mode` `L2743`
+    - `AuroraControlPanel._sync_focus_nav_state` `L14215`
 
-## `AuroraControlPanel._build_settings_card` `L2735`
+## `AuroraControlPanel._build_settings_card` `L2808`
 
 - Domain: Layout / Tabs
 - Summary: No docstring summary.
 - Internal calls:
-  - `AuroraControlPanel._new_settings_section` `L2517`
-  - `AuroraControlPanel._register_widget_locks` `L2227`
-  - `AuroraControlPanel.apply_additional_settings` `L6899`
-    - `AuroraControlPanel._build_additional_settings_commands` `L5101`
-    - `AuroraControlPanel.mark_operator_activity` `L5060`
-    - `AuroraControlPanel.send_raw` `L5064`
-  - `AuroraControlPanel.apply_model_preset` `L6540`
-    - `AuroraControlPanel._build_additional_settings_commands` `L5101`
-    - `AuroraControlPanel.apply_settings` `L6911`
-    - `AuroraControlPanel.apply_turn_scheduler_profile_to_controls` `L6508`
-    - `AuroraControlPanel.mark_operator_activity` `L5060`
-  - `AuroraControlPanel.apply_operator_profile` `L6606`
-    - `AuroraControlPanel._build_additional_settings_commands` `L5101`
-    - `AuroraControlPanel._build_advanced_context_commands` `L5127`
-    - `AuroraControlPanel._build_episodic_memory_commands` `L6045`
-    - `AuroraControlPanel.apply_overlay_preset` `L6587`
-    - `AuroraControlPanel.apply_settings` `L6911`
-    - `AuroraControlPanel.apply_turn_scheduler_profile_to_controls` `L6508`
-    - `AuroraControlPanel.mark_operator_activity` `L5060`
-  - `AuroraControlPanel.apply_overlay_preset` `L6587`
-    - `AuroraControlPanel.mark_operator_activity` `L5060`
-    - `AuroraControlPanel.send_raw` `L5064`
-  - `AuroraControlPanel.apply_settings` `L6911`
-    - `AuroraControlPanel._submit_settings_transaction` `L5223`
-  - `AuroraControlPanel.apply_stateful_model_preset` `L6574`
-    - `AuroraControlPanel.mark_operator_activity` `L5060`
-    - `AuroraControlPanel.send_raw` `L5064`
-  - `AuroraControlPanel.send_raw` `L5064`
-    - `append_external_message` `L1767`
-    - `AuroraControlPanel.mark_operator_activity` `L5060`
-    - `AuroraControlPanel.sanitize_operator_activity_command` `L5051`
-    - `short` `L1264`
-  - `AuroraControlPanel.show_tab` `L14010`
-    - `AuroraControlPanel._apply_settings_mode` `L2670`
-    - `AuroraControlPanel._sync_focus_nav_state` `L14025`
+  - `AuroraControlPanel._new_settings_section` `L2590`
+  - `AuroraControlPanel._register_widget_locks` `L2247`
+  - `AuroraControlPanel.apply_additional_settings` `L7069`
+    - `AuroraControlPanel._build_additional_settings_commands` `L5271`
+    - `AuroraControlPanel.mark_operator_activity` `L5230`
+    - `AuroraControlPanel.send_raw` `L5234`
+  - `AuroraControlPanel.apply_model_preset` `L6710`
+    - `AuroraControlPanel._build_additional_settings_commands` `L5271`
+    - `AuroraControlPanel.apply_settings` `L7081`
+    - `AuroraControlPanel.apply_turn_scheduler_profile_to_controls` `L6678`
+    - `AuroraControlPanel.mark_operator_activity` `L5230`
+  - `AuroraControlPanel.apply_operator_profile` `L6776`
+    - `AuroraControlPanel._build_additional_settings_commands` `L5271`
+    - `AuroraControlPanel._build_advanced_context_commands` `L5297`
+    - `AuroraControlPanel._build_episodic_memory_commands` `L6215`
+    - `AuroraControlPanel.apply_overlay_preset` `L6757`
+    - `AuroraControlPanel.apply_settings` `L7081`
+    - `AuroraControlPanel.apply_turn_scheduler_profile_to_controls` `L6678`
+    - `AuroraControlPanel.mark_operator_activity` `L5230`
+  - `AuroraControlPanel.apply_overlay_preset` `L6757`
+    - `AuroraControlPanel.mark_operator_activity` `L5230`
+    - `AuroraControlPanel.send_raw` `L5234`
+  - `AuroraControlPanel.apply_settings` `L7081`
+    - `AuroraControlPanel._submit_settings_transaction` `L5393`
+  - `AuroraControlPanel.apply_stateful_model_preset` `L6744`
+    - `AuroraControlPanel.mark_operator_activity` `L5230`
+    - `AuroraControlPanel.send_raw` `L5234`
+  - `AuroraControlPanel.send_raw` `L5234`
+    - `append_external_message` `L1774`
+    - `AuroraControlPanel.mark_operator_activity` `L5230`
+    - `AuroraControlPanel.sanitize_operator_activity_command` `L5221`
+    - `short` `L1267`
+  - `AuroraControlPanel.show_tab` `L14200`
+    - `AuroraControlPanel._apply_settings_mode` `L2743`
+    - `AuroraControlPanel._sync_focus_nav_state` `L14215`
 
-## `AuroraControlPanel._build_pending_tab` `L4026`
+## `AuroraControlPanel._build_pending_tab` `L4141`
 
 - Domain: Pending Queue UI
 - Summary: No docstring summary.
 - Internal calls:
-  - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-  - `AuroraControlPanel._new_work_page` `L2511`
-  - `AuroraControlPanel.send_raw` `L5064`
-    - `append_external_message` `L1767`
-    - `AuroraControlPanel.mark_operator_activity` `L5060`
-    - `AuroraControlPanel.sanitize_operator_activity_command` `L5051`
-    - `short` `L1264`
+  - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+  - `AuroraControlPanel._new_work_page` `L2584`
+  - `AuroraControlPanel.send_raw` `L5234`
+    - `append_external_message` `L1774`
+    - `AuroraControlPanel.mark_operator_activity` `L5230`
+    - `AuroraControlPanel.sanitize_operator_activity_command` `L5221`
+    - `short` `L1267`
 
-## `AuroraControlPanel._build_screenshots_tab` `L4764`
+## `AuroraControlPanel._build_screenshots_tab` `L4951`
 
 - Domain: Screenshot Viewer
 - Summary: No docstring summary.
 - Internal calls:
-  - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-  - `AuroraControlPanel._new_work_page` `L2511`
-  - `AuroraControlPanel.open_screenshot_popout` `L9061`
-    - `AuroraControlPanel.close_screenshot_popout` `L9107`
-    - `AuroraControlPanel.refresh_popout_image` `L9127`
-    - `AuroraControlPanel.set_screenshot_popout_mode` `L9120`
-    - `AuroraControlPanel.step_screenshot` `L7294`
-    - `AuroraControlPanel.toggle_screenshot_popout_mode` `L9124`
-  - `AuroraControlPanel.step_screenshot` `L7294`
-    - `AuroraControlPanel.render_screenshot` `L8977`
+  - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+  - `AuroraControlPanel._new_work_page` `L2584`
+  - `AuroraControlPanel.open_screenshot_popout` `L9241`
+    - `AuroraControlPanel.close_screenshot_popout` `L9287`
+    - `AuroraControlPanel.refresh_popout_image` `L9307`
+    - `AuroraControlPanel.set_screenshot_popout_mode` `L9300`
+    - `AuroraControlPanel.step_screenshot` `L7464`
+    - `AuroraControlPanel.toggle_screenshot_popout_mode` `L9304`
+  - `AuroraControlPanel.step_screenshot` `L7464`
+    - `AuroraControlPanel.render_screenshot` `L9157`
 
-## `AuroraControlPanel._build_image_memory_tab` `L4803`
+## `AuroraControlPanel._build_image_memory_tab` `L4990`
 
 - Domain: Image Memory Viewer
 - Summary: No docstring summary.
 - Internal calls:
-  - `AuroraControlPanel._add_workflow_status_strip` `L3795`
-  - `AuroraControlPanel._new_work_page` `L2511`
-  - `AuroraControlPanel.open_image_memory_popout` `L9157`
-    - `AuroraControlPanel.close_image_memory_popout` `L9203`
-    - `AuroraControlPanel.refresh_image_memory_popout` `L9223`
-    - `AuroraControlPanel.set_image_memory_popout_mode` `L9216`
-    - `AuroraControlPanel.step_image_memory` `L7313`
-    - `AuroraControlPanel.toggle_image_memory_popout_mode` `L9220`
-  - `AuroraControlPanel.step_image_memory` `L7313`
-    - `AuroraControlPanel.render_image_memory` `L9258`
+  - `AuroraControlPanel._add_workflow_status_strip` `L3910`
+  - `AuroraControlPanel._new_work_page` `L2584`
+  - `AuroraControlPanel.open_image_memory_popout` `L9337`
+    - `AuroraControlPanel.close_image_memory_popout` `L9383`
+    - `AuroraControlPanel.refresh_image_memory_popout` `L9403`
+    - `AuroraControlPanel.set_image_memory_popout_mode` `L9396`
+    - `AuroraControlPanel.step_image_memory` `L7483`
+    - `AuroraControlPanel.toggle_image_memory_popout_mode` `L9400`
+  - `AuroraControlPanel.step_image_memory` `L7483`
+    - `AuroraControlPanel.render_image_memory` `L9438`
 
-## `AuroraControlPanel.refresh_now` `L7401`
-
-- Domain: Refresh / State Load
-- Summary: No docstring summary.
-- Internal calls:
-  - `AuroraControlPanel._drain_settings_transaction_results` `L5343`
-    - `AuroraControlPanel._handle_settings_transaction_result` `L5351`
-  - `AuroraControlPanel._get_active_tab_name` `L14096`
-  - `decorate_state_processes` `L1582`
-    - `is_windows_pid_running` `L1537`
-    - `read_pid_file` `L1557`
-    - `remove_pid_file` `L1569`
-  - `AuroraControlPanel.render_logs` `L8812`
-    - `AuroraControlPanel._get_active_tab_name` `L14096`
-    - `AuroraControlPanel._render_log_widget` `L8821`
-    - `AuroraControlPanel.render_conversation` `L4205`
-  - `AuroraControlPanel.render_state` `L8263`
-    - `AuroraControlPanel._get_active_tab_name` `L14096`
-    - `AuroraControlPanel._is_dashboard_popout_open` `L4861`
-    - `AuroraControlPanel._is_image_memory_popout_open` `L8899`
-    - `AuroraControlPanel._is_screenshot_popout_open` `L8893`
-    - `AuroraControlPanel._refresh_runtime_status_strip` `L7325`
-    - `AuroraControlPanel._set_runtime_banner_text` `L6430`
-    - `AuroraControlPanel._sync_setting_var` `L7453`
-    - `AuroraControlPanel._update_settings_transaction_surface` `L5205`
-    - `AuroraControlPanel._write_text` `L13995`
-    - `AuroraControlPanel.apply_runtime_locks` `L6964`
-    - `AuroraControlPanel.build_advanced_context_status` `L9440`
-    - `AuroraControlPanel.build_agent_registry_text` `L10947`
-    - `AuroraControlPanel.build_command_drip_text` `L13919`
-    - `AuroraControlPanel.build_context_files_text` `L13243`
-    - `AuroraControlPanel.build_history_context_text` `L12025`
-    - `AuroraControlPanel.build_image_context_index_text` `L12619`
-    - `AuroraControlPanel.build_live_harness_text` `L12770`
-    - `build_model_choices` `L1762`
-    - `AuroraControlPanel.build_model_cost_status` `L9395`
-    - `AuroraControlPanel.build_model_status_text` `L10247`
-    - `AuroraControlPanel.build_next_turn_status` `L9428`
-    - `AuroraControlPanel.build_overview_text` `L13299`
-    - `AuroraControlPanel.build_portal_intake_text` `L11416`
-    - `AuroraControlPanel.build_prompt_ledger_text` `L10725`
-    - `AuroraControlPanel.build_responses_shadow_text` `L12911`
-    - `AuroraControlPanel.build_settings_safety_summary` `L9797`
-    - `AuroraControlPanel.build_settings_safety_text` `L10159`
-    - `AuroraControlPanel.build_visual_context_text` `L12557`
-    - `AuroraControlPanel.refresh_dashboard` `L4950`
-    - `AuroraControlPanel.refresh_image_memory_list` `L8940`
-    - `AuroraControlPanel.refresh_model_choice_widgets` `L6765`
-    - `AuroraControlPanel.refresh_overview_summary` `L7493`
-    - `AuroraControlPanel.refresh_recovery_home_vars` `L9690`
-    - `AuroraControlPanel.refresh_screenshot_list` `L8905`
-    - `AuroraControlPanel.refresh_workflow_status` `L7877`
-    - `AuroraControlPanel.render_episodic` `L8652`
-    - `AuroraControlPanel.render_memory` `L8517`
-    - `AuroraControlPanel.render_pending` `L8509`
-    - `AuroraControlPanel.sync_chat_head_visibility` `L5590`
-
-## `AuroraControlPanel.refresh_loop` `L7387`
+## `AuroraControlPanel.refresh_now` `L7578`
 
 - Domain: Refresh / State Load
 - Summary: No docstring summary.
 - Internal calls:
-  - `AuroraControlPanel.refresh_now` `L7401`
-    - `AuroraControlPanel._drain_settings_transaction_results` `L5343`
-    - `AuroraControlPanel._get_active_tab_name` `L14096`
-    - `decorate_state_processes` `L1582`
-    - `AuroraControlPanel.render_logs` `L8812`
-    - `AuroraControlPanel.render_state` `L8263`
+  - `AuroraControlPanel._drain_settings_transaction_results` `L5513`
+    - `AuroraControlPanel._handle_settings_transaction_result` `L5521`
+  - `AuroraControlPanel._get_active_tab_name` `L14286`
+  - `decorate_state_processes` `L1589`
+    - `is_windows_pid_running` `L1544`
+    - `read_pid_file` `L1564`
+    - `remove_pid_file` `L1576`
+  - `AuroraControlPanel.render_logs` `L8992`
+    - `AuroraControlPanel._get_active_tab_name` `L14286`
+    - `AuroraControlPanel._render_log_widget` `L9001`
+    - `AuroraControlPanel.render_conversation` `L4385`
+  - `AuroraControlPanel.render_state` `L8440`
+    - `AuroraControlPanel._get_active_tab_name` `L14286`
+    - `AuroraControlPanel._is_dashboard_popout_open` `L5048`
+    - `AuroraControlPanel._is_image_memory_popout_open` `L9079`
+    - `AuroraControlPanel._is_screenshot_popout_open` `L9073`
+    - `AuroraControlPanel._refresh_runtime_status_strip` `L7495`
+    - `AuroraControlPanel._set_runtime_banner_text` `L6600`
+    - `AuroraControlPanel._sync_setting_var` `L7630`
+    - `AuroraControlPanel._update_settings_transaction_surface` `L5375`
+    - `AuroraControlPanel._write_text` `L14175`
+    - `AuroraControlPanel.apply_runtime_locks` `L7134`
+    - `AuroraControlPanel.build_advanced_context_status` `L9620`
+    - `AuroraControlPanel.build_agent_registry_text` `L11127`
+    - `AuroraControlPanel.build_command_drip_text` `L14099`
+    - `AuroraControlPanel.build_context_files_text` `L13423`
+    - `AuroraControlPanel.build_history_context_text` `L12205`
+    - `AuroraControlPanel.build_image_context_index_text` `L12799`
+    - `AuroraControlPanel.build_live_harness_text` `L12950`
+    - `build_model_choices` `L1769`
+    - `AuroraControlPanel.build_model_cost_status` `L9575`
+    - `AuroraControlPanel.build_model_status_text` `L10427`
+    - `AuroraControlPanel.build_next_turn_status` `L9608`
+    - `AuroraControlPanel.build_overview_text` `L13479`
+    - `AuroraControlPanel.build_portal_intake_text` `L11596`
+    - `AuroraControlPanel.build_prompt_ledger_text` `L10905`
+    - `AuroraControlPanel.build_responses_shadow_text` `L13091`
+    - `AuroraControlPanel.build_settings_safety_summary` `L9977`
+    - `AuroraControlPanel.build_settings_safety_text` `L10339`
+    - `AuroraControlPanel.build_visual_context_text` `L12737`
+    - `AuroraControlPanel.refresh_conversation_feedback` `L4353`
+    - `AuroraControlPanel.refresh_dashboard` `L5137`
+    - `AuroraControlPanel.refresh_image_memory_list` `L9120`
+    - `AuroraControlPanel.refresh_model_choice_widgets` `L6935`
+    - `AuroraControlPanel.refresh_overview_summary` `L7670`
+    - `AuroraControlPanel.refresh_recovery_home_vars` `L9870`
+    - `AuroraControlPanel.refresh_screenshot_list` `L9085`
+    - `AuroraControlPanel.refresh_workflow_status` `L8054`
+    - `AuroraControlPanel.render_episodic` `L8832`
+    - `AuroraControlPanel.render_memory` `L8697`
+    - `AuroraControlPanel.render_pending` `L8689`
+    - `AuroraControlPanel.sync_chat_head_visibility` `L5760`
 
-## `AuroraControlPanel.send_raw` `L5064`
+## `AuroraControlPanel.refresh_loop` `L7564`
+
+- Domain: Refresh / State Load
+- Summary: No docstring summary.
+- Internal calls:
+  - `AuroraControlPanel.refresh_now` `L7578`
+    - `AuroraControlPanel._drain_settings_transaction_results` `L5513`
+    - `AuroraControlPanel._get_active_tab_name` `L14286`
+    - `decorate_state_processes` `L1589`
+    - `AuroraControlPanel.render_logs` `L8992`
+    - `AuroraControlPanel.render_state` `L8440`
+
+## `AuroraControlPanel.send_raw` `L5234`
 
 - Domain: Command Sink / Actions
 - Summary: No docstring summary.
 - Internal calls:
-  - `append_external_message` `L1767`
-  - `AuroraControlPanel.mark_operator_activity` `L5060`
-  - `AuroraControlPanel.sanitize_operator_activity_command` `L5051`
-  - `short` `L1264`
+  - `append_external_message` `L1774`
+  - `AuroraControlPanel.mark_operator_activity` `L5230`
+  - `AuroraControlPanel.sanitize_operator_activity_command` `L5221`
+  - `short` `L1267`
 

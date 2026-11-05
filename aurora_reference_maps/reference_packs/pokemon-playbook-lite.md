@@ -1,5 +1,19 @@
 # Pokemon Playbook Lite
 
+## Longer task-flow proof (private Implementation 33)
+
+The repaired ten-minute continuation won Gary's battle, healed and won a Route 1 wild battle using Sol 6.1 low, with no sampled pending proposals or fixture approvals. Scene evidence now ignores quoted NPC dialogue, recognizes closed dialogue and accepts dialogue over a location. Use explicit current `Scene:` labels, and quote full horizon prose, e.g. `UPDATE_PINNED_SHORT_TERM("Finish the battle, then leave Oak's lab.")`. Under task_flow the four horizon commands preserve comma prose; legacy keeps first-argument behavior. Check actual stored content, not only save/load success. Sol low → one Astra medium → Sol low was independently reverified with returned model IDs. See `docs/reviews/2026-11-04/implementation-33.md` for exact results and remaining production-worker limitations; these adapter tests are not full AT2 acceptance.
+
+## Optional task flow (private Implementation 32)
+
+Task flow's follow-up admits one explicit GB battle menu/confirm press or hold <=.25s; legacy still holds battle inputs. Broader battle actions remain reviewed/rejected. Current Init requires bare scene labels and numeric COMPLETE_GOAL IDs. Save/load success does not prove the model used the right goal ID; inspect the status/receipt.
+
+The user resumed scoped native testing for this slice. Recommended test profile: Sol low, Astra medium on call, Regular speed, Auto execution with task_flow policy, requested capture enabled, per_capture scheduling and zero periodic turn heartbeat. Applying Command-driven preset does not select Auto or enable inference. Legacy admission/timing remain available. Explicit directional GB press/holds up to one second may run on fresh reported overworld scenes; unknown scenes and long/indefinite directional movement retain existing review/rejection. Use 2–4 actions on clear calibrated paths, one on menus/uncertain transitions, then inspect a fresh image. Update changed goals/route/horizons rather than rewriting them every turn; after two failures revise or request Astra. Current run results and fixture limitations are in `docs/reviews/2026-11-04/implementation-32.md`. Do not infer unrestricted future native authorization from this note.
+
+## Current private scene policy (Implementation 26)
+
+Default evidence mode reads fresh `Scene: overworld` / `Observation: bedroom stairs visible; no battle interface` sections before command admission. Plans, old receipts and arbitrary historical context are excluded. Missing, expired or conflicting reports remain unknown and reviewed; text reports are not independent visual or screenshot-freshness proof. `SET_GAMEPLAY_SCENE_POLICY(legacy)` restores the earlier heuristic explicitly. Scope/focus/input ownership checks remain active under both policies. Goal SAVE_TASKS/LOAD_TASKS now support recursive validated round trips and atomic writes; `SET_GOAL_SAVE_FORMAT(legacy)` retains the old file shape. Malformed existing files are preserved and rejected. Current guidance does not authorize another native gameplay run.
+
 ## Adaptive effort for gameplay
 
 For an opted-in Astra Responses session, routine low effort may request a single high turn with SET_NEXT_REASONING_EFFORT(high, puzzle). Aurora validates the unlocked request in assist/auto mode and explicitly returns to the normal battle/review/dynamic policy afterward. A high-effort decision is not a fixed duration; check a fresh observation before delayed inputs. Held-input ownership and stale-observation gameplay proof remain open at 4B3/4B4; do not resume native capture automatically. See [adaptive reasoning](adaptive-reasoning-reference.md).

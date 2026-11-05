@@ -2,12 +2,12 @@
 
 Callable bindings only. See commands.json for aliases, provenance and contract coverage.
 
-- `ADD_APRIORITY_GOAL(goal_text)`
-- `ADD_GOAL(goal_text; priority; significance)`
-- `ADD_JOURNAL(entry)`
+- `ADD_APRIORITY_GOAL(text)`
+- `ADD_GOAL(goal_text[, priority, significance])`
+- `ADD_JOURNAL(text)`
 - `ADD_MODEL(name)`
-- `ADD_OVERARCHING_GOAL(goal_text)`
-- `ADD_UNKNOWN_PRIORITY(goal_text)`
+- `ADD_OVERARCHING_GOAL(text)`
+- `ADD_UNKNOWN_PRIORITY(text)`
 - `APPEND_AGENT_HISTORY(agent_id, visibility=private|parent_visible, summary=..., text=..., note=...)`
 - `APPLY_PERSONAL_DEFAULTS([mode])`
 - `APPLY_SETTINGS_TRANSACTION(token)`
@@ -65,7 +65,7 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `LINK_AGENT_TASK_SUGGESTION(task_id|latest|agent_id, suggestion=latest|suggestion_id|agent_id, note=...)`
 - `LIST_COMMANDS(low|medium|high)`
 - `LIST_EPISODIC_SNAPSHOTS([limit])`
-- `LOAD_TASKS(...)`
+- `LOAD_TASKS([path])`
 - `LOCK_OPERATOR_ACCESS()`
 - `LOCK_SETTING([lock])`
 - `LOGIN_CODEX_OAUTH()`
@@ -135,35 +135,41 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SAVE_HANDOFF(optional_filename)`
 - `SAVE_PERSONAL_DEFAULTS()`
 - `SAVE_PINS(...)`
-- `SAVE_TASKS(...)`
+- `SAVE_TASKS([path])`
 - `SEARCH_COMMANDS(query, low|medium|high)`
 - `SEARCH_EPISODIC_SNAPSHOTS(query[, limit])`
 - `SEARCH_IMAGE_CONTEXT_INDEX(query, optional_limit)`
 - `SEARCH_PROGRAM_MAP(query, runtime|ui)`
 - `SEARCH_REFERENCE_PACK(query, optional_pack_name|all)`
 - `SET_ACTION_MODE([value])`
-- `SET_ADD_IMSGS_TO_HISTORY(on|off)`
-- `SET_ADD_UMSGS_TO_HISTORY(on|off)`
+- `SET_ADD_IMSGS_TO_HISTORY([on|off])`
+- `SET_ADD_UMSGS_TO_HISTORY([on|off])`
 - `SET_AGENT_SUGGESTION_APPROVAL(suggestion_id|latest|agent_id, approval=approved|rejected|requested|draft, note=...)`
 - `SET_AGENT_TASK_STATUS(task_id|latest|agent_id, status=draft|active|review|blocked|closed, note=...)`
 - `SET_ALWAYS(on|off, true|false)`
+- `SET_ASSISTANT_POLICY([value])`
 - `SET_AUTH_MODE([value])`
-- `SET_AUTO_DYNAMIC_INFERENCE(on|off)`
-- `SET_AUTO_PROMPT(on|off)`
+- `SET_AUTO_DYNAMIC_INFERENCE([on|off])`
+- `SET_AUTO_PROMPT([on|off])`
 - `SET_BATTLE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`
 - `SET_BATTLE_VERBOSITY(low|medium|high)`
+- `SET_CAPTURE_GEOMETRY_POLICY([value])`
 - `SET_CAPTURE_MODE([value])`
+- `SET_CAPTURE_PROVENANCE_POLICY([value])`
+- `SET_CAPTURE_REQUEST_ATTEMPTS([value])`
+- `SET_CAPTURE_REQUEST_TIMEOUT([value])`
+- `SET_CAPTURE_TARGET([value])`
 - `SET_CHAT_HEAD_HISTORY_SIZE(width,height)`
 - `SET_CHAT_HEAD_OPACITY(value)`
 - `SET_CHAT_HEAD_SEND_ANIMATION(pulse|none)`
 - `SET_CHAT_HEAD_SEND_ANIMATION_SECONDS(value)`
 - `SET_CHAT_HEAD_STRIP_SIZE(width,height)`
-- `SET_CHAT_HEAD_TOPMOST(on|off)`
+- `SET_CHAT_HEAD_TOPMOST([on|off])`
 - `SET_CHAT_LOG_ECHO(on|off)`
 - `SET_COMMAND_DRIP_LOOKAHEAD(turns)`
 - `SET_COMMAND_DRIP_RETENTION(turns)`
-- `SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED(on|off)`
-- `SET_COMMAND_DRIP_SHOW_VARIANTS(on|off)`
+- `SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED([on|off])`
+- `SET_COMMAND_DRIP_SHOW_VARIANTS([on|off])`
 - `SET_CONTEXT_MARK_APPROVAL(mark_id|target, approval=draft|requested|approved|rejected, optional mark_type=...)`
 - `SET_CRITIQUE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`
 - `SET_CRITIQUE_TURN_INTERVAL(turns)`
@@ -172,19 +178,22 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SET_DEMAND_CAPTURE([value])`
 - `SET_EPISODIC_EMBEDDINGS(off|auto|force)`
 - `SET_EPISODIC_EMBEDDING_MODEL(name)`
-- `SET_EPISODIC_MEMORY(on|off)`
+- `SET_EPISODIC_MEMORY([on|off])`
 - `SET_EPISODIC_MEMORY_INTERVAL(seconds)`
-- `SET_EPISODIC_MEMORY_PERIODIC(on|off)`
-- `SET_EPISODIC_MEMORY_SCENE_TRIGGER(on|off)`
+- `SET_EPISODIC_MEMORY_PERIODIC([on|off])`
+- `SET_EPISODIC_MEMORY_SCENE_TRIGGER([on|off])`
 - `SET_EPISODIC_PLANNING_ASSIST(off|review|critique|review_critique)`
 - `SET_EPISODIC_PLANNING_ASSIST_COOLDOWN(turns)`
 - `SET_EPISODIC_PLANNING_ASSIST_K(k)`
 - `SET_EXECUTION_MODE([value])`
+- `SET_GAMEPLAY_SCENE_POLICY([value])`
 - `SET_GAME_PROFILE([value])`
+- `SET_GOAL_SAVE_FORMAT([value])`
 - `SET_HIGH_DETAIL(...)`
 - `SET_IMAGE_DETAIL([value])`
-- `SET_IMPORTANT_MESSAGES(on|off)`
-- `SET_IMSGS_DECAY_CHECK(on|off)`
+- `SET_IMPORTANT_MESSAGES([on|off])`
+- `SET_IMSGS_DECAY_CHECK([on|off])`
+- `SET_INIT_DELIVERY([value])`
 - `SET_KEYPOINT_GRID(on|off)`
 - `SET_LATEST_IMAGE_DETAIL(...)`
 - `SET_LIVE_INIT([value])`
@@ -199,6 +208,8 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SET_PASSCODE_COMMAND_VISIBILITY(on|off)`
 - `SET_PENDING_QUEUE_MODE(normal|replace|insert)`
 - `SET_PROMPT_INCLUSION_ACTIVATION(on|off, preview_id=latest|fresh|..., checklist_id=latest|fresh|..., confirm=offline_proof|rollback)`
+- `SET_READBACK_SCOPE([value])`
+- `SET_READBACK_WAKE([value])`
 - `SET_REASONING_EFFORT([value])`
 - `SET_REASONING_MODEL([value])`
 - `SET_REASONING_SUMMARY_MODE(auto|none|brief|detailed)`
@@ -206,14 +217,18 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SET_REVIEW_TURN_INTERVAL(turns)`
 - `SET_REVIEW_VERBOSITY(low|medium|high)`
 - `SET_SCREENSHOT_INTERVAL([value])`
+- `SET_SERVICE_TIER([value])`
 - `SET_SESSION_REASONING_EFFORT([value])`
-- `SET_SHOW_AI_COMMANDS(on|off)`
-- `SET_SHOW_AI_TEXT(on|off)`
-- `SET_SHOW_USER_COMMANDS(on|off)`
-- `SET_SHOW_USER_TEXT(on|off)`
+- `SET_SHOW_AI_COMMANDS([on|off])`
+- `SET_SHOW_AI_TEXT([on|off])`
+- `SET_SHOW_USER_COMMANDS([on|off])`
+- `SET_SHOW_USER_TEXT([on|off])`
 - `SET_SOUND_EFFECTS(on|off)`
 - `SET_STATEFUL_MODEL_PRESET(stateless-default|responses-link-preview|conversation-preview)`
 - `SET_STATUS_OVERLAY(on|off)`
+- `SET_TASK_CONTINUATION([value])`
+- `SET_TASK_MAX_MODEL_TURNS([value])`
+- `SET_TASK_MAX_SECONDS([value])`
 - `SET_TEMPERATURE([value])`
 - `SET_TEXT_MODEL([value])`
 - `SET_TILE_GRID(on|off)`
@@ -225,8 +240,8 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SET_TURN_POST_ACTION_SETTLE_SECONDS([value])`
 - `SET_TURN_SCHEDULER_MODE([value])`
 - `SET_TURN_SCHEDULER_PROFILE([value])`
-- `SET_UMSGS_DECAY_CHECK(on|off)`
-- `SET_UNIMPORTANT_MESSAGES(on|off)`
+- `SET_UMSGS_DECAY_CHECK([on|off])`
+- `SET_UNIMPORTANT_MESSAGES([on|off])`
 - `SET_VISION_MODEL([value])`
 - `SHOW_AGENTS()`
 - `SHOW_AGENT_HELPER_CLOSURE()`
@@ -324,7 +339,7 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `STATUS()`
 - `SUGGEST_AGENT_COMMAND(agent_id, command=..., reason=..., risk=low|medium|high, target=pending_commands)`
 - `SUMMON_AGENT(agent_id, role=..., rank=..., urgency=..., allow=..., deny=..., history=private|parent_visible)`
-- `TASKS(...)`
+- `TASKS()`
 - `TOGGLE_ADD_IMSGS_TO_HISTORY(...)`
 - `TOGGLE_ADD_UMSGS_TO_HISTORY(...)`
 - `TOGGLE_ALWAYS(...)`
@@ -348,12 +363,13 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `UPDATE_KNOWN_FAILURES(items)`
 - `UPDATE_LAST_LANDMARK(landmark)`
 - `UPDATE_LOCAL_PATH_PLAN(steps)`
-- `UPDATE_LONG_TERM_CONTEXT(items)`
-- `UPDATE_MID_TERM_CONTEXT(items)`
-- `UPDATE_NOTES(items)`
+- `UPDATE_LONG_TERM_CONTEXT(text...)`
+- `UPDATE_MESSAGE(message_id, revision, text_json_base64url, on|off|keep)`
+- `UPDATE_MID_TERM_CONTEXT(text...)`
+- `UPDATE_NOTES(text)`
 - `UPDATE_PARTY(party_status)`
-- `UPDATE_PINNED_IMMEDIATE(actions)`
-- `UPDATE_PINNED_SHORT_TERM(actions)`
+- `UPDATE_PINNED_IMMEDIATE(text...)`
+- `UPDATE_PINNED_SHORT_TERM(text...)`
 - `UPDATE_RECENT_MOVEMENT_RESULTS(items)`
 - `UPDATE_ROUTE_BLOCKERS(items)`
 - `UPDATE_ROUTE_INTENT(intents)`

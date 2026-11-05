@@ -7,7 +7,8 @@ from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import aurora2_control_panel as panel
-from aurora_panel_layout import clamp_window_geometry, load_layout_preferences, save_layout_preferences, fit_popout_window
+from aurora_panel_layout import (clamp_window_geometry, load_layout_preferences, save_layout_preferences,
+                                fit_popout_window, ui_scale, receipt_tree_items, reconcile_tree_rows)
 
 
 class Value:
@@ -21,7 +22,90 @@ class Value:
         self.value = value
 
 
+class FakeTree:
+    """Treeview contract without Tk/native rendering."""
+    def __init__(self, items):
+        self.order, self.values = [iid for iid, _ in items], dict(items)
+        self.selected, self.focused, self.scroll_x, self.scroll_y = (), "", .4, 0
+        self.writes = []
+
+    def get_children(self): return tuple(self.order)
+    def selection(self): return self.selected
+    def selection_set(self, selected): self.selected = tuple(selected)
+    def focus(self, value=None):
+        if value is not None: self.focused = value
+        return self.focused
+    def xview(self): return self.scroll_x, 1
+    def yview(self): return self.scroll_y, 1
+    def xview_moveto(self, value): self.scroll_x = value
+    def yview_moveto(self, value): self.scroll_y = value
+    def delete(self, *items):
+        for iid in items:
+            self.order.remove(iid)
+            self.values.pop(iid)
+            self.writes.append(("delete", iid))
+        self.selected = tuple(iid for iid in self.selected if iid not in items)
+    def insert(self, parent, index, *, iid, values):
+        self.order.insert(index, iid)
+        self.values[iid] = values
+        self.writes.append(("insert", iid))
+    def item(self, iid, option=None, *, values=None):
+        if values is not None:
+            self.values[iid] = values
+            self.writes.append(("item", iid))
+        return self.values[iid]
+    def move(self, iid, parent, index):
+        self.order.remove(iid)
+        self.order.insert(index, iid)
+        self.writes.append(("move", iid))
+
+
 class LayoutTests(unittest.TestCase):
+    def test_receipt_identity_survives_status_changes_without_collapsing_duplicates(self):
+        row = {"kind": "command_receipt", "request_id": "long-request", "client_id": "panel",
+               "timestamp": "2026-11-04T12:00:00-08:00", "command_name": "SET_NEXT_INFERENCE", "status": "queued"}
+        before, _ = receipt_tree_items([row, row, {}, {}])
+        after, mapping = receipt_tree_items([{**row, "status": "completed"}, row, {}, {}])
+        self.assertEqual([iid for iid, _ in before], [iid for iid, _ in after])
+        self.assertEqual(len(mapping), 4)
+        self.assertEqual(after[0][1][2], "completed")
+        another, _ = receipt_tree_items([{**row, "client_id": "other"}])
+        self.assertNotEqual(before[0][0], another[0][0])
+
+    def test_receipt_reconciliation_preserves_reading_anchor_and_updates_only_changed_cells(self):
+        tree = FakeTree([("a", ("one",)), ("b", ("two",)), ("c", ("three",)), ("d", ("four",))])
+        tree.selected, tree.focused, tree.scroll_y = ("c",), "c", .5
+        reconcile_tree_rows(tree, [("new", ("new",)), ("a", ("one",)), ("b", ("two",)), ("c", ("updated",)), ("d", ("four",))])
+        self.assertEqual(tree.selected, ("c",))
+        self.assertEqual(tree.focused, "c")
+        self.assertEqual(tree.scroll_y, .6)  # Same top receipt after an insertion above it.
+        self.assertEqual(tree.scroll_x, .4)
+        self.assertEqual(tree.writes, [("insert", "new"), ("item", "c")])
+        tree.writes.clear()
+        reconcile_tree_rows(tree, [(iid, tree.values[iid]) for iid in tree.order])
+        self.assertEqual(tree.writes, [])
+        reconcile_tree_rows(tree, [("d", ("four",)), ("a", ("one",))])
+        self.assertEqual(tree.order, ["d", "a"])
+        self.assertEqual(tree.selected, ())
+        reconcile_tree_rows(tree, [])
+        self.assertEqual(tree.order, [])
+
+    def test_small_strip_and_offscreen_history_are_clamped(self):
+        result = clamp_window_geometry({"x": 900, "y": 680, "width": 1000, "height": 100},
+                                      [(0, 0, 1280, 720)], minimum=(520, 74))
+        self.assertEqual(result["height"], 100)
+        self.assertLessEqual(result["x"] + result["width"], 1280)
+        self.assertLessEqual(result["y"] + result["height"], 720)
+
+    def test_display_scale_and_explicit_legacy_pixels(self):
+        widget = SimpleNamespace(winfo_fpixels=lambda value: 288)
+        with patch.dict("os.environ", {"AURORA_PANEL_SCALE": ""}):
+            self.assertEqual(ui_scale(widget), 3.0)
+        with patch.dict("os.environ", {"AURORA_PANEL_SCALE": "1"}):
+            self.assertEqual(ui_scale(widget), 1.0)
+        with patch.dict("os.environ", {"AURORA_PANEL_SCALE": "nan"}):
+            self.assertEqual(ui_scale(widget), 1.0)
+
     def test_popout_uses_absolute_negative_monitor_coordinates(self):
         window = Mock()
         window.winfo_screenwidth.return_value = 1280
@@ -105,12 +189,17 @@ class LayoutTests(unittest.TestCase):
     def test_failed_text_paint_is_retried_for_identical_content(self):
         app = SimpleNamespace(_text_content_cache={})
         widget = Mock()
+        widget.yview.return_value = (0.4, 0.7)
+        widget.xview.return_value = (0.0, 1.0)
+        widget.tag_ranges.return_value = ("2.0", "2.7")
         widget.insert.side_effect = [RuntimeError("transient paint failure"), None]
         with self.assertRaises(RuntimeError):
             panel.AuroraControlPanel._write_text(app, widget, "receipt")
         self.assertEqual(app._text_content_cache, {})
         panel.AuroraControlPanel._write_text(app, widget, "receipt")
         self.assertEqual(widget.insert.call_count, 2)
+        widget.yview_moveto.assert_called_with(0.4)
+        widget.tag_add.assert_called_with("sel", "2.0", "2.7")
         panel.AuroraControlPanel._write_text(app, widget, "receipt")
         self.assertEqual(widget.insert.call_count, 2)
 

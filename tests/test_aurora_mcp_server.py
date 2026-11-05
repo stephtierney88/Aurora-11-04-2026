@@ -121,7 +121,7 @@ class AuroraReadOnlyMcpServerTests(unittest.TestCase):
         self.assertEqual(
             commands["structuredContent"]["commands"][0]["command"], "SHOW_RUNTIME"
         )
-        self.assertEqual(settings["structuredContent"]["count"], 24)
+        self.assertEqual(settings["structuredContent"]["count"], 39)
         self.assertFalse(
             settings["structuredContent"]["mcp_authority"]["settings_mutation"]
         )

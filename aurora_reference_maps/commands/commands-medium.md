@@ -1,11 +1,11 @@
 # Aurora commands — summaries
 
-- `ADD_APRIORITY_GOAL(goal_text)`: Add a new open-ended goal.
-- `ADD_GOAL(goal_text; priority; significance)`: Add a new goal with priority and significance.
-- `ADD_JOURNAL(entry)`: Append a continuity/journal note.
+- `ADD_APRIORITY_GOAL(text)`: Add non-empty text to the named memory list, retaining its existing deduplication/retention policy.
+- `ADD_GOAL(goal_text[, priority, significance])`: Add a goal with opaque priority/significance labels; duplicates are unchanged, not relabeled. Accepts comma fields or one semicolon-delimited argument.
+- `ADD_JOURNAL(text)`: Add non-empty text to the named memory list, retaining its existing deduplication/retention policy.
 - `ADD_MODEL(name)`: Validate a model with a short test call and add it to the custom Aurora catalog.
-- `ADD_OVERARCHING_GOAL(goal_text)`: Add a long-horizon mission or strategic objective.
-- `ADD_UNKNOWN_PRIORITY(goal_text)`: Add a candidate goal whose priority is still unknown.
+- `ADD_OVERARCHING_GOAL(text)`: Add non-empty text to the named memory list, retaining its existing deduplication/retention policy.
+- `ADD_UNKNOWN_PRIORITY(text)`: Add non-empty text to the named memory list, retaining its existing deduplication/retention policy.
 - `APPEND_AGENT_HISTORY(agent_id, visibility=private|parent_visible, summary=..., text=..., note=...)`: Append an explicit operator note to one sub-agent private JSONL log without writing parent chat history, prompts, Pending Commands, or execution queues.
 - `APPLY_PERSONAL_DEFAULTS([mode])`: Validate and apply the saved personal profile; reapply retains setter effects, while changed_only skips unchanged values.
 - `APPLY_SETTINGS_TRANSACTION(token)`: Preview, atomically apply, or explicitly roll back registered runtime settings through the existing transaction service.
@@ -42,7 +42,7 @@
 - `CLEAR_RESPONSES_SHADOW_PROBE()`: Clear the Responses live-probe scaffold while keeping chat/completions as the fallback.
 - `CLEAR_ROUTE_STATE()`: Clear route state, route intent, local path, blockers, and recent movement results.
 - `CLOSE_CHAT_HEAD()`: Ask the control panel to close the floating chat strip and its attached history pane.
-- `COMPLETE_GOAL(goal_id)`: Mark a goal as completed.
+- `COMPLETE_GOAL(goal_id)`: Complete the exact recursive goal ID; a missing ID fails, repeated completion is unchanged.
 - `DELETE_MSG(timestamp)`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
 - `DHISTORY()`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
 - `DRY_RUN_AGENT_PENDING_INSERT(optional_filter)`: Log and display a no-exec dry-run proving which review links satisfy the future insertion contract while leaving the executable Pending queue unchanged.
@@ -63,7 +63,7 @@
 - `LINK_AGENT_TASK_SUGGESTION(task_id|latest|agent_id, suggestion=latest|suggestion_id|agent_id, note=...)`: Link a task packet to a suggestion as review provenance while keeping the Pending gate closed.
 - `LIST_COMMANDS(low|medium|high)`: Display the mirrored Aurora command catalog at the requested verbosity.
 - `LIST_EPISODIC_SNAPSHOTS([limit])`: Existing episodic snapshot write/list/lexical-search behavior with complete argument admission and correlated receipts; no inferred persistence or rollback guarantee.
-- `LOAD_TASKS(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `LOAD_TASKS([path])`: Save a validated recursive task snapshot atomically, or validate and restore a complete snapshot. Does not undo live actions.
 - `LOCK_OPERATOR_ACCESS()`: Clear the current external-operator authorization immediately.
 - `LOCK_SETTING([lock])`: Read locks when omitted; otherwise enable or disable the named runtime setting lock. Settings values are unchanged.
 - `LOGIN_CODEX_OAUTH()`: Open the ChatGPT/Codex OAuth sign-in helper in a new window.
@@ -133,35 +133,41 @@
 - `SAVE_HANDOFF(optional_filename)`: Save a structured handoff snapshot to the logging folder or a provided path.
 - `SAVE_PERSONAL_DEFAULTS()`: Atomically save current profile settings, retaining unknown fields in a valid existing file.
 - `SAVE_PINS(...)`: Inspect the handler; detailed usage has not been reviewed.
-- `SAVE_TASKS(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `SAVE_TASKS([path])`: Save a validated recursive task snapshot atomically, or validate and restore a complete snapshot. Does not undo live actions.
 - `SEARCH_COMMANDS(query, low|medium|high)`: Search the mirrored Aurora command catalog by topic, summary, handler, or signature text.
 - `SEARCH_EPISODIC_SNAPSHOTS(query[, limit])`: Existing episodic snapshot write/list/lexical-search behavior with complete argument admission and correlated receipts; no inferred persistence or rollback guarantee.
 - `SEARCH_IMAGE_CONTEXT_INDEX(query, optional_limit)`: Search image sidecars by caption, OCR text, tags, capture reason, image id, and path.
 - `SEARCH_PROGRAM_MAP(query, runtime|ui)`: Search the mirrored runtime/control-panel symbol indexes and generated maps.
 - `SEARCH_REFERENCE_PACK(query, optional_pack_name|all)`: Search the mirrored Aurora reference packs by topic text.
 - `SET_ACTION_MODE([value])`: Set runtime.action, or omit value to read it. Controller family available to Aurora for approved actions.
-- `SET_ADD_IMSGS_TO_HISTORY(on|off)`: Explicitly control important-message history retention.
-- `SET_ADD_UMSGS_TO_HISTORY(on|off)`: Explicitly control unimportant-message history retention.
+- `SET_ADD_IMSGS_TO_HISTORY([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+- `SET_ADD_UMSGS_TO_HISTORY([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - `SET_AGENT_SUGGESTION_APPROVAL(suggestion_id|latest|agent_id, approval=approved|rejected|requested|draft, note=...)`: Append review-state metadata without Pending Command insertion or execution.
 - `SET_AGENT_TASK_STATUS(task_id|latest|agent_id, status=draft|active|review|blocked|closed, note=...)`: Append review/status metadata for a sub-agent task packet without execution or prompt inclusion.
 - `SET_ALWAYS(on|off, true|false)`: Explicitly set always-mode and hide_input together.
+- `SET_ASSISTANT_POLICY([value])`: Set runtime.assistant_policy, or omit value to read it. Task flow admits discovery, enabled capture requests, one-turn plans, bounded GB overworld movement and battle menu steps in Auto. Legacy keeps previous review decisions.
 - `SET_AUTH_MODE([value])`: Set auth.mode, or omit value to read it. Credential route Aurora will resolve before a model request.
-- `SET_AUTO_DYNAMIC_INFERENCE(on|off)`: Allow Aurora to adapt the next turn's model settings automatically.
-- `SET_AUTO_PROMPT(on|off)`: Explicitly enable or disable auto prompting.
+- `SET_AUTO_DYNAMIC_INFERENCE([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+- `SET_AUTO_PROMPT([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - `SET_BATTLE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`: Set battle reasoning effort.
 - `SET_BATTLE_VERBOSITY(low|medium|high)`: Set verbosity for battle turns.
+- `SET_CAPTURE_GEOMETRY_POLICY([value])`: Set capture.geometry_policy, or omit value to read it. Verified captures an explicit physical rectangle; legacy keeps startup scaling and default desktop grabs.
 - `SET_CAPTURE_MODE([value])`: Set capture.mode, or omit value to read it. Heartbeat captures periodically; request_only captures only when the demand service has a due request.
+- `SET_CAPTURE_PROVENANCE_POLICY([value])`: Set capture.provenance_policy, or omit value to read it. Verified requires pixels acquired after the action settle boundary; legacy retains counter/clock freshness checks.
+- `SET_CAPTURE_REQUEST_ATTEMPTS([value])`: Set capture.request_max_attempts, or omit value to read it. Maximum acquisition attempts for one request; zero preserves unlimited retries. Legacy drawing recapture shares its parent's attempt.
+- `SET_CAPTURE_REQUEST_TIMEOUT([value])`: Set capture.request_timeout_seconds, or omit value to read it. Total monotonic deadline from request admission through settle, acquisition, drawing and publication. Zero preserves unlimited waiting.
+- `SET_CAPTURE_TARGET([value])`: Set capture.target, or omit value to read it. Choose primary monitor, virtual desktop or foreground window for verified geometry.
 - `SET_CHAT_HEAD_HISTORY_SIZE(width,height)`: Set the attached history window size.
 - `SET_CHAT_HEAD_OPACITY(value)`: Set chat-head window opacity between 0.25 and 1.0.
 - `SET_CHAT_HEAD_SEND_ANIMATION(pulse|none)`: Control the send animation style used by the floating chat strip input.
 - `SET_CHAT_HEAD_SEND_ANIMATION_SECONDS(value)`: Set the floating chat strip send animation duration.
 - `SET_CHAT_HEAD_STRIP_SIZE(width,height)`: Set the strip window size.
-- `SET_CHAT_HEAD_TOPMOST(on|off)`: Control whether the chat-head windows stay topmost.
+- `SET_CHAT_HEAD_TOPMOST([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - `SET_CHAT_LOG_ECHO(on|off)`: Toggle compact [CHATLOG] console echo output.
 - `SET_COMMAND_DRIP_LOOKAHEAD(turns)`: Set how many turns ahead Aurora sketches likely command candidates; this does not approve commands.
 - `SET_COMMAND_DRIP_RETENTION(turns)`: Set how many recent turns of command drip history remain on hand. Recommended normal range: 3-7.
-- `SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED(on|off)`: Show or hide likely dropped candidates in the drip tree.
-- `SET_COMMAND_DRIP_SHOW_VARIANTS(on|off)`: Show or hide near-miss command variants in the drip tree.
+- `SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+- `SET_COMMAND_DRIP_SHOW_VARIANTS([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - `SET_CONTEXT_MARK_APPROVAL(mark_id|target, approval=draft|requested|approved|rejected, optional mark_type=...)`: Update a context mark approval state.
 - `SET_CRITIQUE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`: Set reasoning effort for critique/self-review turns.
 - `SET_CRITIQUE_TURN_INTERVAL(turns)`: Set how often Aurora performs a deeper critique/self-review turn.
@@ -170,19 +176,22 @@
 - `SET_DEMAND_CAPTURE([value])`: Set capture.demand_enabled, or omit value to read it. Whether commands and explicit requests may ask the capture service for a fresh frame.
 - `SET_EPISODIC_EMBEDDINGS(off|auto|force)`: Choose lexical-only retrieval, lexical fallback, or embedding-required retrieval.
 - `SET_EPISODIC_EMBEDDING_MODEL(name)`: Set which OpenAI embedding model episodic retrieval should use.
-- `SET_EPISODIC_MEMORY(on|off)`: Enable or disable compact episodic snapshot writing.
+- `SET_EPISODIC_MEMORY([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - `SET_EPISODIC_MEMORY_INTERVAL(seconds)`: Set the periodic episodic snapshot interval. Minimum 60 seconds.
-- `SET_EPISODIC_MEMORY_PERIODIC(on|off)`: Enable or disable periodic episodic snapshot writes.
-- `SET_EPISODIC_MEMORY_SCENE_TRIGGER(on|off)`: Enable or disable scene-change episodic snapshot writes.
+- `SET_EPISODIC_MEMORY_PERIODIC([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+- `SET_EPISODIC_MEMORY_SCENE_TRIGGER([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - `SET_EPISODIC_PLANNING_ASSIST(off|review|critique|review_critique)`: Bound automatic episodic retrieval injection to higher-attention planning turns.
 - `SET_EPISODIC_PLANNING_ASSIST_COOLDOWN(turns)`: Set the minimum turn gap before bounded planning retrieval may run again. Range 0-12.
 - `SET_EPISODIC_PLANNING_ASSIST_K(k)`: Set how many episodic memories bounded planning turns may inject. Range 1-4.
 - `SET_EXECUTION_MODE([value])`: Set runtime.execution, or omit value to read it. Approval and execution posture for commands proposed by the model.
+- `SET_GAMEPLAY_SCENE_POLICY([value])`: Set game.scene_policy, or omit value to read it. Evidence uses fresh model observation/scene sections with token boundaries and conflict checks. Legacy retains mixed-context substring inference.
 - `SET_GAME_PROFILE([value])`: Set game.profile, or omit value to read it. Gameplay assumptions, prompts, controls, and save-state guidance.
+- `SET_GOAL_SAVE_FORMAT([value])`: Set goals.save_format, or omit value to read it. Versioned saves add a schema envelope; legacy preserves the existing task document shape. Both use recursive IDs, validation and atomic replacement.
 - `SET_HIGH_DETAIL(...)`: Inspect the handler; detailed usage has not been reviewed.
 - `SET_IMAGE_DETAIL([value])`: Set vision.image_detail, or omit value to read it. Default image detail before model-specific compatibility normalization.
-- `SET_IMPORTANT_MESSAGES(on|off)`: Explicitly enable or disable important messages.
-- `SET_IMSGS_DECAY_CHECK(on|off)`: Explicitly control important-message decay checks.
+- `SET_IMPORTANT_MESSAGES([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+- `SET_IMSGS_DECAY_CHECK([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+- `SET_INIT_DELIVERY([value])`: Set context.init_delivery, or omit value to read it. System once omits exact Init history copies only when the full text is already in the system prompt. Stored history is preserved.
 - `SET_KEYPOINT_GRID(on|off)`: Toggle the red key-point grid overlay.
 - `SET_LATEST_IMAGE_DETAIL(...)`: Inspect the handler; detailed usage has not been reviewed.
 - `SET_LIVE_INIT([value])`: Set runtime.live_init, or omit value to read it. Whether Aurora loads its full live initialization prompt when that path is used.
@@ -197,6 +206,8 @@
 - `SET_PASSCODE_COMMAND_VISIBILITY(on|off)`: Show raw passcode-bearing commands in logs/history, or mask them as *******.
 - `SET_PENDING_QUEUE_MODE(normal|replace|insert)`: Set how newly queued pending commands behave by default in the pending planning lane.
 - `SET_PROMPT_INCLUSION_ACTIVATION(on|off, preview_id=latest|fresh|..., checklist_id=latest|fresh|..., confirm=offline_proof|rollback)`: Enable or disable reversible Prompt Inclusion after fresh review and offline proof.
+- `SET_READBACK_SCOPE([value])`: Set scheduler.readback_scope, or omit value to read it. Discovery preserves history-based lookup delivery; reviewed additionally includes bounded task-correlated settings, goals, history and retrieval receipts.
+- `SET_READBACK_WAKE([value])`: Set scheduler.readback_wake_enabled, or omit value to read it. Wake a follow-up for eligible discovery or reviewed receipt data, according to readback scope. Requires bounded task mode.
 - `SET_REASONING_EFFORT([value])`: Set inference.reasoning_effort, or omit value to read it. Default reasoning effort before model-specific compatibility normalization.
 - `SET_REASONING_MODEL([value])`: Set model.reasoning, or omit value to read it. Model selected when Aurora requests a reasoning-oriented turn.
 - `SET_REASONING_SUMMARY_MODE(auto|none|brief|detailed)`: Track the preferred reasoning summary mode.
@@ -204,27 +215,31 @@
 - `SET_REVIEW_TURN_INTERVAL(turns)`: Set how often Aurora performs a deliberate review turn.
 - `SET_REVIEW_VERBOSITY(low|medium|high)`: Set verbosity for scheduled higher-attention review turns.
 - `SET_SCREENSHOT_INTERVAL([value])`: Set capture.screenshot_interval, or omit value to read it. Requested screenshot polling interval before idle floors and other effective cadence rules.
+- `SET_SERVICE_TIER([value])`: Set inference.service_tier, or omit value to read it. Requested service priority, independent of reasoning effort. Regular omits acceleration; subscription catalog must advertise other tiers.
 - `SET_SESSION_REASONING_EFFORT([value])`: Set inference.reasoning_effort, or omit value to read it. Default reasoning effort before model-specific compatibility normalization.
-- `SET_SHOW_AI_COMMANDS(on|off)`: Explicitly control AI command visibility.
-- `SET_SHOW_AI_TEXT(on|off)`: Explicitly control AI text visibility.
-- `SET_SHOW_USER_COMMANDS(on|off)`: Explicitly control user command visibility.
-- `SET_SHOW_USER_TEXT(on|off)`: Explicitly control user text visibility.
+- `SET_SHOW_AI_COMMANDS([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+- `SET_SHOW_AI_TEXT([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+- `SET_SHOW_USER_COMMANDS([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+- `SET_SHOW_USER_TEXT([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - `SET_SOUND_EFFECTS(on|off)`: Enable or disable sound effects.
 - `SET_STATEFUL_MODEL_PRESET(stateless-default|responses-link-preview|conversation-preview)`: Select the visible stateful preset profile metadata; live transport remains unchanged until a later transport slice.
 - `SET_STATUS_OVERLAY(on|off)`: Toggle the top status text overlay.
+- `SET_TASK_CONTINUATION([value])`: Set task.continuation_mode, or omit value to read it. Bounded limits all model slots/wake reasons in one task; legacy retains unrestricted scheduler behavior.
+- `SET_TASK_MAX_MODEL_TURNS([value])`: Set task.max_model_turns, or omit value to read it. Maximum model-turn admissions, across primary/review slots. Latched at the next task start.
+- `SET_TASK_MAX_SECONDS([value])`: Set task.max_seconds, or omit value to read it. Elapsed-time admission limit; late model responses cannot launch new commands. Latched at next task start.
 - `SET_TEMPERATURE([value])`: Set inference.temperature, or omit value to read it. Sampling temperature used by Aurora where the selected model accepts it.
 - `SET_TEXT_MODEL([value])`: Set model.text, or omit value to read it. Model used for text-oriented Aurora turns.
 - `SET_TILE_GRID(on|off)`: Toggle the colored tile grid overlay.
 - `SET_TIME_LOGGING(on|off)`: Toggle detailed timing/debug logging.
 - `SET_TURN_CAPTURE_WAKE([value])`: Set scheduler.capture_wake_enabled, or omit value to read it. Whether settled capture changes may wake a model turn in hybrid scheduler mode.
 - `SET_TURN_CAPTURE_WAKE_DEBOUNCE_SECONDS([value])`: Set scheduler.capture_wake_debounce_seconds, or omit value to read it. Settle delay before a changed capture may wake a model turn.
-- `SET_TURN_HEARTBEAT_SECONDS([value])`: Set scheduler.heartbeat_seconds, or omit value to read it. Maximum quiet interval before the scheduler heartbeat can wake a turn.
+- `SET_TURN_HEARTBEAT_SECONDS([value])`: Set scheduler.heartbeat_seconds, or omit value to read it. Maximum quiet interval before a heartbeat can wake a turn; zero explicitly disables periodic model turns.
 - `SET_TURN_MIN_GAP_SECONDS([value])`: Set scheduler.min_gap_seconds, or omit value to read it. Minimum spacing between model-turn submissions.
 - `SET_TURN_POST_ACTION_SETTLE_SECONDS([value])`: Set scheduler.post_action_settle_seconds, or omit value to read it. Delay after an action result before scheduler follow-up may proceed.
 - `SET_TURN_SCHEDULER_MODE([value])`: Set scheduler.mode, or omit value to read it. Wake strategy for capture-driven, event-driven, or hybrid turns.
 - `SET_TURN_SCHEDULER_PROFILE([value])`: Set scheduler.profile, or omit value to read it. Named bundle for Aurora turn wake and pacing thresholds.
-- `SET_UMSGS_DECAY_CHECK(on|off)`: Explicitly control unimportant-message decay checks.
-- `SET_UNIMPORTANT_MESSAGES(on|off)`: Explicitly enable or disable unimportant messages.
+- `SET_UMSGS_DECAY_CHECK([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+- `SET_UNIMPORTANT_MESSAGES([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - `SET_VISION_MODEL([value])`: Set model.vision, or omit value to read it. Model selected for vision-oriented Aurora turns.
 - `SHOW_AGENTS()`: Display metadata-only Agent Registry / History ACL state.
 - `SHOW_AGENT_HELPER_CLOSURE()`: Display Window 20 helper closure readiness, Pending cleanup status, manual-approval boundary, and guardrails.
@@ -322,7 +337,7 @@
 - `STATUS()`: Display the current runtime mode and key toggles.
 - `SUGGEST_AGENT_COMMAND(agent_id, command=..., reason=..., risk=low|medium|high, target=pending_commands)`: Record a policy-tagged suggestion audit row without Pending Command insertion or execution.
 - `SUMMON_AGENT(agent_id, role=..., rank=..., urgency=..., allow=..., deny=..., history=private|parent_visible)`: Add or reactivate a sub-agent registry row without spawning a worker.
-- `TASKS(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `TASKS()`: Unimplemented legacy placeholder: reports failure and stops the batch tail; does not start inference.
 - `TOGGLE_ADD_IMSGS_TO_HISTORY(...)`: Inspect the handler; detailed usage has not been reviewed.
 - `TOGGLE_ADD_UMSGS_TO_HISTORY(...)`: Inspect the handler; detailed usage has not been reviewed.
 - `TOGGLE_ALWAYS(...)`: Inspect the handler; detailed usage has not been reviewed.
@@ -346,12 +361,13 @@
 - `UPDATE_KNOWN_FAILURES(items)`: Set actions or plans that are currently known to be failing or blocked.
 - `UPDATE_LAST_LANDMARK(landmark)`: Record the most recent stable landmark.
 - `UPDATE_LOCAL_PATH_PLAN(steps)`: Set the short-horizon path steps; separate with semicolons.
-- `UPDATE_LONG_TERM_CONTEXT(items)`: Set long-horizon strategic context; separate with semicolons.
-- `UPDATE_MID_TERM_CONTEXT(items)`: Set the medium-horizon context or plan; separate with semicolons.
-- `UPDATE_NOTES(items)`: Set stable notes/reminders; separate with semicolons.
+- `UPDATE_LONG_TERM_CONTEXT(text...)`: Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it.
+- `UPDATE_MESSAGE(message_id, revision, text_json_base64url, on|off|keep)`: Use the current conversation ID/revision and base64url-encoded JSON text. Stale/missing/ambiguous IDs fail without mutation. Managed protection cannot be changed. Existing timestamp EDIT_MSGS and PIN(text) remain available.
+- `UPDATE_MID_TERM_CONTEXT(text...)`: Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it.
+- `UPDATE_NOTES(text)`: Replace the semicolon-delimited notes list; explicit empty text clears it.
 - `UPDATE_PARTY(party_status)`: Update your current party status; provide details for each Pokémon, separated by semicolons.
-- `UPDATE_PINNED_IMMEDIATE(actions)`: Set the immediate next actions; separate with semicolons.
-- `UPDATE_PINNED_SHORT_TERM(actions)`: Set the soon-ish action list; separate with semicolons.
+- `UPDATE_PINNED_IMMEDIATE(text...)`: Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it.
+- `UPDATE_PINNED_SHORT_TERM(text...)`: Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it.
 - `UPDATE_RECENT_MOVEMENT_RESULTS(items)`: Set recent movement outcomes; separate with semicolons.
 - `UPDATE_ROUTE_BLOCKERS(items)`: Set route blockers or navigation constraints; separate with semicolons.
 - `UPDATE_ROUTE_INTENT(intents)`: Set the current high-level route or destination intent; separate with semicolons.

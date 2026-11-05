@@ -29,6 +29,7 @@ MAX_PROFILE_BYTES = 8 * 1024 * 1024
 # path: (existing runtime setter, coercion contract, additional runtime lock)
 # Registered fields reuse the authoritative registry, including value aliases.
 PROFILE_FIELDS = {
+    "assistant_policy": ("set_assistant_policy", "runtime.assistant_policy", ""),
     "auth_mode": ("set_auth_mode", "auth.mode", ""),
     "execution_mode": ("set_execution_mode", "runtime.execution", ""),
     "action_mode": ("set_action_mode", "runtime.action", ""),
@@ -56,6 +57,13 @@ PROFILE_FIELDS = {
     "turn_post_action_settle_seconds": ("set_turn_post_action_settle_seconds", "scheduler.post_action_settle_seconds", ""),
     "demand_capture_enabled": ("set_demand_capture_enabled", "capture.demand_enabled", ""),
     "capture_mode": ("set_capture_mode", "capture.mode", ""),
+    "capture_geometry_policy": ("set_capture_geometry_policy", "capture.geometry_policy", ""),
+    "capture_request_timeout_seconds": ("set_capture_request_timeout", "capture.request_timeout_seconds", ""),
+    "capture_request_max_attempts": ("set_capture_request_attempts", "capture.request_max_attempts", ""),
+    "capture_target": ("set_capture_target", "capture.target", ""),
+    "capture_provenance_policy": ("set_capture_provenance_policy", "capture.provenance_policy", ""),
+    "gameplay_scene_policy": ("set_gameplay_scene_policy", "game.scene_policy", ""),
+    "goal_save_format": ("set_goal_save_format", "goals.save_format", ""),
     "unchanged_screenshot_persist_interval": ("set_unchanged_screenshot_persist_interval", "persist_interval", "screenshot_interval"),
     "auto_dynamic_inference": ("set_auto_dynamic_inference_enabled", "boolean", "reasoning"),
     "review_turn_interval": ("set_review_turn_interval", "nonnegative_int", "reasoning"),

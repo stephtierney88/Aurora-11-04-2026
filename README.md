@@ -1,64 +1,46 @@
-# Aurora — November 4, 2026 developer preview
+# Aurora — November 5, 2026 developer preview
 
-Aurora is a personal Windows desktop-agent harness with a Control Panel and an operator CLI. This is an experimental source snapshot for technically curious users, with the same broad commands and advanced settings available behind a simpler conversation view. It is not a general-purpose, unattended desktop automation release.
+Aurora is a Windows desktop-agent harness with a conversation-first Control Panel, a visual Switchboard and an operator shell. It gives models screenshots, executes permitted commands, maintains goals and memory, and continues tasks across observations. Its large command/settings arsenal is intentional; start in Conversation and open Advanced controls when needed.
 
-**Start here:** [For humans](README_FOR_HUMANS.md) · [For AI assistants](README_FOR_AI.md)
+**Start here:** [Human guide](README_FOR_HUMANS.md) · [AI setup guide](README_FOR_AI.md) · [Replacing an older copy](UPGRADING.md) · [What changed](RELEASE_NOTES.md)
 
-## Start here
+This is a supervised developer preview, with no polished-release ETA. Start with Windows and Python 3.11 or 3.12; the commands below select 3.11, or substitute `py -3.12`. No ROM, emulator, saved game, credentials or captured screenshots are included.
 
-Use Windows and Python 3.11 with Tkinter. In PowerShell, inside this folder:
+## Install and open the GUI
+
+Download/extract or clone into a fresh folder. Open PowerShell in that folder:
 
 ```powershell
 py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-preview.txt
 .\.venv\Scripts\python.exe aurora_preflight.py --json
+.\.venv\Scripts\python.exe aurora_preflight.py --surface panel --display --json
 .\launch_aurora2_ui.cmd
 ```
 
-The panel opens without starting model inference. Configure your own API key through your normal secure environment setup (`OPENAI_API_KEY`; the older `OPENAI_2023_API_KEY` also works and takes precedence). Never paste a key into the conversation or commit it. Launch the panel from an environment that has your key. OAuth code is present but is not a verified subscription-access path for this preview.
+Select **Start runtime** to start paused. Configure your own API key for API billing, or use **Sign in / OpenAI** and explicitly select **openai_chatgpt** in Agent controls for Aurora's ChatGPT subscription route. Sign-in alone does not switch billing or enable inference. Account/model availability is checked at runtime.
 
-In the panel, Start runtime starts paused; Enable inference then keeps the current settings. The older orb double-click still applies its activation profile. Alternatively, start a paused worker in a second terminal:
+Send a short text task, then choose **Enable inference**. **Pause inference**, **Cancel work** and **Stop runtime** do different jobs. **Reset to preview defaults** offers a reviewed return to paused/safe settings without erasing your files or credentials. Read the human guide before enabling desktop actions.
 
-```powershell
-.\.venv\Scripts\python.exe aurora2.py --offline --no-live-init --no-smoke-test --no-sound --action-mode none --execution-mode safe --no-ui
-```
+## Progress since the previous public snapshot
 
-This starts the runtime with inference off and no implicit action mapping. The main Start runtime button additionally selects safe execution policy. In the panel, inspect the model/settings and then choose **Enable inference** when ready for paid requests. **Pause inference** stops new inference; **Cancel work** cancels current work; **Stop runtime** shuts down the worker. Those are separate controls. Choose an action mode/execution policy explicitly in Advanced settings before trying desktop actions. Do not begin with private or important windows on screen.
+- **Gameplay:** repaired scene detection and recursive goal save/load. A bounded ten-minute FireRed run with Sol 6.1 low won the rival battle, healed and won a Route 1 wild battle. That used a test controller; the normal background loop still needs equivalent endurance qualification.
+- **Subscription access:** real ChatGPT subscription inference and Sol → one Astra turn → Sol restoration were verified on the development account. Long-session/account-switch recovery still needs testing.
+- **Conversation:** queued/awaiting messages and delivery stages, revision-checked edit/pin, a readable detachable mini-preview and clearer current-context/history views.
+- **Flow:** multiple-command guidance, command-driven capture, optional turn/time task limits, optional duplicate-Init removal and reviewed command-result readbacks. Reading a new image still takes another inference call.
+- **Reliability:** guarded tests cover frame identity/freshness, geometry, optional capture deadlines, cancellation, held inputs and more everyday goal/history commands.
+- **Usability:** clearer draft-versus-applied Switchboard settings, compact headers, receipt inspection, scrolling and repaint fixes. Broader mixed-DPI/live-load checks remain.
 
-## Conversation and context
+Inventory: **376 command bindings, 146 reviewed argument contracts, 39 shared settings and 24 views**. Legacy behavior and Advanced settings remain available. [Release notes](RELEASE_NOTES.md) distinguish live evidence, offline checks and unfinished work.
 
-Before desktop actions on another PC, run `aurora_preflight.py --display --json` and follow the AI README's display/preset checklist. Panel/popout sizing adapts to work areas, but legacy screenshot resizing and mouse coordinates need calibration, especially with different DPI or multiple monitors. Main paused GUI startup uses a 2-second capture interval; reset chooses request-only. The full settings and command arsenal remain available. This is not universal automatic screen adaptation.
+## Things to try
 
-- **Conversation → Current context** is the currently eligible conversation window from runtime memory. Messages disappear when deleted, decayed or outside that window. System details are an optional display checkbox. This is not a dump of the complete API prompt.
-- **Retained messages** includes messages still held by the runtime but outside the current window.
-- **Historical log** opens the existing Chat log view, including older events. **Context details** exposes memory/prompt organization.
-- Write below the transcript and use **Send message** or Ctrl+Enter. A queued message enters history when its inference turn begins. Sending does not turn inference on. Queues are session-local, not a durable outbox.
-- **Advanced settings**, the full View selector, Dashboard, Screenshots, Recovery, command entry and CLI retain the operator capabilities. **Reopen last view** restores the previous startup preference instead of opening Conversation.
+Start with chat, command discovery, goals/save/load, message editing/pinning and Switchboard Preview → Apply → Undo. Then try a small screenshot/click/type/readback task on a harmless local page. Aurora has the primitives for supervised website navigation, form entry and reading visible pages; broad internet-task reliability is not established.
 
-## Models and verification
+For Pokémon, supply your own emulator/game and check focus, mapping, capture geometry and timing. Use a copied save. The successful run is evidence of progress, not a promise of unattended game completion.
 
-**Known issues from the final Pokemon test:** an 83-second copied-save run moved the character once, updated goals/four horizons and verified Sol -> Astra -> Sol when stuck. It stopped because the text scene classifier mislabeled a bedroom as a battle. Goal save/load, nested serialization and nested IDs also need repair. Message review/edit/exact-timestamp deletion work; range deletion and near/extra-long horizons are not implemented. Treat gameplay and durable goal memory as unfinished. The assistant GB-routing defect discovered during that test was fixed and all 526 existing regression tests pass. This preview is suitable for supervised exploration, not unattended play.
+## Ask your coding AI
 
-**The Switchboard** adds a simple default flow map, observed primary/vision/review models and cadence, expandable switches and timing dials, all 360 command bindings, yellow prepare / green run, and correlated receipts. Hover/click context nodes to inspect loaded Init, current conversation, last prepared system/memory/user text and screenshot metadata. The flow is observed configuration, not an execution trace. One prominent chat shortcut pair avoids duplicate button rows; Portal animation can be disabled. All older Advanced controls and legacy paths remain.
+> Read README.md, README_FOR_HUMANS.md, README_FOR_AI.md, UPGRADING.md and AGENTS.md. Help me make a fresh Python 3.11 environment, run preflight, configure my own credentials securely and open the GUI paused. Check my monitor, model access and effective settings. Demonstrate chat, Outbox, Pause, Cancel work and Reset to preview defaults. Then propose one bounded test on a harmless window; do not enable wider actions or change billing without my instruction.
 
-Primary/Vision/Review dropdowns apply independently of other drafts; clicking the header model status opens them. Conversation timestamps, model labels and last-edit attribution are on by default and can be hidden. **Reset to preview defaults**, available beside the main runtime controls and in Switchboard/Commands, opens a review/apply/undo workflow for 22 controls. It returns to paused/safe/action-none with Sol low, Astra and capture on request, preserving credentials, chat/files, saved profiles and other Advanced settings. Recovery retains the broader System/Personal profile actions.
-
-New defaults are `gpt-6.1-sol` with low reasoning for text/vision, and `gpt-6-astra` for the review/reasoning role with medium review effort. Older model choices, explicit effort settings, profiles and Chat Completions remain available. This harness uses text-form Aurora commands; the smoke does not claim native API function calling on Chat Completions. The optional Astra Responses/configuration-update path remains separate.
-
-November 4 final bounded live proof: Sol recognized a random token and loaded Init marker, proposed commands and clicked an isolated test button using explicit native-widget coordinates; Astra read the changed screenshot; the next turn returned to Sol low. Provider-returned model IDs matched the requested sequence, and prompt/message/edit attribution checks passed. Two earlier screenshot-only coordinate attempts were rejected by the fixture, so coordinate grounding still needs work. Existing policy held the commands, and the fixture explicitly approved them. A demand-capture request was queued and fulfilled by a bounded test-window capture, not the production background capture worker. This does not establish current Pokemon performance, unattended autonomy, cross-platform support or broad desktop reliability.
-
-Validation: 526 automated tests passed in the development workspace. The Switchboard's isolated native panel smoke covered 24 views, draft preservation, settings preview/apply/rollback, context inspection and raw-command receipts; the prominent popout was also checked manually. A guarded three-turn fake-provider run verified prompt-material export and reasoning restoration with zero API calls. The earlier preview installed into a fresh virtual environment and passed preflight plus the guarded real-runtime fixture. This evidence is from one Windows host, not a second clean PC.
-
-The normal setup requires your own Windows environment and provider access. Audio/game/emulator/companion integrations can require additional programs and configuration. Provider costs and availability can change. The full public snapshot has no private Git history, saved conversations, personal defaults, credentials, runtime state or screenshots.
-
-## Operator entry points
-
-```powershell
-.\.venv\Scripts\python.exe aurora_cli.py status
-.\.venv\Scripts\python.exe aurora_cli.py commands --limit 20
-.\.venv\Scripts\python.exe aurora_cli.py doctor
-```
-
-See `aurora_reference_maps/runtime/overview.md`, the function skeletons and `docs/reference-packs/` for capability discovery. The maps describe implementation; dated historical notes are not proof of current behavior. The project is still evolving, and no public-release ETA is promised.
-
-Prompt refresh: current short/extended guidance now covers discovery, command syntax, permissions, fresh observations and current model controls. Model-requested catalog results enter context by default. The original prompts and terminal-only lookup behavior remain selectable through documented startup environment settings. See the AI guide.
+The snapshot includes runtime/UI source, offline tests, command catalogs, maps/function skeletons and technical references, plus five UI artwork assets used by the application. It excludes private development history, screenshots, conversation logs, state, personal profiles and auth caches. Pattern/configured-secret checks reduce accidental disclosure; they are not a formal security audit.

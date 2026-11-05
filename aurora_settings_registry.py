@@ -106,6 +106,7 @@ class SettingDefinition:
     apply_timing: str = "immediate"
     origin_state_path: tuple[str, ...] = ()
     notes: str = ""
+    operator_only: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -149,6 +150,81 @@ def _setting(
 
 SETTING_DEFINITIONS = (
     _setting(
+        "context.init_delivery", "Init delivery", "context",
+        "System once omits exact Init history copies only when the full text is already in the system prompt. Stored history is preserved.",
+        "enum", ("modes", "init_delivery"), (), "SET_INIT_DELIVERY({value})",
+        allowed_values=("legacy", "system_once"), compatibility_default="legacy", lock_key="live_init",
+        apply_timing="next_model_turn", notes="Edited or truncated Init stays included. Changing this invalidates an active adaptive Responses session; reset that session explicitly.",
+    ),
+    _setting(
+        "task.continuation_mode", "Task continuation", "scheduler",
+        "Bounded limits all model slots/wake reasons in one task; legacy retains unrestricted scheduler behavior.",
+        "enum", ("continuation", "mode"), (), "SET_TASK_CONTINUATION({value})",
+        allowed_values=("legacy", "bounded"), compatibility_default="legacy", lock_key="execution", operator_only=True,
+        notes="New operator input can start another task after a stop. Does not enable inference or Auto; no remote cancellation or action rollback guarantee.",
+    ),
+    _setting(
+        "task.max_model_turns", "Task model-turn limit", "scheduler",
+        "Maximum model-turn admissions, across primary/review slots. Latched at the next task start.",
+        "integer", ("continuation", "max_model_turns"), (), "SET_TASK_MAX_MODEL_TURNS({value})",
+        minimum=1, maximum=10000, compatibility_default=8, lock_key="execution", operator_only=True,
+        apply_timing="next_task", notes="Includes failed preparations; not a token, money or action-count budget.",
+    ),
+    _setting(
+        "task.max_seconds", "Task time limit", "scheduler",
+        "Elapsed-time admission limit; late model responses cannot launch new commands. Latched at next task start.",
+        "float", ("continuation", "max_seconds"), (), "SET_TASK_MAX_SECONDS({value})",
+        minimum=1, maximum=86400, compatibility_default=120.0, lock_key="execution", operator_only=True,
+        apply_timing="next_task", notes="Checked between runtime operations. An already executing action or remote request may finish after the limit.",
+    ),
+    _setting(
+        "scheduler.readback_wake_enabled", "Continue after command readback", "scheduler",
+        "Wake a follow-up for eligible discovery or reviewed receipt data, according to readback scope. Requires bounded task mode.",
+        "boolean", ("scheduler", "readback_wake_enabled"), (), "SET_READBACK_WAKE({value})",
+        compatibility_default=False, lock_key="reasoning", apply_timing="immediate_scheduler",
+        notes="Waits for the whole batch and any post-action capture boundary. Reviewed scope includes supported model-requested mutations; never replays commands.",
+    ),
+    _setting(
+        "scheduler.readback_scope", "Command readback scope", "scheduler",
+        "Discovery preserves history-based lookup delivery; reviewed additionally includes bounded task-correlated settings, goals, history and retrieval receipts.",
+        "enum", ("scheduler", "readback_scope"), (), "SET_READBACK_SCOPE({value})",
+        allowed_values=("discovery", "reviewed"), compatibility_default="discovery", lock_key="reasoning",
+        gui_tier="advanced", risk_class="advanced", apply_timing="next_receipt_and_request",
+        notes="Session-only; requires bounded task mode. Future receipts are retained, not backfilled. Wake is separately controlled. Receipt data is independent of chat decay, visibly bounded, and never command replay.",
+    ),
+    _setting(
+        "runtime.assistant_policy", "Assistant task-flow policy", "execution",
+        "Task flow admits discovery, enabled capture requests, one-turn plans, bounded GB overworld movement and battle menu steps in Auto. Legacy keeps previous review decisions.",
+        "enum", ("modes", "assistant_policy"), ("defaults", "system_profile", "assistant_policy"),
+        "SET_ASSISTANT_POLICY({value})", allowed_values=("legacy", "task_flow"),
+        compatibility_default="legacy", lock_key="execution", gui_tier="advanced", risk_class="advanced",
+        notes="Does not enable inference or Auto. New directional holds are bounded to 1s overworld or .25s battle. Unknown scenes, longer directional input, persistence and permanent settings retain review. Existing locks and input ownership apply.",
+    ),
+    _setting(
+        "inference.service_tier", "Service speed priority", "inference",
+        "Requested service priority, independent of reasoning effort. Regular omits acceleration; subscription catalog must advertise other tiers.",
+        "enum", ("models", "service_tier"), (), "SET_SERVICE_TIER({value})",
+        allowed_values=("regular", "priority", "ultrafast"), value_aliases=(("fast", "priority"),),
+        compatibility_default="regular", lock_key="reasoning", gui_tier="advanced", risk_class="advanced",
+        apply_timing="next_model_turn", notes="Session-only. Accelerated tiers currently require openai_chatgpt; no automatic fallback. Increased subscription usage may apply.",
+    ),
+    _setting(
+        "game.scene_policy", "Gameplay scene policy", "gameplay",
+        "Evidence uses fresh model observation/scene sections with token boundaries and conflict checks. Legacy retains mixed-context substring inference.",
+        "enum", ("modes", "gameplay_scene_policy"), ("defaults", "system_profile", "gameplay_scene_policy"),
+        "SET_GAMEPLAY_SCENE_POLICY({value})", allowed_values=("evidence", "legacy"),
+        compatibility_default="legacy", lock_key="action", gui_tier="advanced", risk_class="advanced",
+        apply_timing="next_scene_evaluation", notes="New sessions default to evidence. Text reports are not verified image perception; unknown scenes remain reviewed.",
+    ),
+    _setting(
+        "goals.save_format", "Goal save format", "memory",
+        "Versioned saves add a schema envelope; legacy preserves the existing task document shape. Both use recursive IDs, validation and atomic replacement.",
+        "enum", ("modes", "goal_save_format"), ("defaults", "system_profile", "goal_save_format"),
+        "SET_GOAL_SAVE_FORMAT({value})", allowed_values=("versioned", "legacy"),
+        compatibility_default="legacy", lock_key="execution", gui_tier="advanced", risk_class="advanced",
+        apply_timing="next_explicit_save", notes="Both formats load automatically. Malformed/duplicate-ID files are rejected unchanged; saves do not happen automatically.",
+    ),
+    _setting(
         "auth.mode",
         "Authentication mode",
         "access",
@@ -159,7 +235,7 @@ SETTING_DEFINITIONS = (
         "SET_AUTH_MODE({value})",
         aliases=("auth", "auth_mode"),
         lock_key="auth",
-        allowed_values=("api_key", "codex_oauth", "auto"),
+        allowed_values=("api_key", "openai_chatgpt", "codex_oauth", "auto"),
         compatibility_default="api_key",
         gui_tier="advanced",
         risk_class="advanced",
@@ -395,14 +471,14 @@ SETTING_DEFINITIONS = (
         "scheduler.heartbeat_seconds",
         "Turn heartbeat seconds",
         "scheduler",
-        "Maximum quiet interval before the scheduler heartbeat can wake a turn.",
+        "Maximum quiet interval before a heartbeat can wake a turn; zero explicitly disables periodic model turns.",
         "float",
         ("scheduler", "heartbeat_seconds"),
         ("defaults", "system_profile", "turn_heartbeat_seconds"),
         "SET_TURN_HEARTBEAT_SECONDS({value})",
         aliases=("heartbeat", "turn_heartbeat_seconds"),
         lock_key="reasoning",
-        minimum=0.25,
+        minimum=0.0,
         compatibility_default=2.25,
         gui_tier="advanced",
         risk_class="advanced",
@@ -511,6 +587,57 @@ SETTING_DEFINITIONS = (
         notes="Independent of inference scheduling. In-flight capture may finish. Request-only with demand disabled produces no new captures.",
     ),
     _setting(
+        "capture.provenance_policy",
+        "Capture freshness policy",
+        "capture",
+        "Verified requires pixels acquired after the action settle boundary; legacy retains counter/clock freshness checks.",
+        "enum",
+        ("modes", "capture_provenance_policy"),
+        ("defaults", "system_profile", "capture_provenance_policy"),
+        "SET_CAPTURE_PROVENANCE_POLICY({value})",
+        allowed_values=("verified", "legacy"),
+        compatibility_default="verified",
+        lock_key="screenshot_interval",
+        gui_tier="advanced",
+        risk_class="advanced",
+        apply_timing="next_scheduler_check",
+        notes="Unknown legacy frame provenance is never upgraded to verified. Both paths retain request generations and cancellation protection.",
+    ),
+    _setting(
+        "capture.geometry_policy", "Capture geometry policy", "capture",
+        "Verified captures an explicit physical rectangle; legacy keeps startup scaling and default desktop grabs.",
+        "enum", ("modes", "capture_geometry_policy"), ("defaults", "system_profile", "capture_geometry_policy"),
+        "SET_CAPTURE_GEOMETRY_POLICY({value})", allowed_values=("verified", "legacy"),
+        compatibility_default="verified", lock_key="screenshot_interval", gui_tier="advanced", risk_class="advanced",
+        apply_timing="next_acquisition",
+        notes="Existing in-flight frames keep their own geometry. This does not calibrate or convert desktop input commands.",
+    ),
+    _setting(
+        "capture.target", "Capture target", "capture",
+        "Choose primary monitor, virtual desktop or foreground window for verified geometry.",
+        "enum", ("modes", "capture_target"), ("defaults", "system_profile", "capture_target"),
+        "SET_CAPTURE_TARGET({value})", allowed_values=("legacy_options", "primary", "virtual", "foreground"),
+        compatibility_default="legacy_options", lock_key="screenshot_interval", gui_tier="advanced", risk_class="advanced",
+        apply_timing="next_verified_acquisition",
+        notes="legacy_options resolves existing flags: native cursor first (primary), current window next, then entire screen. Legacy geometry ignores this selector. Foreground is a desktop crop; overlapping windows may be visible.",
+    ),
+    _setting(
+        "capture.request_timeout_seconds", "Capture request timeout (s; 0 = unlimited)", "capture",
+        "Total monotonic deadline from request admission through settle, acquisition, drawing and publication. Zero preserves unlimited waiting.",
+        "float", ("modes", "capture_request_timeout_seconds"), ("defaults", "system_profile", "capture_request_timeout_seconds"),
+        "SET_CAPTURE_REQUEST_TIMEOUT({value})", minimum=0.0, compatibility_default=0.0,
+        lock_key="screenshot_interval", gui_tier="advanced", risk_class="advanced", apply_timing="next_capture_request",
+        notes="Latched per request. Expiry rejects late pixels and blocks automatic observation continuation; it does not interrupt an OS call. Explicit request or cancellation recovers the wait.",
+    ),
+    _setting(
+        "capture.request_max_attempts", "Capture request attempts (0 = unlimited)", "capture",
+        "Maximum acquisition attempts for one request; zero preserves unlimited retries. Legacy drawing recapture shares its parent's attempt.",
+        "integer", ("modes", "capture_request_max_attempts"), ("defaults", "system_profile", "capture_request_max_attempts"),
+        "SET_CAPTURE_REQUEST_ATTEMPTS({value})", minimum=0, compatibility_default=0,
+        lock_key="screenshot_interval", gui_tier="advanced", risk_class="advanced", apply_timing="next_capture_request",
+        notes="Attempts use the existing one-second publication lease. Failure of the final attempt, or expiry of its lease, is terminal. Heartbeat cannot add attempts beyond the budget.",
+    ),
+    _setting(
         "capture.demand_enabled",
         "Demand capture enabled",
         "capture",
@@ -580,7 +707,7 @@ def _build_setting_indexes() -> tuple[dict[str, SettingDefinition], dict[str, st
         key = normalize_setting_key(definition.key)
         if key != definition.key or key in definitions or key in aliases:
             raise RuntimeError(f"Duplicate or non-normalized setting key: {definition.key}")
-        if definition.value_type not in {"boolean", "enum", "float", "string"}:
+        if definition.value_type not in {"boolean", "enum", "float", "integer", "string"}:
             raise RuntimeError(f"Unsupported setting value type for {key}: {definition.value_type}")
         if definition.value_type == "enum" and not definition.allowed_values:
             raise RuntimeError(f"Enum setting {key} requires allowed values.")
@@ -678,7 +805,7 @@ def coerce_setting_value(key: Any, value: Any, *, for_readback: bool = False) ->
             )
         return normalized
 
-    if definition.value_type == "float":
+    if definition.value_type in {"float", "integer"}:
         if isinstance(value, bool):
             raise InvalidSettingValueError(f"{definition.key} requires a numeric value.")
         try:
@@ -687,6 +814,8 @@ def coerce_setting_value(key: Any, value: Any, *, for_readback: bool = False) ->
             raise InvalidSettingValueError(f"{definition.key} requires a numeric value.") from error
         if not math.isfinite(numeric):
             raise InvalidSettingValueError(f"{definition.key} requires a finite numeric value.")
+        if definition.value_type == "integer" and not numeric.is_integer():
+            raise InvalidSettingValueError(f"{definition.key} requires a whole number.")
         if definition.minimum is not None and numeric < definition.minimum:
             raise InvalidSettingValueError(
                 f"{definition.key} must be at least {definition.minimum}."
@@ -695,7 +824,7 @@ def coerce_setting_value(key: Any, value: Any, *, for_readback: bool = False) ->
             raise InvalidSettingValueError(
                 f"{definition.key} must be at most {definition.maximum}."
             )
-        return numeric
+        return int(numeric) if definition.value_type == "integer" else numeric
 
     if definition.value_type == "string":
         if not isinstance(value, str) or not value.strip():

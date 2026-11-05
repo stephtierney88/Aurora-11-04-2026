@@ -68,7 +68,7 @@ class InferenceOptionTests(unittest.TestCase):
 
     def test_descriptions_publish_contracts_without_removing_bindings(self):
         rows = {r["command"]: r for r in build_command_catalog(ingress.ROOT)["commands"]}
-        self.assertEqual(len(rows), 360)
+        self.assertEqual(len(rows), 376)
         for name in INFERENCE_PLAN_COMMANDS:
             self.assertEqual(rows[name]["contract"], describe_command_contract(name))
             self.assertEqual(rows[name]["contract"]["result"]["receipt_field"], "inference_plan_results")
@@ -146,7 +146,7 @@ class InferencePlanRuntimeTests(unittest.TestCase):
         initial = self.replace(note="keep old plan")
         for lock, options in (("models", "model=custom; note=x"), ("reasoning", "reasoning=high; note=x"),
                               ("reasoning", "verbosity=high; note=x"), ("reasoning", "summary=brief; note=x"),
-                              ("temperature", "temperature=0; note=x")):
+                              ("temperature", "temperature=0; note=x"), ("reasoning", "service_tier=priority")):
             with self.subTest(lock=lock, options=options):
                 self.fixture.locks[lock] = True
                 result = self.run_batch("SET_NEXT_INFERENCE(" + options + "); SET_TIME_LOGGING(on)")

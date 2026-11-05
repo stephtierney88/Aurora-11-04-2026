@@ -1,5 +1,36 @@
 # Aurora Typed Settings and Transactions Reference
 
+## November 5 — reviewed receipt scope (Implementation 44)
+
+Current registry **39 settings / 376 bindings / 146 reviewed contracts**; preview reset 35, persisted preference fields remain 69.
+
+`scheduler.readback_scope` / `SET_READBACK_SCOPE(discovery|reviewed)` is a session-only Advanced selector using the reasoning lock, shared typed commands and versioned Preview/Apply/Undo. Zero arguments query. Default `discovery` preserves history-based lookup delivery; `reviewed` additionally captures future supported model-command receipts and includes pending evidence in the next bounded-task request. It is not backfilled from old logs. Startup configuration: `AURORA_READBACK_SCOPE=reviewed`; existing shell/CLI raw-command access remains.
+
+Automatic continuation separately requires `SET_READBACK_WAKE(on)` and `SET_TASK_CONTINUATION(bounded)`. Selecting receipt scope does not enable inference, change execution permission or billing. Retained receipts are bounded and task-scoped; changing back to discovery suppresses their automatic wakes/inclusion while retaining inspectable records. No failed command or uncertain request is automatically replayed. Read Implementation 44 (development reference omitted from this snapshot) for exact scope and limits.
+
+## November 5 — CF1b2 request limits (Implementation 43)
+
+Current registry: **38 settings / 375 bindings / 145 reviewed contracts**; reset 34, runtime preference snapshots 69 fields. Counts in older dated sections are historical.
+
+- `capture.request_timeout_seconds` / `SET_CAPTURE_REQUEST_TIMEOUT(seconds)`: finite nonnegative seconds, default 0 (unlimited). CLI `--capture-request-timeout`, environment `AURORA_CAPTURE_REQUEST_TIMEOUT`.
+- `capture.request_max_attempts` / `SET_CAPTURE_REQUEST_ATTEMPTS(count)`: nonnegative integer, default 0 (unlimited). CLI `--capture-request-attempts`, environment `AURORA_CAPTURE_REQUEST_ATTEMPTS`.
+- Both are latched on the next request, use the screenshot_interval lock, shared validation/receipts/source/scope and Preview/Apply/Undo. Zero arguments query. Saved profiles and preview reset include them. Existing requests retain their original limits when settings change.
+- Deadline includes settle, acquisition, drawing and publication admission. Attempt exhaustion occurs on final failure or the final attempt's existing one-second publication lease; a dropped/slow pipeline can exhaust that lease. Legacy recapture shares its parent attempt. Heartbeats cannot bypass the cap.
+- Limits fence request completion; they do not interrupt a running native call. Inspect `capture_service.current_failure`, `last_failure` and `acquisitions_inflight`. Explicit fresh capture or Cancel acknowledges a terminal wait; a never-returning native call may require runtime restart. No new defaults were applied to the user's saved configuration.
+
+Implementation 43 (development reference omitted from this snapshot) owns verification and remaining boundaries.
+
+## November 5 — CF1b geometry controls
+
+The registry now has 36 settings (373 command bindings, 143 reviewed contracts). Preview reset has 32 settings; runtime preference snapshots contain 67 fields. Historical counts below describe their dated revisions.
+
+- `capture.geometry_policy`: `verified` (default) or `legacy`; command `SET_CAPTURE_GEOMETRY_POLICY(value)`, zero arguments query. Verified geometry uses explicit physical rectangles; legacy retains default desktop grabs/startup scaling/current-window recapture and unknown calibration.
+- `capture.target`: `legacy_options` (default), `primary`, `virtual`, `foreground`; command `SET_CAPTURE_TARGET(value)`, zero arguments query. The selector takes effect on the next verified acquisition. Legacy geometry ignores it, as disclosed by setting notes. Existing native-cursor flag wins first (primary), then current_window, then entire_screen, then primary.
+- Both use the screenshot_interval lock and shared versioned settings Preview/Apply/Undo, Advanced controls, saved profiles, CLI `--capture-geometry-policy` / `--capture-target`, and `AURORA_CAPTURE_GEOMETRY_POLICY` / `AURORA_CAPTURE_TARGET`. Existing in-flight frames retain their own geometry.
+- `capture.provenance_policy` remains independent: acquisition freshness versus legacy counter checks. Capture mode, cadence, demand and inference scheduling remain separate. Geometry describes pixels; it does not convert or qualify existing input backends.
+
+Implementation 42 (development reference omitted from this snapshot) owns validation and native-testing limits.
+
 ## September 7 defaults service — Implementation 12 / 4B4b
 
 The four existing defaults commands now return default_profile_results (aurora_default_profile_result_v1) with before/after profile state and content versions, requested/changed/attempted fields, explicit failure/restoration and file evidence where relevant. Failures stop the remaining command batch; duplicate receipts retain original evidence without another apply/save.

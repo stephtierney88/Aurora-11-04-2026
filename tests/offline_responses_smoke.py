@@ -11,11 +11,11 @@ import time
 from pathlib import Path
 
 from offline_panel_smoke import COPY_FILES
-from offline_runtime_smoke import CONTRACT_FIXTURE
+from offline_runtime_smoke import CONTRACT_FIXTURE, CONTRACT_IMPORT_GUARD
 
 ROOT = Path(__file__).resolve().parents[1]
 
-FIXTURE = CONTRACT_FIXTURE.rsplit("runtime.main()", 1)[0] + '''
+FIXTURE = CONTRACT_IMPORT_GUARD + CONTRACT_FIXTURE.rsplit("runtime.main()", 1)[0] + '''
 import json
 import queue
 import threading
@@ -83,12 +83,20 @@ try:
     assert [row["updates"] for row in requests_seen] == [[], ["high"], ["low"]], requests_seen
     assert [row["previous_response_id"] for row in requests_seen] == [None, "resp_fixture_1", "resp_fixture_2"]
     assert runtime.RESPONSES_REASONING.snapshot()["effective_effort"] == "low"
+    conversation = runtime.build_control_panel_state_snapshot()["conversation"]
+    preparations = [row for row in conversation["archive"]["events"] if row.get("event") == "request preparation"]
+    assert len(preparations) == 3
+    assert all("delivery is not established" in row["text"] for row in preparations)
+    assert "Configured capture policy:" in preparations[0]["text"]
+    assert set(conversation["models"]) == {"Primary", "Vision", "Review"}
+    assert all(row.get("message_id") for row in conversation["retained"]["rows"])
     assert errors.empty()
     assert not Path("forbidden-native-input.txt").exists()
     proof = {"status": "passed", "startup": startup, "requests": requests_seen,
              "model_requested_escalation": True, "command_result_count": len(recent),
              "reasoning_state": runtime.RESPONSES_REASONING.snapshot(),
              "prompt_materials_export_verified": True,
+             "conversation_archive_preparations": len(preparations), "conversation_metadata_and_model_slots": True,
              "native_capture_network_guards_unused": True, "real_api_calls": 0}
 finally:
     runtime.SEND_TO_MODEL = runtime.ENABLE_MODEL_RESPONSES = False
@@ -123,7 +131,7 @@ def run_smoke():
                     process.terminate()
                     process.wait(timeout=5)
         if code != 0:
-            raise AssertionError((work/"process.log").read_text(errors="replace")[-6000:])
+            raise AssertionError((work/"process.log").read_text(encoding="utf-8", errors="replace")[-6000:])
         proof = json.loads((work/"proof.json").read_text(encoding="utf-8"))
         proof.update(runtime_exit_code=code, elapsed_seconds=round(time.monotonic()-started, 3), ownership=ownership)
     proof["fixture_removed"] = not work.exists()

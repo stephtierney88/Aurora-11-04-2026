@@ -13,7 +13,7 @@ from aurora_command_catalog import build_command_catalog, load_generated_catalog
 from aurora_command_protocol import split_command_batch
 from aurora_control_plane import journal_offsets, wait_for_command_receipt
 from aurora_conversation import conversation_text
-from aurora_panel_layout import CollapsibleSection, FlowBar
+from aurora_panel_layout import CollapsibleSection, FlowBar, ui_scale, wrap_packed_labels
 from aurora_settings_registry import SETTING_DEFINITIONS, coerce_setting_value
 
 BG, CARD, INK, MUTED = "#0b1020", "#131c2b", "#e9eef5", "#a9b8cb"
@@ -23,7 +23,7 @@ GREEN, YELLOW, PURPLE = "#8ce0b5", "#f2cd70", "#c2adf5"
 def preview_default_changes():
     """Explicit session baseline; credentials, game profile and legacy Advanced stay owned elsewhere."""
     values = {row.key: row.compatibility_default for row in SETTING_DEFINITIONS
-              if row.key not in {"auth.mode", "game.profile"}}
+              if row.key not in {"auth.mode", "game.profile", "game.scene_policy", "goals.save_format"}}
     values.update({"runtime.live": False, "runtime.execution": "safe", "runtime.action": "none",
                    "model.text": "gpt-6.1-sol", "model.vision": "gpt-6.1-sol", "model.reasoning": "gpt-6-astra",
                    "inference.reasoning_effort": "low", "capture.mode": "request_only",
@@ -35,7 +35,7 @@ def next_inference_label(state):
     plan = (state.get("planning") or {}).get("next_inference")
     if not isinstance(plan, dict):
         return "unknown"
-    keys = ("reasoning_effort", "verbosity", "summary_mode", "image_detail", "latest_image_detail",
+    keys = ("reasoning_effort", "service_tier", "verbosity", "summary_mode", "image_detail", "latest_image_detail",
             "temperature", "model", "text_model", "vision_model", "reasoning_model", "note")
     return "queued" if any(plan.get(key) not in (None, "") for key in keys) or plan.get("target_turn", 0) else "none"
 
@@ -203,7 +203,7 @@ class PortalShortcuts(ttk.Frame):
                 pass
         self.portal = ttk.Button(self, text="Conversation", compound="left", command=lambda: app.show_tab("Conversation"))
         self.portal.pack(side="left", padx=(0, 5))
-        self.chat = ttk.Button(self, text="Popout chat  ↗", command=app.toggle_chat_head_request)
+        self.chat = ttk.Button(self, text="Popout chat  ↗", command=app.open_conversation_popout)
         try:
             from PIL import Image, ImageDraw, ImageTk
             icon = Image.new("RGBA", (44, 30))
@@ -244,6 +244,7 @@ class Switchboard(ttk.Frame):
         self.app, self.root = app, Path(root)
         self.rows = load_switchboard_catalog(root)
         self.variables, self.observed, self.readbacks, self.dirty = {}, {}, {}, set()
+        self.readback_labels, self._readback_details = {}, {}
         self.sliders = {}
         self.receipts, self.pending = queue.Queue(), None
         self._flow_signature = None
@@ -299,19 +300,22 @@ class Switchboard(ttk.Frame):
         self.model_selectors = {}
         self.model_keys = {"model.text", "model.vision", "model.reasoning", "inference.reasoning_effort"}
         for label, key in (("Primary", "model.text"), ("Vision", "model.vision"), ("Review", "model.reasoning")):
-            self.model_bar.add(ttk.Label(self.model_bar, text=label, foreground=PURPLE))
-            self.model_selectors[key] = self.model_bar.add(ttk.Combobox(self.model_bar, textvariable=self.variables[key], width=20))
-        self.model_bar.add(ttk.Label(self.model_bar, text="Primary effort"))
-        self.model_bar.add(ttk.Combobox(self.model_bar, textvariable=self.variables["inference.reasoning_effort"],
-                                      values=definitions["inference.reasoning_effort"].allowed_values, state="readonly", width=9))
+            group = self.model_bar.add(ttk.Frame(self.model_bar))
+            ttk.Label(group, text=label, foreground=PURPLE).pack(side="left", padx=(0, 5))
+            self.model_selectors[key] = ttk.Combobox(group, textvariable=self.variables[key], width=20)
+            self.model_selectors[key].pack(side="left")
+        effort_group = self.model_bar.add(ttk.Frame(self.model_bar))
+        ttk.Label(effort_group, text="Primary effort").pack(side="left", padx=(0, 5))
+        ttk.Combobox(effort_group, textvariable=self.variables["inference.reasoning_effort"],
+                     values=definitions["inference.reasoning_effort"].allowed_values, state="readonly", width=9).pack(side="left")
         self.model_apply_button = self.model_bar.add(ttk.Button(self.model_bar, text="Apply model choices", style="SwitchRun.TButton",
                                                      command=lambda: self.submit_settings("apply", keys=self.model_keys)))
-        self.model_status = ttk.Label(self, textvariable=app.settings_transaction_status_var, style="Muted.TLabel", wraplength=950)
+        self.model_status = ttk.Label(self, text="Model selections are drafts until Apply.", style="Muted.TLabel", wraplength=950)
         self.model_status.pack(fill="x", before=self.controls, pady=(0, 6))
 
         self.defaults_section = CollapsibleSection(self, "Preview defaults — a known starting point", expanded=False)
         self.defaults_section.pack(fill="x", before=self.controls, pady=(0, 10))
-        ttk.Label(self.defaults_section.body, text="Resets the 22 Switchboard controls listed below for this session: inference paused, safe execution, action mode none, Sol low / Astra, capture on request.\nAuthentication, game profile, chats, files, saved profiles and other Advanced settings stay as they are. An in-flight request may still finish remotely.\nUse Cancel work for queued/in-flight commands; Recovery has System and Personal profile restoration.",
+        ttk.Label(self.defaults_section.body, text=f"Resets the {len(preview_default_changes())} registered controls listed below for this session: inference paused, safe execution, action mode none, Sol low / Astra, capture on request.\nAuthentication, game profile, chats, files, saved profiles and unlisted Advanced settings stay as they are. An in-flight request may still finish remotely.\nUse Cancel work for queued/in-flight commands; Recovery has System and Personal profile restoration.",
                   wraplength=950, style="Muted.TLabel").pack(fill="x", pady=5)
         self.defaults_preview = tk.Text(self.defaults_section.body, height=8, wrap="none", bg=CARD, fg=INK, relief="flat")
         defaults_scroll = ttk.Scrollbar(self.defaults_section.body, command=self.defaults_preview.yview)
@@ -482,6 +486,9 @@ class Switchboard(ttk.Frame):
         var = tk.StringVar(value="")
         self.variables[definition.key] = var
         ttk.Label(row, text=definition.title, foreground=PURPLE).pack(anchor="w")
+        if definition.key.startswith("task.") or definition.key in {"context.init_delivery", "scheduler.readback_wake_enabled"}:
+            ttk.Label(row, text=definition.description + (" Operator only." if definition.operator_only else ""),
+                      style="Muted.TLabel", wraplength=800).pack(fill="x")
         controls = FlowBar(row)
         controls.pack(fill="x")
         if definition.value_type == "boolean":
@@ -502,7 +509,9 @@ class Switchboard(ttk.Frame):
             controls.add(ttk.Label(controls, text="seconds (dial 0.1–60; type any valid value)", style="Muted.TLabel"))
         readback = tk.StringVar(value="Observed: unknown")
         self.readbacks[definition.key] = readback
-        ttk.Label(row, textvariable=readback, style="Muted.TLabel", wraplength=800).pack(anchor="w")
+        label = ttk.Label(row, textvariable=readback, style="Muted.TLabel", wraplength=800)
+        label.pack(anchor="w")
+        self.readback_labels[definition.key] = label
         var.trace_add("write", lambda *_a, key=definition.key: self.mark_dirty(key))
 
     def mark_dirty(self, key):
@@ -516,6 +525,20 @@ class Switchboard(ttk.Frame):
             self.dirty.add(key)
         else:
             self.dirty.discard(key)
+        self.refresh_setting_feedback(key)
+        self.refresh_draft_hint()
+
+    def refresh_setting_feedback(self, key):
+        """Show unsubmitted edits beside the control without changing readback authority."""
+        observed = self._readback_details.get(key, "Observed: unknown")
+        draft = self.variables[key].get()
+        dirty = key in self.dirty
+        prefix = f"Draft: {draft or '(empty)'} — not applied. " if dirty else ""
+        self.readbacks[key].set(prefix + observed)
+        self.readback_labels[key].configure(style="Draft.TLabel" if dirty else "Muted.TLabel")
+
+    def refresh_draft_hint(self):
+        self.hint.set(f"{'Runtime connected' if self._fresh else 'Inactive / stale — editing drafts only'} · {len(self.dirty)} edited switches · {len(self.rows)} command bindings")
 
     def reload(self):
         self.dirty.clear()
@@ -538,7 +561,7 @@ class Switchboard(ttk.Frame):
 
     def submit_defaults(self, operation):
         return self.app._submit_settings_transaction(operation, changes=preview_default_changes(),
-            activity_label="Preview defaults (22 controls; other Advanced settings retained)", inline_results=True)
+            activity_label=f"Preview defaults ({len(preview_default_changes())} controls; other Advanced settings retained)", inline_results=True)
 
     def submit_settings(self, operation, keys=None):
         try:
@@ -625,6 +648,9 @@ class Switchboard(ttk.Frame):
         self.receipts.put(result)
 
     def update_state(self, force=False):
+        # Full transaction/version evidence remains in expanded switches and
+        # Dashboard; long hashes should not dominate the compact model picker.
+        self.model_status.configure(text=self.app.settings_transaction_status_var.get().split(" | version ")[0])
         state = self.app.state_cache or {}
         models, model_status, modes = (state.get(key) or {} for key in ("models", "model_status", "modes"))
         review_n = model_status.get("review_turn_interval")
@@ -632,11 +658,14 @@ class Switchboard(ttk.Frame):
         for selector in self.model_selectors.values():
             selector.configure(values=choices)
         review = f"every {review_n} turns" if isinstance(review_n, (int, float)) and review_n > 0 else "on call / no periodic review" if review_n == 0 else "cadence unknown"
+        continuation = state.get("continuation") or {}
+        task = continuation.get("active_task") or {}
         self.running_summary.set(
             f"Primary: {models.get('text', 'unknown')} · {model_status.get('reasoning_effort', 'unknown')} effort   |   Vision: {models.get('vision', 'unknown')}\n"
             f"Review: {models.get('reasoning', 'unknown')} · {model_status.get('review_reasoning_effort', 'unknown')} effort · {review}   |   Dynamic inference: {model_status.get('auto_dynamic_inference', 'unknown')}\n"
             f"Mode: {modes.get('execution', 'unknown')} / {modes.get('action', 'unknown')} · {models.get('transport', 'unknown')}   |   Screenshot: {modes.get('capture_mode', 'unknown')} · {modes.get('effective_screenshot_interval', 'unknown')}s effective   |   Turn heartbeat: {(state.get('scheduler') or {}).get('heartbeat_seconds', 'unknown')}s\n"
-            f"Turn: {(state.get('planning') or {}).get('inference_counter', 'unknown')} · Pending proposals: {len(state.get('pending_commands') or [])} displayed · Next-turn override: {next_inference_label(state)} · Model selectors below are drafts until Apply.")
+            f"Turn: {(state.get('planning') or {}).get('inference_counter', 'unknown')} · Pending proposals: {len(state.get('pending_commands') or [])} displayed · Next-turn override: {next_inference_label(state)} · Model selectors below are drafts until Apply.\n"
+            f"Task: {continuation.get('mode', 'unknown')} · {task.get('status', 'unknown')} · {task.get('turns', 0)}/{task.get('max_turns', '?')} model turns · {task.get('stop_reason') or 'no stop recorded'} · Init: {modes.get('init_delivery', 'unknown')}")
         self.refresh_contents()
         transaction = self.app.settings_transaction_last_receipt
         receipt_signature = json.dumps(transaction, sort_keys=True)
@@ -670,8 +699,9 @@ class Switchboard(ttk.Frame):
                 if self.variables[key].get() == shown:
                     self.dirty.discard(key)
                 source = row.get("source") or {}
-                self.readbacks[key].set(f"Observed: {shown or 'unknown'} · {row.get('value_status', 'unknown')} · {source.get('path', 'unknown source')} · session" + (" · LOCKED" if row.get("locked") else ""))
-            self.hint.set(f"{'Runtime connected' if self._fresh else 'Inactive / stale — editing drafts only'} · {len(self.dirty)} edited switches · {len(self.rows)} command bindings")
+                self._readback_details[key] = f"Observed: {shown or 'unknown'} · {row.get('value_status', 'unknown')} · {source.get('path', 'unknown source')} · session" + (" · LOCKED" if row.get("locked") else "")
+                self.refresh_setting_feedback(key)
+            self.refresh_draft_hint()
         except (OSError, ValueError) as error:
             self._fresh = False
             self.hint.set(f"Observed settings unavailable: {error}")
@@ -687,69 +717,99 @@ class Switchboard(ttk.Frame):
         if not hasattr(self, "graph") or not self.graph.winfo_ismapped():
             return
         model = switchboard_flow(self.app.state_cache or {}, fresh=self._fresh, level=self.level.get())
-        width = max(400, self.graph.winfo_width())
+        width = max(160, self.graph.winfo_width())
         teasers = {kind: context_teaser(self.app.state_cache or {}, kind) for kind, _label, _description in CONTEXT_PARTS}
         signature = json.dumps([model, teasers], sort_keys=True), width
         if signature == self._flow_signature and not force:
             return
         self._flow_signature = signature
+        wrap_packed_labels(self)
         canvas = self.graph
         canvas.delete("all")
-        left, right = width * .26, width * .74
-        positions = [(left, 100), (right, 100), (right, 245), (left, 245)]
-        if len(model["nodes"]) == 3:
-            positions = [(width*.17, 220), (width*.5, 220), (width*.83, 220)]
-        elif len(model["nodes"]) > 4:
-            positions = [(left if (i // 2) % 2 == 0 else right, 100 + (i // 2) * 145) if i % 2 == 0
-                         else (right if (i // 2) % 2 == 0 else left, 100 + (i // 2) * 145) for i in range(len(model["nodes"]))]
-        height = max(y for _x, y in positions) + (75 if len(model["nodes"]) == 3 else 95)
-        canvas.configure(height=height)
-        node_w = min(270, width * .39)
-        if len(model["nodes"]) == 3:
-            node_w = min(250, width * .26)
-            chip_width = width / len(CONTEXT_PARTS)
-            for index, (kind, label, _description) in enumerate(CONTEXT_PARTS):
-                x = chip_width * (index + .5)
-                tag = "context:" + kind
-                canvas.create_rectangle(x-chip_width*.46, 24, x+chip_width*.46, 87, fill=CARD, outline=PURPLE, tags=(tag,))
-                canvas.create_text(x, 44, text=label + " *", fill=INK, width=chip_width*.86, font=("Segoe UI Semibold", 10), tags=(tag,))
-                limit = max(18, min(72, int(chip_width / 6) * 2))
-                detail = teasers[kind][:limit] + ("…" if len(teasers[kind]) > limit else "")
-                teaser_item = canvas.create_text(x, 72, text=detail, fill=MUTED, width=chip_width*.86, font=("Segoe UI", 8), tags=(tag,))
-                while len(detail) > 2 and canvas.bbox(teaser_item)[3] - canvas.bbox(teaser_item)[1] > 26:
-                    detail = detail[:-2] + "…"
-                    canvas.itemconfigure(teaser_item, text=detail)
-                canvas.create_line(x, 87, x, 105, fill=MUTED)
-            canvas.create_line(chip_width*.5, 105, width-chip_width*.5, 105, fill=MUTED)
-            canvas.create_line(width/2, 142, width/2, 180, arrow="last", fill=MUTED, dash=(4, 4))
-            canvas.create_text(width/2, 118, text="Context assembly · * hover to preview, click for contents", fill=PURPLE, font=("Segoe UI", 9))
-        for edge in model["edges"]:
-            start, end = positions[edge["from"]], positions[edge["to"]]
-            x1, y1 = start; x2, y2 = end
-            if len(model["nodes"]) == 3 and edge["from"] == 2:
-                canvas.create_line(x1, y1+40, x1, y1+65, x2, y1+65, x2, y2+40, arrow="last", fill=GREEN if edge["on"] else MUTED, dash=() if edge["on"] else (5, 4), width=2)
-                continue
-            if y1 == y2:
-                direction = 1 if x2 > x1 else -1
-                x1 += direction * node_w / 2; x2 -= direction * node_w / 2
-            else:
-                direction = 1 if y2 > y1 else -1
-                y1 += direction * 40; y2 -= direction * 40
-            canvas.create_line(x1, y1, x2, y2, arrow="last", width=2, fill=GREEN if edge["on"] else MUTED, dash=() if edge["on"] else (5, 4))
-            canvas.create_text((x1+x2)/2, (y1+y2)/2 - (11 if y1 == y2 else 0), text=edge["label"], fill=MUTED,
-                               width=100, font=("Segoe UI", 8), anchor="s" if y1 == y2 else "center")
-        for loop in model["loops"]:
-            x, y = positions[loop["from"]]
-            color = GREEN if loop["on"] else MUTED
-            canvas.create_line(x-node_w*.3, y-40, x-node_w*.3, y-77, x+node_w*.3, y-77, x+node_w*.3, y-40,
-                               arrow="last", fill=color, width=2, dash=() if loop["on"] else (5, 4))
-            canvas.create_text(x, y-88, text=loop["label"] + ("" if loop["on"] else " · off"), fill=color, font=("Segoe UI", 9))
+        px = lambda value: round(value * ui_scale(self))
+        self._flow_boxes = []
+
+        def card(x, y, w, title, detail, tag, color, *, preview=False):
+            pad = px(12)
+            detail = str(detail)
+            if preview and len(detail) > 512:
+                detail = detail[:512] + "…"
+            title_id = canvas.create_text(x+pad, y+pad, text=title, anchor="nw", fill=INK,
+                width=max(30, w-2*pad), font=("Segoe UI Semibold", 10), tags=(tag, "flow_text"))
+            detail_y = canvas.bbox(title_id)[3] + px(6)
+            detail_id = canvas.create_text(x+pad, detail_y, text=detail, anchor="nw", fill=MUTED,
+                width=max(30, w-2*pad), font=("Segoe UI", 9), tags=(tag, "flow_text"))
+            if preview:
+                if canvas.bbox(detail_id)[3]-detail_y > px(40):
+                    low, high = 0, len(detail)
+                    while low < high:
+                        mid = (low + high + 1) // 2
+                        canvas.itemconfigure(detail_id, text=detail[:mid]+"…")
+                        if canvas.bbox(detail_id)[3]-detail_y <= px(40):
+                            low = mid
+                        else:
+                            high = mid - 1
+                    canvas.itemconfigure(detail_id, text=detail[:low]+"…")
+            bottom = canvas.bbox(detail_id)[3] + pad
+            rect = canvas.create_rectangle(x, y, x+w, bottom, fill=CARD, outline=color, width=2, tags=(tag, "flow_card"))
+            canvas.tag_lower(rect)
+            self._flow_boxes.append((tag, (x, y, x+w, bottom), (title_id, detail_id)))
+            return bottom
+
+        top = px(10)
+        if self.level.get() == "Overview":
+            columns = min(len(CONTEXT_PARTS), max(1, int(width / px(190))))
+            rows = (len(CONTEXT_PARTS) + columns - 1) // columns
+            columns = (len(CONTEXT_PARTS) + rows - 1) // rows
+            gap = px(10)
+            chip_w = (width-gap*(columns+1))/columns
+            for start in range(0, len(CONTEXT_PARTS), columns):
+                bottom = top
+                for col, (kind, label, _description) in enumerate(CONTEXT_PARTS[start:start+columns]):
+                    bottom = max(bottom, card(gap+col*(chip_w+gap), top, chip_w, label+" *", teasers[kind], "context:"+kind, PURPLE, preview=True))
+                top = bottom + gap
+            item = canvas.create_text(width/2, top+px(5), text="Context assembly · hover to preview; click for contents", anchor="n",
+                                      width=width-px(24), fill=PURPLE, font=("Segoe UI", 9))
+            top = canvas.bbox(item)[3]+px(30)
+
+        horizontal = len(model["nodes"]) == 3 and width >= px(880)
+        node_w = (width-px(240))/3 if horizontal else min(px(540), width-px(90))
+        boxes = []
+        y = top
         for index, node in enumerate(model["nodes"]):
-            x, y = positions[index]
-            canvas.create_rectangle(x-node_w/2, y-40, x+node_w/2, y+40, fill=CARD, outline=PURPLE if node["on"] else "#465168", width=2, tags=(f"node{index}",))
-            canvas.create_text(x, y-18, text=node["label"], fill=INK, width=node_w-12, font=("Segoe UI Semibold", 10), tags=(f"node{index}",))
-            canvas.create_text(x, y+12, text=node["detail"], fill=MUTED, width=node_w-12, font=("Segoe UI", 9), tags=(f"node{index}",))
-        canvas.create_text(width/2, height-20, text=model["status"] + " · click a node for its detail view", fill=PURPLE)
+            x = px(15)+index*(node_w+px(100)) if horizontal else (width-node_w)/2
+            loop_text = ["↻ " + loop["label"] + ("" if loop["on"] else " · off") for loop in model["loops"] if loop["from"] == index]
+            detail = node["detail"] + ("\n"+"\n".join(loop_text) if loop_text else "")
+            bottom = card(x, y, node_w, node["label"], detail, f"node{index}", PURPLE if node["on"] else "#465168")
+            boxes.append((x, y, x+node_w, bottom))
+            if not horizontal:
+                y = bottom + px(70)
+        bottom = max(box[3] for box in boxes)
+        for edge in model["edges"]:
+            a, b = boxes[edge["from"]], boxes[edge["to"]]
+            color = GREEN if edge["on"] else MUTED
+            returning = edge["to"] <= edge["from"]
+            if returning:
+                if horizontal:
+                    coords = [(a[0]+a[2])/2, a[3], (a[0]+a[2])/2, bottom+px(30), (b[0]+b[2])/2, bottom+px(30), (b[0]+b[2])/2, b[3]]
+                else:
+                    coords = [a[0], (a[1]+a[3])/2, px(14), (a[1]+a[3])/2, px(14), (b[1]+b[3])/2, b[0], (b[1]+b[3])/2]
+                tx, ty, anchor = width/2, bottom+px(42), "n"
+            elif horizontal:
+                yy = min(a[3], b[3])-px(12)
+                coords = [a[2], yy, b[0], yy]
+                tx, ty, anchor = (a[2]+b[0])/2, yy-px(8), "s"
+            else:
+                coords = [width/2, a[3], width/2, b[1]]
+                tx, ty, anchor = width/2+px(10), (a[3]+b[1])/2, "w"
+            canvas.create_line(*coords, arrow="last", width=2, fill=color, dash=() if edge["on"] else (5, 4))
+            canvas.create_text(tx, ty, text=edge["label"], fill=color, width=px(96) if horizontal and not returning else node_w/2,
+                               font=("Segoe UI", 8), anchor=anchor)
+        footer = canvas.create_text(width/2, bottom+px(80), text=model["status"]+" · click a node for details", anchor="n",
+                                   width=width-px(24), fill=PURPLE, font=("Segoe UI", 9))
+        height = canvas.bbox(footer)[3]+px(14)
+        if int(float(canvas.cget("height"))) != height:
+            canvas.configure(height=height)
 
     def graph_click(self, event):
         self.hide_init_tip()

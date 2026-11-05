@@ -8,9 +8,11 @@ import re
 import tempfile
 import time
 import unittest
+import uuid
 from pathlib import Path
 from types import SimpleNamespace
 from aurora_runtime_work import CancellationDomain, WorkCancelled
+from aurora_delivery_receipts import TrackedInput
 from aurora_input_ownership import HeldInputLedger, InputOwnershipError, cooperative_move
 from aurora_pending_commands import PENDING_WRAPPER_MODES
 
@@ -83,6 +85,7 @@ class RuntimeIngressTests(unittest.TestCase):
         self.inputs = queue.Queue()
         self.journal = MutationAdmissionJournal(self.temp.name, session_id="test")
         self.scope = {
+            "TrackedInput": TrackedInput,
             "current_history_actor": current_history_actor, "history_actor_scope": history_actor_scope,
             **runtime_constants(), "json": json, "re": re, "time": time, "os": os,
             "datetime": datetime, "CommandSyntaxError": CommandSyntaxError,
@@ -116,6 +119,7 @@ class RuntimeIngressTests(unittest.TestCase):
             "set_last_command_value": lambda value: None,
             "get_last_command_value": lambda: "", "get_last_key_value": lambda: "",
             "runtime_state": {}, "agent_state": SimpleNamespace(inference_counter=0),
+            "uuid": uuid, "current_delivery": lambda: None,
             "display_message": lambda *args: None, "append_runtime_feedback": lambda *args: None,
             "touch_last_interaction": lambda: None, "ensure_external_bridge_files": lambda: None,
             "summarize_runtime_text": lambda text, **kw: str(text)[:kw.get("max_chars", 1000)],
@@ -197,6 +201,14 @@ class RuntimeIngressTests(unittest.TestCase):
 
     def authorize(self):
         self.scope["is_operator_authorized"] = lambda: True
+
+    def test_word_apostrophe_preserves_unquoted_prose_without_weakening_framing(self):
+        text = "UPDATE_CONTEXT(Leave Oak's lab, don't reset); SHOW_RUNTIME()"
+        self.assertEqual(len(split_command_batch(text)), 2)
+        self.assertEqual(self.scope['extract_command_arguments'](split_command_batch(text)[0]), ["Leave Oak's lab", "don't reset"])
+        for malformed in ("UPDATE_CONTEXT('unclosed)", 'UPDATE_CONTEXT("unclosed)', 'SHOW_RUNTIME() trailing'):
+            with self.assertRaises(CommandSyntaxError):
+                split_command_batch(malformed)
 
     def test_locked_read_then_mutation_executes_nothing_and_is_journaled(self):
         self.send("SHOW_RUNTIME(); SET_TIME_LOGGING(on)")

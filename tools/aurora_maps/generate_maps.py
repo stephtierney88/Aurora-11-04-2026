@@ -12,6 +12,12 @@ ROOT = Path(__file__).resolve().parents[2]
 RUNTIME_PATH = ROOT / "aurora2.py"
 UI_PATH = ROOT / "aurora2_control_panel.py"
 CONTROL_PLANE_PATHS = (
+    ROOT / "aurora_capture_geometry.py", ROOT / "aurora_capture_provenance.py", ROOT / "aurora_capture_store.py",
+    ROOT / "aurora_conversation_delivery.py", ROOT / "aurora_delivery_receipts.py",
+    ROOT / "aurora_agent_controls.py", ROOT / "aurora_chatgpt_auth.py",
+    ROOT / "aurora_chatgpt_transport.py", ROOT / "aurora_chatgpt_panel.py",
+    ROOT / "aurora_conversation_navigator.py",
+    ROOT / "aurora_gameplay_scene.py", ROOT / "aurora_goal_store.py",
     ROOT / "aurora_command_catalog.py",
     ROOT / "aurora_validation_console.py",
     ROOT / "aurora_validation_worker.py",
@@ -25,7 +31,7 @@ CONTROL_PLANE_PATHS = (
     ROOT / "obs_readonly_mcp_server.py",
     ROOT / "obs_readonly_client.py",
     ROOT / "aurora_capture_store.py",
-    ROOT / "aurora_runtime_work.py", ROOT / "aurora_input_ownership.py",
+    ROOT / "aurora_runtime_work.py", ROOT / "aurora_input_ownership.py", ROOT / "aurora_task_continuation.py",
     ROOT / "aurora_responses_reasoning.py",
     ROOT / "aurora_control_plane.py",
     ROOT / "aurora_command_protocol.py",

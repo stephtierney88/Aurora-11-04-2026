@@ -9,7 +9,7 @@ import time
 import tkinter as tk
 import ctypes
 from pathlib import Path
-from tkinter import messagebox, simpledialog, ttk
+from tkinter import font as tkfont, messagebox, simpledialog, ttk
 from ctypes import wintypes
 from aurora_episodic_retrieval import (
     RETRIEVAL_WEIGHT_KEYS, RETRIEVAL_OPTION_DEFAULTS, rebalance_score_weights,
@@ -17,12 +17,15 @@ from aurora_episodic_retrieval import (
 )
 import aurora_retrieval_commands as retrieval_commands
 from aurora_retrieval_results import parse_retrieval_result_arguments
-from aurora_conversation import conversation_text
+from aurora_conversation import conversation_text, VIEW_MODES
+from aurora_conversation_navigator import ConversationNavigator, MessageEditor
+from aurora_conversation_delivery import SessionOutbox, OutboxWindow, ConversationPopout, AwaitingReply, conversation_activity
 from aurora_switchboard import Switchboard, PortalShortcuts
 from aurora_search_query import SEARCH_DEFAULTS, SEARCH_CHOICES, normalize_search_options, search_has_filter
 from aurora_panel_layout import (
     CollapsibleSection, FlowBar, ScrollablePane, clamp_window_geometry,
-    load_layout_preferences, monitor_work_areas, save_layout_preferences, fit_popout_window,
+    load_layout_preferences, monitor_work_areas, save_layout_preferences, fit_popout_window, ui_scale,
+    bind_label_wrap, wrap_packed_labels, receipt_tree_items, reconcile_tree_rows,
 )
 
 from aurora_control_plane import (
@@ -130,7 +133,7 @@ MODELS = [
     "gpt-4o",
     "gpt-4o-mini",
 ]
-AUTH_MODES = ["api_key", "codex_oauth", "auto"]
+AUTH_MODES = ["api_key", "openai_chatgpt", "codex_oauth", "auto"]
 EXECUTION_MODES = ["safe", "assist", "auto"]
 ACTION_MODES = ["gb", "pyag", "none"]
 EFFORTS = ["", "minimal", "none", "low", "medium", "high", "xhigh", "max"]
@@ -524,7 +527,7 @@ SETTING_SAFETY_INVENTORY = [
         "class": "advanced",
         "surface": "Access & Safety; Models & Modes",
         "state_path": ("modes", "auth"),
-        "commands": "SET_AUTH_MODE(api_key|codex_oauth|auto), SHOW_AUTH()",
+        "commands": "SET_AUTH_MODE(api_key|openai_chatgpt|codex_oauth|auto), SHOW_AUTH()",
         "novice": "If auth looks unresolved, fix that before judging model behavior.",
         "intermediate": "Use SHOW_AUTH() when live turns silently do not start.",
     },
@@ -1309,6 +1312,10 @@ def has_effective_next_inference_plan(next_plan):
 
 def build_queue_next_action_cue(state):
     state = state or {}
+    continuation = state.get("continuation") or {}
+    task = continuation.get("active_task") or {}
+    if continuation.get("mode") == "bounded" and task.get("status") == "stopped":
+        return f"Next: task stopped ({task.get('stop_reason', 'unknown')}); new operator input starts another bounded task."
     scheduler = state.get("scheduler", {}) or {}
     planning = state.get("planning", {}) or {}
     monitors = state.get("monitors", {}) or {}
@@ -1764,7 +1771,7 @@ def build_model_choices(model_catalog=None):
     return sorted({*MODELS, *custom_models.keys()})
 
 
-def append_external_message(text, raw=False, source="control_panel", subject="[AURORA CONTROL PANEL]", metadata=None):
+def append_external_message(text, raw=False, source="control_panel", subject="[AURORA CONTROL PANEL]", metadata=None, request_id=None, message_id=None):
     return append_bridge_request(
         ROOT,
         text,
@@ -1774,6 +1781,8 @@ def append_external_message(text, raw=False, source="control_panel", subject="[A
         subject=subject,
         metadata=metadata or {},
         client_id="aurora_control_panel",
+        request_id=request_id,
+        message_id=message_id,
     )
 
 
@@ -2050,9 +2059,15 @@ class AuroraControlPanel(tk.Tk):
         self._sash_after_id = None
         self.refresh_health_var = tk.StringVar(value="")
         self.compact_status_var = tk.StringVar(value="Waiting for runtime state")
+        self.header_status_var = tk.StringVar(value="Waiting for runtime state")
+        self.compact_header_var = tk.BooleanVar(value=self.ui_preferences.get("compact_header", True) is not False)
         self._configure_initial_window_geometry()
         self.configure(bg=BG)
         self.state_cache = {}
+        self.conversation_outbox = SessionOutbox(ROOT)
+        self.conversation_outbox_window = None
+        self.conversation_popout_window = None
+        self.conversation_activity_var = tk.StringVar(value="Waiting for runtime state.")
         self.pending_rows = []
         self.pending_candidates_text = None
         self.screenshot_files = []
@@ -2075,6 +2090,7 @@ class AuroraControlPanel(tk.Tk):
         self.dashboard_popout_window = None
         self.dashboard_popout_text = None
         self.dashboard_popout_button = None
+        self.dashboard_receipt_window = None
         self.dashboard_status_var = tk.StringVar(value="Dashboard popout closed.")
         self.dashboard_wrap_var = tk.BooleanVar(value=True)
         self.dashboard_popout_summary_var = tk.StringVar(value="Waiting for an observed snapshot.")
@@ -2190,10 +2206,14 @@ class AuroraControlPanel(tk.Tk):
 
     def _configure_initial_window_geometry(self):
         self._work_areas = monitor_work_areas((0, 0, self.winfo_screenwidth(), self.winfo_screenheight()))
-        geometry = clamp_window_geometry(self.ui_preferences.get("geometry"), self._work_areas)
+        scale = ui_scale(self)
+        defaults = {"width": round(1600 * scale), "height": round(980 * scale)}
+        geometry = clamp_window_geometry(self.ui_preferences.get("geometry") or defaults, self._work_areas)
         self._normal_geometry = geometry
         self.geometry(f"{geometry['width']}x{geometry['height']}")
-        self.minsize(min(900, geometry["width"]), min(560, geometry["height"]))
+        area_width = max(area[2]-area[0] for area in self._work_areas)
+        area_height = max(area[3]-area[1] for area in self._work_areas)
+        self.minsize(min(round(900*scale), area_width-32), min(round(560*scale), area_height-64))
         self.after_idle(lambda: self._restore_window_position(geometry))
 
     def _restore_window_position(self, geometry):
@@ -2238,7 +2258,15 @@ class AuroraControlPanel(tk.Tk):
         style.configure("Card.TFrame", background=PANEL)
         style.configure("SelectedCard.TFrame", background="#1b2d49")
         style.configure("Header.TLabel", background=BG, foreground=TEXT, font=("Segoe UI Semibold", 18))
+        style.configure("CompactHeader.TLabel", background=BG, foreground=TEXT, font=("Segoe UI Semibold", 13))
         style.configure("Muted.TLabel", background=BG, foreground=MUTED)
+        style.configure("Draft.TLabel", background=BG, foreground="#f2cd70")
+        # Clam's inherited active background is pale; keep light toggle text
+        # legible while hovering, keyboard-focusing or disabling a control.
+        for toggle_style in ("TCheckbutton", "TRadiobutton"):
+            style.configure(toggle_style, background=BG, foreground=TEXT)
+            style.map(toggle_style, background=[("disabled", BG), ("active", PANEL_2)],
+                      foreground=[("disabled", MUTED), ("active", TEXT)])
         style.configure("CardTitle.TLabel", background=PANEL, foreground=TEXT, font=("Segoe UI Semibold", 11))
         style.configure("CardBody.TLabel", background=PANEL, foreground=MUTED)
         style.configure("SectionTitle.TLabel", background=PANEL, foreground=ACCENT, font=("Segoe UI Semibold", 10))
@@ -2262,7 +2290,8 @@ class AuroraControlPanel(tk.Tk):
         style.layout("Workspace.TNotebook.Tab", [])
         style.configure("TNotebook.Tab", background=PANEL_2, foreground=MUTED, padding=(10, 6))
         style.map("TNotebook.Tab", background=[("selected", PANEL)], foreground=[("selected", TEXT)])
-        style.configure("Treeview", background=PANEL, foreground=TEXT, fieldbackground=PANEL, bordercolor=BORDER)
+        style.configure("Treeview", background=PANEL, foreground=TEXT, fieldbackground=PANEL, bordercolor=BORDER,
+                        rowheight=tkfont.nametofont("TkDefaultFont").metrics("linespace") + round(6 * ui_scale(self)))
         style.configure("Treeview.Heading", background=PANEL_2, foreground=TEXT)
         style.map("Treeview", background=[("selected", "#1d4b87")], foreground=[("selected", TEXT)])
 
@@ -2380,10 +2409,7 @@ class AuroraControlPanel(tk.Tk):
 
     def _build_runtime_status_strip(self, outer):
         self._load_runtime_orb_assets()
-        strip = ttk.Frame(outer, style="Card.TFrame", padding=(10, 8))
-        strip.pack(fill="x")
-        status = ttk.Frame(strip, style="Card.TFrame")
-        status.pack(fill="x")
+        status = self.runtime_status_frame = ttk.Frame(outer, style="Card.TFrame", padding=(10, 8))
         self.runtime_orb_button = ttk.Button(status, text="Runtime" if self.runtime_orb_static_image is None else "",
             image=self.runtime_orb_static_image, width=8)
         self.runtime_orb_button.pack(side="left", padx=(0, 8))
@@ -2392,33 +2418,73 @@ class AuroraControlPanel(tk.Tk):
         ttk.Label(status, textvariable=self.runtime_status_var, style="CardTitle.TLabel").pack(side="left", padx=(0, 12))
         detail = ttk.Label(status, textvariable=self.compact_status_var, style="CardBody.TLabel", wraplength=900, justify="left", cursor="hand2", takefocus=True)
         detail.pack(side="left", fill="x", expand=True)
-        detail.bind("<Configure>", lambda event: detail.configure(wraplength=max(160, event.width)))
+        bind_label_wrap(detail)
         detail.bind("<Button-1>", lambda _event: self.switchboard.focus_models())
         detail.bind("<Return>", lambda _event: self.switchboard.focus_models())
-        actions = FlowBar(strip, style="Card.TFrame")
-        actions.pack(fill="x", pady=(6, 0))
+        self.runtime_status_detail = detail
+        actions = self.runtime_actions = FlowBar(outer)
         self.runtime_activate_button = actions.add(ttk.Button(actions, text="Start runtime", command=self.start_or_enable_runtime))
         self.runtime_deactive_button = actions.add(ttk.Button(actions, text="Pause inference", command=lambda: self.send_raw("SET_LIVE_MODE(off)")))
         self.runtime_cancel_button = actions.add(ttk.Button(actions, text="Cancel work", command=lambda: self.send_raw("CANCEL_ACTIVE_WORK()")))
         self.runtime_shutdown_button = actions.add(ttk.Button(actions, text="Stop runtime", command=lambda: self.send_raw("SHUTDOWN_RUNTIME()")))
-        actions.add(ttk.Button(actions, text="Reset to preview defaults", command=lambda: self.switchboard.open_defaults()))
+        self.header_reset_button = actions.add(ttk.Button(actions, text="Reset to preview defaults", command=lambda: self.switchboard.open_defaults()))
         capture = actions.add(ttk.Button(actions, text="Capture now", command=lambda: self.send_raw("REQUEST_SCREENSHOT_CAPTURE(control_panel)")))
         self._register_widget_locks(capture, ["screenshot_interval"], quick=True)
+        self.header_options_button = actions.add(ttk.Menubutton(actions, text="Panel options ▾"))
+        menu = tk.Menu(self.header_options_button, tearoff=False)
+        menu.add_checkbutton(label="Compact header", variable=self.compact_header_var, command=self._apply_header_layout)
+        menu.add_separator()
+        menu.add_command(label="Runtime details", command=self.open_banner_dialog)
+        menu.add_command(label="Advanced settings", command=self.toggle_settings_pane)
+        menu.add_command(label="Maximize / restore window", command=self.toggle_maximized)
+        menu.add_separator()
+        menu.add_command(label="Reset to preview defaults…", command=lambda: self.switchboard.open_defaults())
+        self.header_options_button.configure(menu=menu)
+
+    def _apply_header_layout(self):
+        """Presentation preference only; keep the full header and every control reachable."""
+        compact = self.compact_header_var.get()
+        self.ui_preferences["compact_header"] = compact
+        self.header_title.configure(style="CompactHeader.TLabel" if compact else "Header.TLabel")
+        self.runtime_status_detail.configure(textvariable=self.header_status_var if compact else self.compact_status_var)
+        self.runtime_status_frame.configure(padding=(6, 2) if compact else (10, 8))
+        self.runtime_status_frame.grid(row=0 if compact else 1, column=1 if compact else 0,
+                                       columnspan=1 if compact else 3, sticky="ew", padx=(0, 8) if compact else 0)
+        self.runtime_actions.grid(row=1 if compact else 2, column=0, columnspan=3, sticky="ew", pady=(4, 0))
+        if compact:
+            self.header_utilities.grid_remove()
+        else:
+            self.header_utilities.grid()
+        self.runtime_actions.set_visible(self.header_reset_button, not compact)
+
+    def _sync_refresh_health_visibility(self, *_args):
+        if self.refresh_health_var.get():
+            if not self.refresh_health_label.winfo_manager():
+                self.refresh_health_label.pack(fill="x", pady=(0, 2), after=self.header_frame)
+        else:
+            self.refresh_health_label.pack_forget()
 
     def _build_ui(self):
         shell = ttk.Frame(self, padding=10)
         shell.pack(fill="both", expand=True)
-        titlebar = ttk.Frame(shell)
+        titlebar = self.header_frame = ttk.Frame(shell)
         titlebar.pack(fill="x", pady=(0, 6))
-        ttk.Label(titlebar, text="Aurora 2", style="Header.TLabel").pack(side="left")
-        self.maximize_button = ttk.Button(titlebar, text="Maximize window", command=self.toggle_maximized)
-        self.maximize_button.pack(side="right")
-        self.settings_toggle_button = ttk.Button(titlebar, text="Advanced settings", command=self.toggle_settings_pane)
-        self.settings_toggle_button.pack(side="right", padx=(0, 6))
-        ttk.Button(titlebar, text="Runtime details", command=self.open_banner_dialog).pack(side="right", padx=(0, 6))
-        self._build_runtime_status_strip(shell)
+        titlebar.columnconfigure(1, weight=1)
+        self.header_title = ttk.Label(titlebar, text="Aurora 2", style="Header.TLabel")
+        self.header_title.grid(row=0, column=0, sticky="w", padx=(0, 12))
+        utilities = self.header_utilities = FlowBar(titlebar)
+        utilities.grid(row=0, column=1, sticky="ew", padx=(0, 12))
+        utilities.add(ttk.Button(utilities, text="Runtime details", command=self.open_banner_dialog))
+        self.settings_toggle_button = utilities.add(ttk.Button(utilities, text="Advanced settings", command=self.toggle_settings_pane))
+        self.maximize_button = utilities.add(ttk.Button(utilities, text="Maximize window", command=self.toggle_maximized))
+        from aurora_chatgpt_panel import SignInButtons
+        self.signin_buttons = SignInButtons(titlebar, self, ROOT)
+        self.signin_buttons.grid(row=0, column=2, sticky="e")
+        self._build_runtime_status_strip(titlebar)
+        self._apply_header_layout()
         self.refresh_health_label = ttk.Label(shell, textvariable=self.refresh_health_var, style="Muted.TLabel", wraplength=900)
-        self.refresh_health_label.pack(fill="x", pady=(0, 2))
+        bind_label_wrap(self.refresh_health_label)
+        self.refresh_health_var.trace_add("write", self._sync_refresh_health_visibility)
 
         navigation = FlowBar(shell)
         navigation.pack(fill="x", pady=(4, 6))
@@ -2432,6 +2498,7 @@ class AuroraControlPanel(tk.Tk):
             button = navigation.add(ttk.Button(navigation, text=label, style="Nav.TButton", command=lambda target=label: self.show_tab(target)))
             self.focus_nav_buttons[label] = button
         navigation.add(PortalShortcuts(navigation, self, ROOT))
+
 
         self.content_panes = ttk.Panedwindow(shell, orient="horizontal")
         self.content_panes.pack(fill="both", expand=True)
@@ -2458,6 +2525,9 @@ class AuroraControlPanel(tk.Tk):
         self._build_quick_controls(self.left_inner)
         self._build_sidebar_runtime_details(self.left_inner)
         self._build_settings_card(self.left_inner)
+        from aurora_agent_controls import AgentControls
+        self.agent_controls = AgentControls(shell, self)
+        self.agent_controls.pack(fill="x", pady=(0, 4), before=self.content_panes)
         self._build_feedback_card(self.left_inner)
         for section in self.settings_sections:
             section.index_labels()
@@ -2492,6 +2562,7 @@ class AuroraControlPanel(tk.Tk):
         self._build_image_memory_tab()
         self._build_help_tab()
         self._build_raw_tab()
+        wrap_packed_labels(self.notebook)
 
         names = [self.notebook.tab(tab, "text") for tab in self.notebook.tabs()]
         self.focus_tab_by_label = {name: name for name in names}
@@ -2500,6 +2571,8 @@ class AuroraControlPanel(tk.Tk):
         self.notebook.bind("<<NotebookTabChanged>>", self._sync_focus_nav_state)
         self._apply_settings_mode(self.ui_preferences.get("settings_mode", "hidden"))
         self.content_panes.bind("<Configure>", self._schedule_sash_clamp)
+        self.content_panes.bind("<Map>", self._schedule_sash_clamp, add="+")
+        self.settings_view.bind("<Map>", self._schedule_sash_clamp, add="+")
         self.content_panes.bind("<ButtonRelease-1>", self._remember_sash)
         initial_view = self.ui_preferences.get("active_view", "Conversation") if self.ui_preferences.get("restore_last_view", False) else "Conversation"
         if not self.show_tab(initial_view):
@@ -2509,7 +2582,7 @@ class AuroraControlPanel(tk.Tk):
         self._protect_unfocused_combobox_wheel(self)
 
     def _new_work_page(self, title):
-        page = ScrollablePane(self.notebook, background=BG, padding=10, fit_width=title in {"Dashboard", "Conversation", "The Switchboard"}, fit_height=title == "Conversation")
+        page = ScrollablePane(self.notebook, background=BG, padding=10, fit_width=title in {"Dashboard", "Conversation", "The Switchboard"})
         self.notebook.add(page, text=title)
         self.page_views[title] = page
         return page.inner
@@ -3716,14 +3789,19 @@ class AuroraControlPanel(tk.Tk):
                 justify="left",
             )
             label.pack(anchor="w", fill="x")
-            label.bind("<Configure>", lambda event, target=label: target.configure(wraplength=max(160, event.width)))
+            bind_label_wrap(label, source=card, inset=24)
 
         add_summary("runtime", "Runtime", 0, 0)
         add_summary("operation", "Operation", 0, 1)
         add_summary("control_plane", "Control Plane", 1, 0)
         add_summary("settings", "Settings", 1, 1)
+        wrap_packed_labels(frame)
 
-        ttk.Label(frame, text="Recent Receipts", style="SectionTitle.TLabel").pack(anchor="w", pady=(0, 4))
+        receipt_tools = FlowBar(frame)
+        receipt_tools.pack(fill="x", pady=(0, 4))
+        receipt_tools.add(ttk.Label(receipt_tools, text="Recent receipts", style="SectionTitle.TLabel"))
+        receipt_tools.add(ttk.Button(receipt_tools, text="Open selected receipt ↗", command=self.open_dashboard_receipt))
+        receipt_tools.add(ttk.Label(receipt_tools, text="Select to read below · Enter or double-click to expand", style="Muted.TLabel"))
         event_shell = ttk.Frame(frame)
         event_shell.pack(fill="x", pady=(0, 8))
         columns = ("time", "command", "status", "delivery", "request")
@@ -3734,14 +3812,16 @@ class AuroraControlPanel(tk.Tk):
             height=7,
         )
         for key, title, width in [
-            ("time", "Time", 145),
-            ("command", "Command", 170),
-            ("status", "Status", 95),
-            ("delivery", "Delivery", 130),
-            ("request", "Request", 260),
+            ("time", "Time", 150),
+            ("command", "Command", 270),
+            ("status", "Status", 110),
+            ("delivery", "Delivery", 160),
+            ("request", "Request", 280),
         ]:
             self.dashboard_events_tree.heading(key, text=title)
-            self.dashboard_events_tree.column(key, width=width, minwidth=70, stretch=key == "request")
+            self.dashboard_events_tree.column(key, width=round(width * ui_scale(self)),
+                minwidth=round((170 if key in {"command", "request"} else 70) * ui_scale(self)),
+                stretch=key in {"command", "request"})
         self.dashboard_events_tree.grid(row=0, column=0, sticky="nsew")
         event_scroll = ttk.Scrollbar(event_shell, orient="vertical", command=self.dashboard_events_tree.yview)
         event_scroll.grid(row=0, column=1, sticky="ns")
@@ -3750,8 +3830,10 @@ class AuroraControlPanel(tk.Tk):
         event_shell.columnconfigure(0, weight=1)
         self.dashboard_events_tree.configure(yscrollcommand=event_scroll.set, xscrollcommand=event_x.set)
         self.dashboard_events_tree.bind("<<TreeviewSelect>>", self._show_dashboard_receipt)
-        self.dashboard_receipt_text = self._dashboard_detail_widget(frame, height=4)
-        self._write_text(self.dashboard_receipt_text, "Select a receipt to inspect its full identifiers and result.")
+        self.dashboard_events_tree.bind("<Return>", self.open_dashboard_receipt)
+        self.dashboard_events_tree.bind("<Double-Button-1>", self.open_dashboard_receipt)
+        self.dashboard_receipt_text = self._dashboard_detail_widget(frame, height=6)
+        self._write_text(self.dashboard_receipt_text, "Select a receipt to inspect its full identifiers and status. Raw command arguments and payloads are omitted.")
 
         ttk.Label(frame, text="Structured Detail", style="SectionTitle.TLabel").pack(anchor="w", pady=(0, 4))
         self.dashboard_text = self._dashboard_detail_widget(frame, height=12)
@@ -3773,16 +3855,17 @@ class AuroraControlPanel(tk.Tk):
         return text
 
     def _layout_dashboard_cards(self, event):
-        columns = 2 if event.width >= 760 else 1
+        columns = 2 if event.width >= round(760 * ui_scale(self)) else 1
         if columns != self._dashboard_card_columns:
             self._dashboard_card_columns = columns
-            event.widget.columnconfigure(1, weight=1 if columns == 2 else 0)
+            event.widget.columnconfigure(0, weight=1, uniform="dashboard")
+            event.widget.columnconfigure(1, weight=1 if columns == 2 else 0, uniform="dashboard" if columns == 2 else "")
             for index, card in enumerate(self.dashboard_cards):
                 card.grid_configure(row=index // columns, column=index % columns,
                                     padx=(0, 8 if columns == 2 and index % 2 == 0 else 0))
 
     def _update_dashboard_wrap(self):
-        for widget in (self.dashboard_text, self.dashboard_popout_text):
+        for widget in (self.dashboard_text, self.dashboard_popout_text, self.dashboard_receipt_text):
             if widget is not None:
                 widget.configure(wrap="word" if self.dashboard_wrap_var.get() else "none")
 
@@ -3790,7 +3873,39 @@ class AuroraControlPanel(tk.Tk):
         selected = self.dashboard_events_tree.selection()
         row = self._dashboard_events_by_iid.get(selected[0]) if selected else None
         self._write_text(self.dashboard_receipt_text, json.dumps(row, indent=2, ensure_ascii=False)
-                         if row else "Select a receipt to inspect its full identifiers and result.")
+                         if row else "Select a receipt to inspect its full identifiers and status. Raw command arguments and payloads are omitted.")
+
+    def open_dashboard_receipt(self, event=None):
+        tree = self.dashboard_events_tree
+        if event is not None and getattr(event, "num", None) == 1:
+            item = tree.identify_row(event.y)
+            if not item:
+                return
+            tree.selection_set(item)
+        selected = tree.selection()
+        row = self._dashboard_events_by_iid.get(selected[0]) if selected else None
+        if row is None:
+            tree.focus_set()
+            return "break"
+        if self.dashboard_receipt_window is not None and self.dashboard_receipt_window.winfo_exists():
+            self.dashboard_receipt_window.destroy()
+        window = self.dashboard_receipt_window = tk.Toplevel(self)
+        window.title("Aurora — receipt snapshot")
+        window.configure(bg=BG)
+        fit_popout_window(window, round(860 * ui_scale(self)), round(480 * ui_scale(self)), self)
+        window.minsize(320, 240)
+        body = ttk.Frame(window, padding=12)
+        body.pack(fill="both", expand=True)
+        label = ttk.Label(body, text="Read-only snapshot of the selected receipt. Command arguments and payloads are omitted.",
+                          style="Muted.TLabel", wraplength=600)
+        label.pack(fill="x", pady=(0, 8))
+        bind_label_wrap(label)
+        ttk.Button(body, text="Close (Esc)", command=window.destroy).pack(side="bottom", anchor="e")
+        detail = self._dashboard_detail_widget(body, height=10)
+        self._write_text(detail, json.dumps(row, indent=2, ensure_ascii=False))
+        detail.focus_set()
+        window.bind("<Escape>", lambda _event: window.destroy())
+        return "break"
 
     def _add_workflow_status_strip(self, frame, key, title):
         strip = ttk.Frame(frame)
@@ -4129,10 +4244,12 @@ class AuroraControlPanel(tk.Tk):
     def _build_conversation_tab(self):
         frame = self._new_work_page("Conversation")
         frame.columnconfigure(0, weight=1)
-        frame.rowconfigure(3, weight=1)
+        frame.rowconfigure(3, weight=1, minsize=round(170 * ui_scale(self)))
         ttk.Label(frame, text="Conversation", style="Header.TLabel").grid(row=0, column=0, sticky="w")
         self.conversation_status_var = tk.StringVar(value="Waiting for the runtime’s current conversation.")
-        ttk.Label(frame, textvariable=self.conversation_status_var, style="Muted.TLabel", wraplength=780).grid(row=1, column=0, sticky="w", pady=(4, 8))
+        status_label = ttk.Label(frame, textvariable=self.conversation_status_var, style="Muted.TLabel", wraplength=round(780*ui_scale(self)))
+        status_label.grid(row=1, column=0, sticky="ew", pady=(4, 8))
+        status_label.bind("<Configure>", lambda event: status_label.configure(wraplength=max(200, event.width-12)))
         tools = FlowBar(frame)
         tools.grid(row=2, column=0, sticky="ew", pady=(0, 8))
         self.conversation_mode_var = tk.StringVar(value="Current context")
@@ -4141,54 +4258,117 @@ class AuroraControlPanel(tk.Tk):
         self.conversation_model_var = tk.BooleanVar(value=bool(self.ui_preferences.get("conversation_model", True)))
         self.conversation_edits_var = tk.BooleanVar(value=bool(self.ui_preferences.get("conversation_edits", True)))
         modes = tools.add(ttk.Combobox(tools, textvariable=self.conversation_mode_var,
-            values=("Current context", "Retained messages"), state="readonly", width=20))
+            values=VIEW_MODES, state="readonly", width=24))
         modes.bind("<<ComboboxSelected>>", lambda _event: self.render_conversation())
         tools.add(ttk.Button(tools, text="Historical log", command=lambda: self.show_tab("Chat")))
-        tools.add(ttk.Button(tools, text="Context details", command=lambda: self.show_tab("History Context")))
+        tools.add(ttk.Button(tools, text="Edit / pin…", command=self.edit_conversation_message))
         tools.add(ttk.Button(tools, text="Latest", command=lambda: self.conversation_text.see(tk.END)))
-        tools.add(ttk.Checkbutton(tools, text="System details", variable=self.conversation_system_var, command=self.render_conversation))
-        for label, variable in (("Times", self.conversation_time_var), ("Models", self.conversation_model_var), ("Edits", self.conversation_edits_var)):
-            tools.add(ttk.Checkbutton(tools, text=label, variable=variable, command=self.render_conversation))
         self.restore_last_view_var = tk.BooleanVar(value=bool(self.ui_preferences.get("restore_last_view", False)))
         tools.add(ttk.Checkbutton(tools, text="Reopen last view", variable=self.restore_last_view_var))
-        transcript = ttk.Frame(frame)
+        transcript = ConversationNavigator(frame, preferences=self.ui_preferences,
+            mode=self.conversation_mode_var, system=self.conversation_system_var,
+            times=self.conversation_time_var, models=self.conversation_model_var,
+            edits=self.conversation_edits_var, on_change=self.render_conversation)
         transcript.grid(row=3, column=0, sticky="nsew")
-        self.conversation_text = tk.Text(transcript, bg=PANEL, fg=TEXT, wrap="word", relief="flat",
-            padx=20, pady=16, height=2, font=("Segoe UI", 11), state="disabled")
-        scrollbar = ttk.Scrollbar(transcript, command=self.conversation_text.yview)
-        self.conversation_text.configure(yscrollcommand=scrollbar.set)
-        scrollbar.pack(side="right", fill="y")
-        self.conversation_text.pack(side="left", fill="both", expand=True)
-        self.conversation_text.tag_configure("user_role", foreground=ACCENT, font=("Segoe UI Semibold", 11), spacing1=8)
-        self.conversation_text.tag_configure("assistant_role", foreground="#86d9b8", font=("Segoe UI Semibold", 11), spacing1=8)
-        ttk.Label(frame, text="Message Aurora", style="CardTitle.TLabel").grid(row=4, column=0, sticky="w", pady=(8, 4))
+        self.conversation_navigator = transcript
+        self.conversation_text = transcript.text
+        tools.add(ttk.Button(tools, text="⚙ View options", command=transcript.open_settings))
+        self.conversation_activity_label = ttk.Label(frame, textvariable=self.conversation_activity_var,
+            style="CardTitle.TLabel", wraplength=round(780*ui_scale(self)))
+        self.conversation_activity_label.grid(row=4, column=0, sticky="ew", pady=(8, 4))
+        self.conversation_activity_label.bind("<Configure>", lambda event: self.conversation_activity_label.configure(wraplength=max(100, event.width)))
         self.conversation_composer = tk.Text(frame, bg=PANEL_2, fg=TEXT, insertbackground=TEXT,
             wrap="word", height=2, relief="flat", padx=12, pady=8, font=("Segoe UI", 11))
-        self.conversation_composer.grid(row=5, column=0, sticky="ew")
+        self.conversation_awaiting = AwaitingReply(frame, self)
+        self.conversation_awaiting.grid(row=5, column=0, sticky="ew", pady=(0, 6))
+        self.conversation_composer.grid(row=6, column=0, sticky="ew")
         self.conversation_composer.bind("<Control-Return>", self.send_conversation_message)
         send_row = FlowBar(frame)
-        send_row.grid(row=6, column=0, sticky="ew", pady=(6, 0))
+        send_row.grid(row=7, column=0, sticky="ew", pady=(6, 0))
         self.conversation_send_button = send_row.add(ttk.Button(send_row, text="Send message", command=self.send_conversation_message))
+        self.conversation_outbox_button = send_row.add(ttk.Button(send_row, text="Outbox (0)", command=self.open_conversation_outbox))
         send_row.add(ttk.Button(send_row, text="Quick start", command=self.show_conversation_quick_start))
         send_row.add(ttk.Label(send_row, text="Ctrl+Enter to send · Enter for a new line", style="Muted.TLabel"))
         self.conversation_delivery_var = tk.StringVar(value="Start the runtime, then enable inference for replies. Sending does not enable it.")
-        ttk.Label(frame, textvariable=self.conversation_delivery_var, style="Muted.TLabel", wraplength=780).grid(row=7, column=0, sticky="w", pady=(5, 0))
+        delivery_label = ttk.Label(frame, textvariable=self.conversation_delivery_var, style="Muted.TLabel", wraplength=round(780*ui_scale(self)))
+        delivery_label.grid(row=8, column=0, sticky="ew", pady=(5, 0))
+        delivery_label.bind("<Configure>", lambda event: delivery_label.configure(wraplength=max(200, event.width-12)))
         self._conversation_revision = None
 
-    def send_conversation_message(self, _event=None):
-        text = self.conversation_composer.get("1.0", "end-1c").strip()
+    def edit_conversation_message(self):
+        row = self.conversation_navigator.selected_message()
+        if not row:
+            self.conversation_status_var.set("Click a message in the conversation, then choose Edit / pin message.")
+            return None
+        if row.get("exemption") == "PinnedInfo":
+            self.conversation_status_var.set("This is a runtime-maintained summary. Select the original message to edit or pin it.")
+            return None
+        if row.get("retained") is not True or row.get("kind") != "text" or row.get("shortened") or row.get("historical_revision") or row.get("event"):
+            self.conversation_status_var.set("Choose a complete retained text message in Current context or Retained messages. Historical revisions and screenshots are read-only.")
+            return None
+        return MessageEditor(self, row, root=ROOT, send=self.send_raw)
+
+    def send_conversation_message(self, _event=None, *, composer=None):
+        composer = composer if composer is not None else self.conversation_composer
+        text = composer.get("1.0", "end-1c").strip()
         if not text:
             return "break"
+        prepared = self.conversation_outbox.prepare(text)
         try:
-            record = append_external_message(text, raw=False, source="panel_conversation", subject="[AURORA CONVERSATION]")
+            record = append_external_message(text, raw=False, source="panel_conversation", subject="[AURORA CONVERSATION]",
+                request_id=prepared["request_id"], message_id=prepared["message_id"])
         except Exception as error:
-            self.conversation_delivery_var.set(f"Could not queue message ({type(error).__name__}). Your draft is kept.")
+            self.conversation_outbox.track(prepared, uncertain=True)
+            self.conversation_delivery_var.set(f"Queue write unconfirmed ({type(error).__name__}). Draft kept; inspect Outbox before resending.")
+            self.refresh_conversation_feedback(update_preview=False)
             return "break"
-        self.conversation_composer.delete("1.0", tk.END)
+        self.conversation_outbox.track(record)
+        composer.delete("1.0", tk.END)
         paused = not bool((self.state_cache.get("modes", {}) or {}).get("live", False))
-        self.conversation_delivery_var.set("Queued locally. " + ("Inference is paused; use Enable inference when ready. " if paused else "Waiting for the next inference. ") + "Your message appears above when its turn begins.")
+        self.conversation_delivery_var.set("Queued locally. " + ("Inference is paused; use Enable inference when ready. " if paused else "Waiting for the next inference. ") + "Track your message in Awaiting reply or Outbox.")
+        self.refresh_conversation_feedback()
         self.mark_operator_activity("Queued conversation message for runtime ingestion")
         return "break"
+
+    def open_conversation_outbox(self):
+        window = self.conversation_outbox_window
+        if window is None or not window.winfo_exists():
+            window = self.conversation_outbox_window = OutboxWindow(self)
+        window.deiconify()
+        window.lift()
+        window.refresh()
+        return window
+
+    def open_conversation_popout(self):
+        if self.ui_preferences.get("legacy_chat_popout", False):
+            return self.toggle_chat_head_request()
+        window = self.conversation_popout_window
+        if window is None or not window.winfo_exists():
+            window = self.conversation_popout_window = ConversationPopout(self)
+        window.deiconify()
+        window.lift()
+        self.render_conversation()
+        return window
+
+    def refresh_conversation_feedback(self, *, update_preview=True):
+        self.conversation_outbox.poll()
+        fresh = build_state_freshness_text(self.state_cache).startswith("State fresh |")
+        self.conversation_activity_var.set(conversation_activity(self.state_cache, fresh=fresh))
+        enhanced = self.ui_preferences.get("conversation_send_feedback", True)
+        if enhanced:
+            self.conversation_activity_label.grid()
+        else:
+            self.conversation_activity_label.grid_remove()
+        if update_preview and self.conversation_outbox.rows:
+            self.conversation_delivery_var.set(self.conversation_outbox.summary(include_text=enhanced))
+        self.conversation_outbox_button.configure(text=f"Outbox ({len(self.conversation_outbox.rows)})")
+        self.conversation_awaiting.refresh()
+        popout = self.conversation_popout_window
+        if popout is not None and popout.winfo_exists():
+            popout.awaiting.refresh()
+        window = self.conversation_outbox_window
+        if window is not None and window.winfo_exists() and window.state() != "withdrawn":
+            window.refresh()
 
     def show_conversation_quick_start(self):
         self._open_settings_text_dialog("Aurora quick start", (
@@ -4203,6 +4383,13 @@ class AuroraControlPanel(tk.Tk):
         ), font=("Segoe UI", 11), height=480)
 
     def render_conversation(self):
+        if hasattr(self, "conversation_navigator"):
+            note = self.conversation_navigator.render(self.state_cache.get("conversation", {}))
+            self.conversation_status_var.set(note)
+            window = self.conversation_popout_window
+            if window is not None and window.winfo_exists() and window.state() != "withdrawn":
+                window.refresh(self.conversation_text.get("1.0", "end-1c"))
+            return
         snapshot = self.state_cache.get("conversation", {})
         mode = "retained" if self.conversation_mode_var.get() == "Retained messages" else "current"
         view = snapshot.get(mode)
@@ -5006,31 +5193,14 @@ class AuroraControlPanel(tk.Tk):
         }
         for key, value in values.items():
             value_var = self.dashboard_summary_vars.get(key)
-            if value_var is not None:
+            if value_var is not None and value_var.get() != value:
                 value_var.set(value)
 
         event_signature = json.dumps(event_rows, sort_keys=True, ensure_ascii=False)
         if self.dashboard_events_tree is not None and event_signature != self._last_dashboard_event_signature:
-            selected = self.dashboard_events_tree.selection()
-            selected_row = self._dashboard_events_by_iid.get(selected[0], {}) if selected else {}
-            selected_identity = (selected_row.get("request_id"), selected_row.get("client_id"))
-            self.dashboard_events_tree.delete(*self.dashboard_events_tree.get_children())
-            self._dashboard_events_by_iid = {}
-            for row in event_rows:
-                item = self.dashboard_events_tree.insert(
-                    "",
-                    "end",
-                    values=(
-                        row.get("timestamp") or "-",
-                        row.get("command_name") or "UNKNOWN",
-                        row.get("status") or "unknown",
-                        row.get("delivery_status") or "unknown",
-                        row.get("request_id") or "-",
-                    ),
-                )
-                self._dashboard_events_by_iid[item] = row
-                if selected_row and (row.get("request_id"), row.get("client_id")) == selected_identity:
-                    self.dashboard_events_tree.selection_set(item)
+            items, by_id = receipt_tree_items(event_rows)
+            reconcile_tree_rows(self.dashboard_events_tree, items)
+            self._dashboard_events_by_iid = by_id
             self._last_dashboard_event_signature = event_signature
             self._show_dashboard_receipt()
 
@@ -5600,13 +5770,14 @@ class AuroraControlPanel(tk.Tk):
 
     def get_panel_chat_head_settings(self):
         panel_state = (self.state_cache or {}).get("panel", {}) or {}
+        scale = ui_scale(self)
         return {
             "opacity": float(panel_state.get("chat_head_opacity", 0.87) or 0.87),
             "topmost": bool(panel_state.get("chat_head_topmost", True)),
-            "strip_width": int(panel_state.get("chat_head_strip_width", 1000) or 1000),
-            "strip_height": int(panel_state.get("chat_head_strip_height", 100) or 100),
-            "history_width": int(panel_state.get("chat_head_history_width", 420) or 420),
-            "history_height": int(panel_state.get("chat_head_history_height", 620) or 620),
+            "strip_width": round(int(panel_state.get("chat_head_strip_width", 1000) or 1000) * scale),
+            "strip_height": round(int(panel_state.get("chat_head_strip_height", 100) or 100) * scale),
+            "history_width": round(int(panel_state.get("chat_head_history_width", 420) or 420) * scale),
+            "history_height": round(int(panel_state.get("chat_head_history_height", 620) or 620) * scale),
             "send_animation": str(panel_state.get("chat_head_send_animation", "pulse") or "pulse"),
             "send_animation_seconds": float(panel_state.get("chat_head_send_animation_seconds", 0.75) or 0.75),
         }
@@ -5644,6 +5815,7 @@ class AuroraControlPanel(tk.Tk):
             outline=CHAT_HEAD_BORDER,
             width=2,
         )
+        canvas.scale("all", 0, 0, ui_scale(self), ui_scale(self))
 
     @staticmethod
     def _blend_chat_head_color(start_hex, end_hex, mix):
@@ -5746,7 +5918,7 @@ class AuroraControlPanel(tk.Tk):
         screen_height = self.winfo_screenheight()
         x = max(24, int((screen_width - width) / 2))
         y = max(24, screen_height - height - 120)
-        window.geometry(f"{width}x{height}+{x}+{y}")
+        fit_popout_window(window, width, height, self, position=(x, y), minimum=(520, 74))
 
     def apply_chat_head_window_settings(self):
         settings = self.get_panel_chat_head_settings()
@@ -5772,10 +5944,6 @@ class AuroraControlPanel(tk.Tk):
             except Exception:
                 pass
             if self.chat_head_window_signature != strip_signature:
-                self.chat_head_strip_window.geometry(
-                    f"{settings['strip_width']}x{settings['strip_height']}"
-                    f"+{self.chat_head_strip_window.winfo_x()}+{self.chat_head_strip_window.winfo_y()}"
-                )
                 self._position_chat_head_strip()
                 self.chat_head_window_signature = strip_signature
         if self._is_chat_head_history_open():
@@ -5788,10 +5956,7 @@ class AuroraControlPanel(tk.Tk):
             except Exception:
                 pass
             if self.chat_head_history_signature != history_signature:
-                self.chat_head_history_window.geometry(
-                    f"{settings['history_width']}x{settings['history_height']}"
-                    f"+{self.chat_head_history_window.winfo_x()}+{self.chat_head_history_window.winfo_y()}"
-                )
+                fit_popout_window(self.chat_head_history_window, settings['history_width'], settings['history_height'], self.chat_head_strip_window)
                 self.chat_head_history_signature = history_signature
             self.reposition_chat_head_history_window()
 
@@ -5806,7 +5971,8 @@ class AuroraControlPanel(tk.Tk):
         window.title("Aurora Chat Strip")
         window.configure(bg=CHAT_HEAD_BG)
         window.resizable(True, True)
-        window.minsize(520, 74)
+        scale = ui_scale(self)
+        window.minsize(min(round(520 * scale), self.winfo_screenwidth()-32), round(90 * scale))
         try:
             window.attributes("-topmost", settings["topmost"])
         except Exception:
@@ -5845,13 +6011,13 @@ class AuroraControlPanel(tk.Tk):
         self.chat_head_strip_text.pack(fill="both", expand=True)
         self.chat_head_strip_text.bind("<Return>", self.submit_chat_head_message)
         self.chat_head_strip_text.bind("<KP_Enter>", self.submit_chat_head_message)
-        expand_shell = tk.Frame(shell, bg=CHAT_HEAD_BG, width=88)
+        expand_shell = tk.Frame(shell, bg=CHAT_HEAD_BG, width=round(88 * scale))
         expand_shell.pack(side="right", fill="y", padx=(8, 10), pady=10)
         expand_shell.pack_propagate(False)
         self.chat_head_expand_canvas = tk.Canvas(
             expand_shell,
-            width=84,
-            height=84,
+            width=round(84 * scale),
+            height=round(84 * scale),
             bg=CHAT_HEAD_BG,
             highlightthickness=0,
             bd=0,
@@ -5859,11 +6025,12 @@ class AuroraControlPanel(tk.Tk):
         )
         self.chat_head_expand_canvas.pack(fill="both", expand=True)
         self.chat_head_expand_canvas.bind("<Button-1>", self.toggle_chat_head_history)
-        close_canvas = tk.Canvas(window, width=24, height=24, bg=CHAT_HEAD_BG, highlightthickness=0, bd=0, cursor="hand2")
+        close_canvas = tk.Canvas(window, width=round(24 * scale), height=round(24 * scale), bg=CHAT_HEAD_BG, highlightthickness=0, bd=0, cursor="hand2")
         close_canvas.place(relx=1.0, x=-8, y=6, anchor="ne")
         close_canvas.create_oval(2, 2, 22, 22, fill=CHAT_HEAD_CLOSE, outline="#7f1d1d", width=2)
         close_canvas.create_line(8, 8, 16, 16, fill="#fee2e2", width=2)
         close_canvas.create_line(16, 8, 8, 16, fill="#fee2e2", width=2)
+        close_canvas.scale("all", 0, 0, scale, scale)
         close_canvas.bind("<Button-1>", self.request_close_chat_head)
         window.bind("<Configure>", self.reposition_chat_head_history_window)
         self.chat_head_window_signature = (
@@ -5893,7 +6060,8 @@ class AuroraControlPanel(tk.Tk):
         window.title("Aurora Chat History")
         window.configure(bg=CHAT_HEAD_BG)
         window.resizable(True, True)
-        window.minsize(320, 320)
+        scale = ui_scale(self)
+        window.minsize(min(round(320 * scale), self.winfo_screenwidth()-32), min(round(320 * scale), self.winfo_screenheight()-64))
         try:
             window.attributes("-topmost", settings["topmost"])
         except Exception:
@@ -5905,13 +6073,14 @@ class AuroraControlPanel(tk.Tk):
         window.protocol("WM_DELETE_WINDOW", self.close_chat_head_history)
         shell = tk.Frame(window, bg=CHAT_HEAD_BG, highlightbackground=CHAT_HEAD_BORDER, highlightthickness=2, bd=0)
         shell.pack(fill="both", expand=True)
-        left_bar = tk.Frame(shell, bg=CHAT_HEAD_BG, width=44)
+        left_bar = tk.Frame(shell, bg=CHAT_HEAD_BG, width=round(44 * scale))
         left_bar.pack(side="left", fill="y", padx=(6, 0), pady=6)
         left_bar.pack_propagate(False)
-        collapse = tk.Canvas(left_bar, width=28, height=60, bg=CHAT_HEAD_BG, highlightthickness=0, bd=0, cursor="hand2")
+        collapse = tk.Canvas(left_bar, width=round(28 * scale), height=round(60 * scale), bg=CHAT_HEAD_BG, highlightthickness=0, bd=0, cursor="hand2")
         collapse.pack(anchor="n", pady=(8, 0))
         collapse.create_rectangle(2, 2, 26, 58, fill="#0b1120", outline=CHAT_HEAD_BORDER, width=2)
         collapse.create_polygon(22, 10, 8, 30, 22, 50, fill=CHAT_HEAD_HISTORY_ACCENT, outline=CHAT_HEAD_BORDER, width=1)
+        collapse.scale("all", 0, 0, scale, scale)
         collapse.bind("<Button-1>", self.close_chat_head_history)
         text_shell = tk.Frame(shell, bg=CHAT_HEAD_BG)
         text_shell.pack(side="left", fill="both", expand=True, padx=(6, 10), pady=10)
@@ -6002,7 +6171,8 @@ class AuroraControlPanel(tk.Tk):
         history_height = settings["history_height"]
         x = strip_x + strip_width - 6
         y = max(24, strip_y - 20)
-        self.chat_head_history_window.geometry(f"{history_width}x{history_height}+{x}+{y}")
+        fit_popout_window(self.chat_head_history_window, history_width, history_height,
+                          self.chat_head_strip_window, position=(x, y))
         self._draw_chat_head_expand_button()
 
     def refresh_chat_head_content(self):
@@ -7363,6 +7533,13 @@ class AuroraControlPanel(tk.Tk):
             f"{(snapshot.get('models', {}) or {}).get('reasoning_effort', 'effort unknown')} effort · "
             f"{request_label} · {work.get('state', 'unknown')} · {freshness_text.split('|')[0].strip()} · Model choices ↗"
         )
+        primary = (snapshot.get("models", {}) or {}).get("text", "unknown model")
+        effort = (snapshot.get("models", {}) or {}).get("reasoning_effort", "unknown")
+        self.header_status_var.set(
+            f"{'Inference enabled' if client_active else 'Inference paused'} · {primary} · {effort} effort"
+            + (f"\nActive request: {active_model}" if work.get("active_network_calls") else "")
+            + f" · {freshness_text.split('|')[0].strip()} · Models ↗"
+        )
         self.runtime_activate_button.configure(text="Enable inference" if runtime_active else "Start runtime")
         self.runtime_activate_button.state(["disabled"] if runtime_active and client_active else ["!disabled"])
         self.runtime_cancel_button.state(["!disabled"] if runtime_active else ["disabled"])
@@ -8261,12 +8438,15 @@ class AuroraControlPanel(tk.Tk):
         )
 
     def render_state(self):
+        self.refresh_conversation_feedback()
         state = self.state_cache or {}
         active_tab = self._get_active_tab_name()
         self._refresh_runtime_status_strip(state)
         self._set_runtime_banner_text(state.get("runtime_summary", ""))
         self.refresh_overview_summary(state)
         self._update_settings_transaction_surface(state)
+        if hasattr(self, "agent_controls"):
+            self.agent_controls.update_state()
         if hasattr(self, "switchboard") and (active_tab == "The Switchboard" or self.switchboard.pending):
             self.switchboard.update_state()
         models = state.get("models", {})
@@ -8811,7 +8991,7 @@ class AuroraControlPanel(tk.Tk):
 
     def render_logs(self, active_tab=None, force=False):
         active_tab = active_tab or self._get_active_tab_name()
-        if force or active_tab == "Conversation":
+        if force or active_tab == "Conversation" or (getattr(self, "conversation_navigator", None) and self.conversation_navigator.popout is not None) or (self.conversation_popout_window is not None and self.conversation_popout_window.winfo_exists() and self.conversation_popout_window.state() != "withdrawn"):
             self.render_conversation()
         if force or active_tab == "Chat":
             self._render_log_widget("chat", self.chat_text, CHAT_LOG_PATH, self.chat_log_limit)
@@ -14001,10 +14181,20 @@ class AuroraControlPanel(tk.Tk):
             self._text_content_cache = cache
         if cache.get(cache_key) == content:
             return
+        # Frequent status refreshes must not pull a reader back to the start or
+        # discard a selection. Replace atomically within this Tk event callback.
+        view_y, view_x = widget.yview(), widget.xview()
+        selection = widget.tag_ranges("sel")
         widget.configure(state="normal")
         widget.delete("1.0", tk.END)
         widget.insert("1.0", content)
         widget.configure(state="disabled")
+        if view_y:
+            widget.yview_moveto(view_y[0])
+        if view_x:
+            widget.xview_moveto(view_x[0])
+        if selection:
+            widget.tag_add("sel", *selection)
         cache[cache_key] = content
 
     def show_tab(self, tab_name):

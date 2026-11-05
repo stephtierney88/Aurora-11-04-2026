@@ -1,10 +1,10 @@
 command	signature	category	handler	summary
-ADD_APRIORITY_GOAL	ADD_APRIORITY_GOAL(goal_text)	Goal Management Commands	add_apriority_goal_command	Add a new open-ended goal.
-ADD_GOAL	ADD_GOAL(goal_text; priority; significance)	Goal Management Commands	add_goal_command	Add a new goal with priority and significance.
-ADD_JOURNAL	ADD_JOURNAL(entry)	Goal Management Commands	add_journal_command	Append a continuity/journal note.
+ADD_APRIORITY_GOAL	ADD_APRIORITY_GOAL(text)	Goal Management Commands	add_apriority_goal_command	Add non-empty text to the named memory list, retaining its existing deduplication/retention policy.
+ADD_GOAL	ADD_GOAL(goal_text[, priority, significance])	Goal Management Commands	add_goal_command	Add a goal with opaque priority/significance labels; duplicates are unchanged, not relabeled. Accepts comma fields or one semicolon-delimited argument.
+ADD_JOURNAL	ADD_JOURNAL(text)	Goal Management Commands	add_journal_command	Add non-empty text to the named memory list, retaining its existing deduplication/retention policy.
 ADD_MODEL	ADD_MODEL(name)	Other Commands	add_model_command	Validate a model with a short test call and add it to the custom Aurora catalog.
-ADD_OVERARCHING_GOAL	ADD_OVERARCHING_GOAL(goal_text)	Goal Management Commands	add_overarching_goal_command	Add a long-horizon mission or strategic objective.
-ADD_UNKNOWN_PRIORITY	ADD_UNKNOWN_PRIORITY(goal_text)	Goal Management Commands	add_unknown_priority_command	Add a candidate goal whose priority is still unknown.
+ADD_OVERARCHING_GOAL	ADD_OVERARCHING_GOAL(text)	Goal Management Commands	add_overarching_goal_command	Add non-empty text to the named memory list, retaining its existing deduplication/retention policy.
+ADD_UNKNOWN_PRIORITY	ADD_UNKNOWN_PRIORITY(text)	Goal Management Commands	add_unknown_priority_command	Add non-empty text to the named memory list, retaining its existing deduplication/retention policy.
 APPEND_AGENT_HISTORY	APPEND_AGENT_HISTORY(agent_id, visibility=private|parent_visible, summary=..., text=..., note=...)	Other Commands	append_agent_history_command	Append an explicit operator note to one sub-agent private JSONL log without writing parent chat history, prompts, Pending Commands, or execution queues.
 APPLY_PERSONAL_DEFAULTS	APPLY_PERSONAL_DEFAULTS([mode])	Other Commands	apply_personal_defaults_command	Validate and apply the saved personal profile; reapply retains setter effects, while changed_only skips unchanged values.
 APPLY_SETTINGS_TRANSACTION	APPLY_SETTINGS_TRANSACTION(token)	Other Commands	apply_settings_transaction_command	Preview, atomically apply, or explicitly roll back registered runtime settings through the existing transaction service.
@@ -41,7 +41,7 @@ CLEAR_RECENT_CONTEXT	CLEAR_RECENT_CONTEXT()	Other Commands	clear_recent_context_
 CLEAR_RESPONSES_SHADOW_PROBE	CLEAR_RESPONSES_SHADOW_PROBE()	Other Commands	clear_responses_shadow_probe_command	Clear the Responses live-probe scaffold while keeping chat/completions as the fallback.
 CLEAR_ROUTE_STATE	CLEAR_ROUTE_STATE()	Other Commands	clear_route_state_command	Clear route state, route intent, local path, blockers, and recent movement results.
 CLOSE_CHAT_HEAD	CLOSE_CHAT_HEAD()	Other Commands	close_chat_head_command	Ask the control panel to close the floating chat strip and its attached history pane.
-COMPLETE_GOAL	COMPLETE_GOAL(goal_id)	Goal Management Commands	complete_goal_command	Mark a goal as completed.
+COMPLETE_GOAL	COMPLETE_GOAL(goal_id)	Goal Management Commands	complete_goal_command	Complete the exact recursive goal ID; a missing ID fails, repeated completion is unchanged.
 DELETE_MSG	DELETE_MSG(timestamp)	Runtime commands	delete_msg_command	CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
 DHISTORY	DHISTORY()	Runtime commands	display_history_command	CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
 DRY_RUN_AGENT_PENDING_INSERT	DRY_RUN_AGENT_PENDING_INSERT(optional_filter)	Other Commands	run_agent_pending_insert_dry_run_command	Log and display a no-exec dry-run proving which review links satisfy the future insertion contract while leaving the executable Pending queue unchanged.
@@ -62,7 +62,7 @@ LINK_AGENT_SUGGESTION_TASK	LINK_AGENT_SUGGESTION_TASK(task_id|latest|agent_id, s
 LINK_AGENT_TASK_SUGGESTION	LINK_AGENT_TASK_SUGGESTION(task_id|latest|agent_id, suggestion=latest|suggestion_id|agent_id, note=...)	Other Commands	link_agent_task_suggestion_command	Link a task packet to a suggestion as review provenance while keeping the Pending gate closed.
 LIST_COMMANDS	LIST_COMMANDS(low|medium|high)	Other Commands	list_commands_command	Display the mirrored Aurora command catalog at the requested verbosity.
 LIST_EPISODIC_SNAPSHOTS	LIST_EPISODIC_SNAPSHOTS([limit])	Other Commands	list_episodic_snapshots_command	Existing episodic snapshot write/list/lexical-search behavior with complete argument admission and correlated receipts; no inferred persistence or rollback guarantee.
-LOAD_TASKS	LOAD_TASKS(...)	Runtime commands	load_tasks_command	Inspect the handler; detailed usage has not been reviewed.
+LOAD_TASKS	LOAD_TASKS([path])	Runtime commands	load_tasks_command	Save a validated recursive task snapshot atomically, or validate and restore a complete snapshot. Does not undo live actions.
 LOCK_OPERATOR_ACCESS	LOCK_OPERATOR_ACCESS()	Other Commands	lock_operator_access_command	Clear the current external-operator authorization immediately.
 LOCK_SETTING	LOCK_SETTING([lock])	Other Commands	lock_setting_command	Read locks when omitted; otherwise enable or disable the named runtime setting lock. Settings values are unchanged.
 LOGIN_CODEX_OAUTH	LOGIN_CODEX_OAUTH()	Other Commands	login_codex_oauth_command	Open the ChatGPT/Codex OAuth sign-in helper in a new window.
@@ -132,35 +132,41 @@ SAVE_ALL_PINS	SAVE_ALL_PINS(...)	Runtime commands	save_all_pins_command	Inspect 
 SAVE_HANDOFF	SAVE_HANDOFF(optional_filename)	Other Commands	save_handoff_command	Save a structured handoff snapshot to the logging folder or a provided path.
 SAVE_PERSONAL_DEFAULTS	SAVE_PERSONAL_DEFAULTS()	Other Commands	save_personal_defaults_command	Atomically save current profile settings, retaining unknown fields in a valid existing file.
 SAVE_PINS	SAVE_PINS(...)	Runtime commands	save_pins_command	Inspect the handler; detailed usage has not been reviewed.
-SAVE_TASKS	SAVE_TASKS(...)	Runtime commands	save_tasks_command	Inspect the handler; detailed usage has not been reviewed.
+SAVE_TASKS	SAVE_TASKS([path])	Runtime commands	save_tasks_command	Save a validated recursive task snapshot atomically, or validate and restore a complete snapshot. Does not undo live actions.
 SEARCH_COMMANDS	SEARCH_COMMANDS(query, low|medium|high)	Other Commands	search_commands_command	Search the mirrored Aurora command catalog by topic, summary, handler, or signature text.
 SEARCH_EPISODIC_SNAPSHOTS	SEARCH_EPISODIC_SNAPSHOTS(query[, limit])	Other Commands	search_episodic_snapshots_command	Existing episodic snapshot write/list/lexical-search behavior with complete argument admission and correlated receipts; no inferred persistence or rollback guarantee.
 SEARCH_IMAGE_CONTEXT_INDEX	SEARCH_IMAGE_CONTEXT_INDEX(query, optional_limit)	Other Commands	search_image_context_index_command	Search image sidecars by caption, OCR text, tags, capture reason, image id, and path.
 SEARCH_PROGRAM_MAP	SEARCH_PROGRAM_MAP(query, runtime|ui)	Other Commands	search_program_map_command	Search the mirrored runtime/control-panel symbol indexes and generated maps.
 SEARCH_REFERENCE_PACK	SEARCH_REFERENCE_PACK(query, optional_pack_name|all)	Other Commands	search_reference_pack_command	Search the mirrored Aurora reference packs by topic text.
 SET_ACTION_MODE	SET_ACTION_MODE([value])	Other Commands	set_action_mode_command	Set runtime.action, or omit value to read it. Controller family available to Aurora for approved actions.
-SET_ADD_IMSGS_TO_HISTORY	SET_ADD_IMSGS_TO_HISTORY(on|off)	Other Commands	set_add_imsgs_to_history_command	Explicitly control important-message history retention.
-SET_ADD_UMSGS_TO_HISTORY	SET_ADD_UMSGS_TO_HISTORY(on|off)	Other Commands	set_add_umsgs_to_history_command	Explicitly control unimportant-message history retention.
+SET_ADD_IMSGS_TO_HISTORY	SET_ADD_IMSGS_TO_HISTORY([on|off])	Other Commands	set_add_imsgs_to_history_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+SET_ADD_UMSGS_TO_HISTORY	SET_ADD_UMSGS_TO_HISTORY([on|off])	Other Commands	set_add_umsgs_to_history_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 SET_AGENT_SUGGESTION_APPROVAL	SET_AGENT_SUGGESTION_APPROVAL(suggestion_id|latest|agent_id, approval=approved|rejected|requested|draft, note=...)	Other Commands	set_agent_suggestion_approval_command	Append review-state metadata without Pending Command insertion or execution.
 SET_AGENT_TASK_STATUS	SET_AGENT_TASK_STATUS(task_id|latest|agent_id, status=draft|active|review|blocked|closed, note=...)	Other Commands	set_agent_task_status_command	Append review/status metadata for a sub-agent task packet without execution or prompt inclusion.
 SET_ALWAYS	SET_ALWAYS(on|off, true|false)	Other Commands	set_always_command	Explicitly set always-mode and hide_input together.
+SET_ASSISTANT_POLICY	SET_ASSISTANT_POLICY([value])	Runtime commands	set_assistant_policy_command	Set runtime.assistant_policy, or omit value to read it. Task flow admits discovery, enabled capture requests, one-turn plans, bounded GB overworld movement and battle menu steps in Auto. Legacy keeps previous review decisions.
 SET_AUTH_MODE	SET_AUTH_MODE([value])	Other Commands	set_auth_mode_command	Set auth.mode, or omit value to read it. Credential route Aurora will resolve before a model request.
-SET_AUTO_DYNAMIC_INFERENCE	SET_AUTO_DYNAMIC_INFERENCE(on|off)	Other Commands	set_auto_dynamic_inference_command	Allow Aurora to adapt the next turn's model settings automatically.
-SET_AUTO_PROMPT	SET_AUTO_PROMPT(on|off)	Other Commands	set_auto_prompt_command	Explicitly enable or disable auto prompting.
+SET_AUTO_DYNAMIC_INFERENCE	SET_AUTO_DYNAMIC_INFERENCE([on|off])	Other Commands	set_auto_dynamic_inference_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+SET_AUTO_PROMPT	SET_AUTO_PROMPT([on|off])	Other Commands	set_auto_prompt_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 SET_BATTLE_REASONING_EFFORT	SET_BATTLE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)	Other Commands	set_battle_reasoning_effort_command	Set battle reasoning effort.
 SET_BATTLE_VERBOSITY	SET_BATTLE_VERBOSITY(low|medium|high)	Other Commands	set_battle_verbosity_command	Set verbosity for battle turns.
+SET_CAPTURE_GEOMETRY_POLICY	SET_CAPTURE_GEOMETRY_POLICY([value])	Runtime commands	set_capture_geometry_policy_command	Set capture.geometry_policy, or omit value to read it. Verified captures an explicit physical rectangle; legacy keeps startup scaling and default desktop grabs.
 SET_CAPTURE_MODE	SET_CAPTURE_MODE([value])	Runtime commands	set_capture_mode_command	Set capture.mode, or omit value to read it. Heartbeat captures periodically; request_only captures only when the demand service has a due request.
+SET_CAPTURE_PROVENANCE_POLICY	SET_CAPTURE_PROVENANCE_POLICY([value])	Runtime commands	set_capture_provenance_policy_command	Set capture.provenance_policy, or omit value to read it. Verified requires pixels acquired after the action settle boundary; legacy retains counter/clock freshness checks.
+SET_CAPTURE_REQUEST_ATTEMPTS	SET_CAPTURE_REQUEST_ATTEMPTS([value])	Runtime commands	set_capture_request_attempts_command	Set capture.request_max_attempts, or omit value to read it. Maximum acquisition attempts for one request; zero preserves unlimited retries. Legacy drawing recapture shares its parent's attempt.
+SET_CAPTURE_REQUEST_TIMEOUT	SET_CAPTURE_REQUEST_TIMEOUT([value])	Runtime commands	set_capture_request_timeout_command	Set capture.request_timeout_seconds, or omit value to read it. Total monotonic deadline from request admission through settle, acquisition, drawing and publication. Zero preserves unlimited waiting.
+SET_CAPTURE_TARGET	SET_CAPTURE_TARGET([value])	Runtime commands	set_capture_target_command	Set capture.target, or omit value to read it. Choose primary monitor, virtual desktop or foreground window for verified geometry.
 SET_CHAT_HEAD_HISTORY_SIZE	SET_CHAT_HEAD_HISTORY_SIZE(width,height)	Other Commands	set_chat_head_history_size_command	Set the attached history window size.
 SET_CHAT_HEAD_OPACITY	SET_CHAT_HEAD_OPACITY(value)	Other Commands	set_chat_head_opacity_command	Set chat-head window opacity between 0.25 and 1.0.
 SET_CHAT_HEAD_SEND_ANIMATION	SET_CHAT_HEAD_SEND_ANIMATION(pulse|none)	Other Commands	set_chat_head_send_animation_command	Control the send animation style used by the floating chat strip input.
 SET_CHAT_HEAD_SEND_ANIMATION_SECONDS	SET_CHAT_HEAD_SEND_ANIMATION_SECONDS(value)	Other Commands	set_chat_head_send_animation_seconds_command	Set the floating chat strip send animation duration.
 SET_CHAT_HEAD_STRIP_SIZE	SET_CHAT_HEAD_STRIP_SIZE(width,height)	Other Commands	set_chat_head_strip_size_command	Set the strip window size.
-SET_CHAT_HEAD_TOPMOST	SET_CHAT_HEAD_TOPMOST(on|off)	Other Commands	set_chat_head_topmost_command	Control whether the chat-head windows stay topmost.
+SET_CHAT_HEAD_TOPMOST	SET_CHAT_HEAD_TOPMOST([on|off])	Other Commands	set_chat_head_topmost_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 SET_CHAT_LOG_ECHO	SET_CHAT_LOG_ECHO(on|off)	Other Commands	set_chat_log_echo_command	Toggle compact [CHATLOG] console echo output.
 SET_COMMAND_DRIP_LOOKAHEAD	SET_COMMAND_DRIP_LOOKAHEAD(turns)	Other Commands	set_command_drip_lookahead_command	Set how many turns ahead Aurora sketches likely command candidates; this does not approve commands.
 SET_COMMAND_DRIP_RETENTION	SET_COMMAND_DRIP_RETENTION(turns)	Other Commands	set_command_drip_retention_command	Set how many recent turns of command drip history remain on hand. Recommended normal range: 3-7.
-SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED	SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED(on|off)	Other Commands	set_command_drip_show_likely_dropped_command	Show or hide likely dropped candidates in the drip tree.
-SET_COMMAND_DRIP_SHOW_VARIANTS	SET_COMMAND_DRIP_SHOW_VARIANTS(on|off)	Other Commands	set_command_drip_show_variants_command	Show or hide near-miss command variants in the drip tree.
+SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED	SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED([on|off])	Other Commands	set_command_drip_show_likely_dropped_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+SET_COMMAND_DRIP_SHOW_VARIANTS	SET_COMMAND_DRIP_SHOW_VARIANTS([on|off])	Other Commands	set_command_drip_show_variants_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 SET_CONTEXT_MARK_APPROVAL	SET_CONTEXT_MARK_APPROVAL(mark_id|target, approval=draft|requested|approved|rejected, optional mark_type=...)	Other Commands	set_context_mark_approval_command	Update a context mark approval state.
 SET_CRITIQUE_REASONING_EFFORT	SET_CRITIQUE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)	Other Commands	set_critique_reasoning_effort_command	Set reasoning effort for critique/self-review turns.
 SET_CRITIQUE_TURN_INTERVAL	SET_CRITIQUE_TURN_INTERVAL(turns)	Other Commands	set_critique_turn_interval_command	Set how often Aurora performs a deeper critique/self-review turn.
@@ -169,19 +175,22 @@ SET_CURSOR_LABEL	SET_CURSOR_LABEL(on|off)	Other Commands	set_cursor_label_comman
 SET_DEMAND_CAPTURE	SET_DEMAND_CAPTURE([value])	Other Commands	set_demand_capture_command	Set capture.demand_enabled, or omit value to read it. Whether commands and explicit requests may ask the capture service for a fresh frame.
 SET_EPISODIC_EMBEDDINGS	SET_EPISODIC_EMBEDDINGS(off|auto|force)	Other Commands	set_episodic_embeddings_command	Choose lexical-only retrieval, lexical fallback, or embedding-required retrieval.
 SET_EPISODIC_EMBEDDING_MODEL	SET_EPISODIC_EMBEDDING_MODEL(name)	Other Commands	set_episodic_embedding_model_command	Set which OpenAI embedding model episodic retrieval should use.
-SET_EPISODIC_MEMORY	SET_EPISODIC_MEMORY(on|off)	Other Commands	set_episodic_memory_command	Enable or disable compact episodic snapshot writing.
+SET_EPISODIC_MEMORY	SET_EPISODIC_MEMORY([on|off])	Other Commands	set_episodic_memory_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 SET_EPISODIC_MEMORY_INTERVAL	SET_EPISODIC_MEMORY_INTERVAL(seconds)	Other Commands	set_episodic_memory_interval_command	Set the periodic episodic snapshot interval. Minimum 60 seconds.
-SET_EPISODIC_MEMORY_PERIODIC	SET_EPISODIC_MEMORY_PERIODIC(on|off)	Other Commands	set_episodic_memory_periodic_command	Enable or disable periodic episodic snapshot writes.
-SET_EPISODIC_MEMORY_SCENE_TRIGGER	SET_EPISODIC_MEMORY_SCENE_TRIGGER(on|off)	Other Commands	set_episodic_memory_scene_trigger_command	Enable or disable scene-change episodic snapshot writes.
+SET_EPISODIC_MEMORY_PERIODIC	SET_EPISODIC_MEMORY_PERIODIC([on|off])	Other Commands	set_episodic_memory_periodic_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+SET_EPISODIC_MEMORY_SCENE_TRIGGER	SET_EPISODIC_MEMORY_SCENE_TRIGGER([on|off])	Other Commands	set_episodic_memory_scene_trigger_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 SET_EPISODIC_PLANNING_ASSIST	SET_EPISODIC_PLANNING_ASSIST(off|review|critique|review_critique)	Other Commands	set_episodic_planning_assist_command	Bound automatic episodic retrieval injection to higher-attention planning turns.
 SET_EPISODIC_PLANNING_ASSIST_COOLDOWN	SET_EPISODIC_PLANNING_ASSIST_COOLDOWN(turns)	Other Commands	set_episodic_planning_assist_cooldown_command	Set the minimum turn gap before bounded planning retrieval may run again. Range 0-12.
 SET_EPISODIC_PLANNING_ASSIST_K	SET_EPISODIC_PLANNING_ASSIST_K(k)	Other Commands	set_episodic_planning_assist_k_command	Set how many episodic memories bounded planning turns may inject. Range 1-4.
 SET_EXECUTION_MODE	SET_EXECUTION_MODE([value])	Other Commands	set_execution_mode_command	Set runtime.execution, or omit value to read it. Approval and execution posture for commands proposed by the model.
+SET_GAMEPLAY_SCENE_POLICY	SET_GAMEPLAY_SCENE_POLICY([value])	Runtime commands	set_gameplay_scene_policy_command	Set game.scene_policy, or omit value to read it. Evidence uses fresh model observation/scene sections with token boundaries and conflict checks. Legacy retains mixed-context substring inference.
 SET_GAME_PROFILE	SET_GAME_PROFILE([value])	Other Commands	set_game_profile_command	Set game.profile, or omit value to read it. Gameplay assumptions, prompts, controls, and save-state guidance.
+SET_GOAL_SAVE_FORMAT	SET_GOAL_SAVE_FORMAT([value])	Runtime commands	set_goal_save_format_command	Set goals.save_format, or omit value to read it. Versioned saves add a schema envelope; legacy preserves the existing task document shape. Both use recursive IDs, validation and atomic replacement.
 SET_HIGH_DETAIL	SET_HIGH_DETAIL(...)	Runtime commands	set_high_detail_command	Inspect the handler; detailed usage has not been reviewed.
 SET_IMAGE_DETAIL	SET_IMAGE_DETAIL([value])	Runtime commands	set_image_detail_command	Set vision.image_detail, or omit value to read it. Default image detail before model-specific compatibility normalization.
-SET_IMPORTANT_MESSAGES	SET_IMPORTANT_MESSAGES(on|off)	Other Commands	set_important_messages_command	Explicitly enable or disable important messages.
-SET_IMSGS_DECAY_CHECK	SET_IMSGS_DECAY_CHECK(on|off)	Other Commands	set_imsgs_decay_check_command	Explicitly control important-message decay checks.
+SET_IMPORTANT_MESSAGES	SET_IMPORTANT_MESSAGES([on|off])	Other Commands	set_important_messages_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+SET_IMSGS_DECAY_CHECK	SET_IMSGS_DECAY_CHECK([on|off])	Other Commands	set_imsgs_decay_check_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+SET_INIT_DELIVERY	SET_INIT_DELIVERY([value])	Runtime commands	set_init_delivery_command	Set context.init_delivery, or omit value to read it. System once omits exact Init history copies only when the full text is already in the system prompt. Stored history is preserved.
 SET_KEYPOINT_GRID	SET_KEYPOINT_GRID(on|off)	Other Commands	set_keypoint_grid_command	Toggle the red key-point grid overlay.
 SET_LATEST_IMAGE_DETAIL	SET_LATEST_IMAGE_DETAIL(...)	Runtime commands	set_latest_image_detail_command	Inspect the handler; detailed usage has not been reviewed.
 SET_LIVE_INIT	SET_LIVE_INIT([value])	Other Commands	set_live_init_command	Set runtime.live_init, or omit value to read it. Whether Aurora loads its full live initialization prompt when that path is used.
@@ -196,6 +205,8 @@ SET_OPERATOR_PASSCODE_REQUIRED	SET_OPERATOR_PASSCODE_REQUIRED(on|off)	Other Comm
 SET_PASSCODE_COMMAND_VISIBILITY	SET_PASSCODE_COMMAND_VISIBILITY(on|off)	Other Commands	set_passcode_command_visibility_command	Show raw passcode-bearing commands in logs/history, or mask them as *******.
 SET_PENDING_QUEUE_MODE	SET_PENDING_QUEUE_MODE(normal|replace|insert)	Other Commands	set_pending_queue_mode_command	Set how newly queued pending commands behave by default in the pending planning lane.
 SET_PROMPT_INCLUSION_ACTIVATION	SET_PROMPT_INCLUSION_ACTIVATION(on|off, preview_id=latest|fresh|..., checklist_id=latest|fresh|..., confirm=offline_proof|rollback)	Other Commands	set_prompt_inclusion_activation_command	Enable or disable reversible Prompt Inclusion after fresh review and offline proof.
+SET_READBACK_SCOPE	SET_READBACK_SCOPE([value])	Runtime commands	set_readback_scope_command	Set scheduler.readback_scope, or omit value to read it. Discovery preserves history-based lookup delivery; reviewed additionally includes bounded task-correlated settings, goals, history and retrieval receipts.
+SET_READBACK_WAKE	SET_READBACK_WAKE([value])	Runtime commands	set_readback_wake_command	Set scheduler.readback_wake_enabled, or omit value to read it. Wake a follow-up for eligible discovery or reviewed receipt data, according to readback scope. Requires bounded task mode.
 SET_REASONING_EFFORT	SET_REASONING_EFFORT([value])	Other Commands	set_reasoning_effort_command	Set inference.reasoning_effort, or omit value to read it. Default reasoning effort before model-specific compatibility normalization.
 SET_REASONING_MODEL	SET_REASONING_MODEL([value])	Other Commands	set_reasoning_model_command	Set model.reasoning, or omit value to read it. Model selected when Aurora requests a reasoning-oriented turn.
 SET_REASONING_SUMMARY_MODE	SET_REASONING_SUMMARY_MODE(auto|none|brief|detailed)	Other Commands	set_reasoning_summary_mode_command	Track the preferred reasoning summary mode.
@@ -203,27 +214,31 @@ SET_REVIEW_REASONING_EFFORT	SET_REVIEW_REASONING_EFFORT(minimal|none|low|medium|
 SET_REVIEW_TURN_INTERVAL	SET_REVIEW_TURN_INTERVAL(turns)	Other Commands	set_review_turn_interval_command	Set how often Aurora performs a deliberate review turn.
 SET_REVIEW_VERBOSITY	SET_REVIEW_VERBOSITY(low|medium|high)	Other Commands	set_review_verbosity_command	Set verbosity for scheduled higher-attention review turns.
 SET_SCREENSHOT_INTERVAL	SET_SCREENSHOT_INTERVAL([value])	Other Commands	set_screenshot_interval_command	Set capture.screenshot_interval, or omit value to read it. Requested screenshot polling interval before idle floors and other effective cadence rules.
+SET_SERVICE_TIER	SET_SERVICE_TIER([value])	Runtime commands	set_service_tier_command	Set inference.service_tier, or omit value to read it. Requested service priority, independent of reasoning effort. Regular omits acceleration; subscription catalog must advertise other tiers.
 SET_SESSION_REASONING_EFFORT	SET_SESSION_REASONING_EFFORT([value])	Other Commands	set_session_reasoning_effort_command	Set inference.reasoning_effort, or omit value to read it. Default reasoning effort before model-specific compatibility normalization.
-SET_SHOW_AI_COMMANDS	SET_SHOW_AI_COMMANDS(on|off)	Other Commands	set_show_ai_commands_command	Explicitly control AI command visibility.
-SET_SHOW_AI_TEXT	SET_SHOW_AI_TEXT(on|off)	Other Commands	set_show_ai_text_command	Explicitly control AI text visibility.
-SET_SHOW_USER_COMMANDS	SET_SHOW_USER_COMMANDS(on|off)	Other Commands	set_show_user_commands_command	Explicitly control user command visibility.
-SET_SHOW_USER_TEXT	SET_SHOW_USER_TEXT(on|off)	Other Commands	set_show_user_text_command	Explicitly control user text visibility.
+SET_SHOW_AI_COMMANDS	SET_SHOW_AI_COMMANDS([on|off])	Other Commands	set_show_ai_commands_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+SET_SHOW_AI_TEXT	SET_SHOW_AI_TEXT([on|off])	Other Commands	set_show_ai_text_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+SET_SHOW_USER_COMMANDS	SET_SHOW_USER_COMMANDS([on|off])	Other Commands	set_show_user_commands_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+SET_SHOW_USER_TEXT	SET_SHOW_USER_TEXT([on|off])	Other Commands	set_show_user_text_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 SET_SOUND_EFFECTS	SET_SOUND_EFFECTS(on|off)	Other Commands	set_sound_effects_command	Enable or disable sound effects.
 SET_STATEFUL_MODEL_PRESET	SET_STATEFUL_MODEL_PRESET(stateless-default|responses-link-preview|conversation-preview)	Other Commands	set_stateful_model_preset_command	Select the visible stateful preset profile metadata; live transport remains unchanged until a later transport slice.
 SET_STATUS_OVERLAY	SET_STATUS_OVERLAY(on|off)	Other Commands	set_status_overlay_command	Toggle the top status text overlay.
+SET_TASK_CONTINUATION	SET_TASK_CONTINUATION([value])	Runtime commands	set_task_continuation_command	Set task.continuation_mode, or omit value to read it. Bounded limits all model slots/wake reasons in one task; legacy retains unrestricted scheduler behavior.
+SET_TASK_MAX_MODEL_TURNS	SET_TASK_MAX_MODEL_TURNS([value])	Runtime commands	set_task_max_model_turns_command	Set task.max_model_turns, or omit value to read it. Maximum model-turn admissions, across primary/review slots. Latched at the next task start.
+SET_TASK_MAX_SECONDS	SET_TASK_MAX_SECONDS([value])	Runtime commands	set_task_max_seconds_command	Set task.max_seconds, or omit value to read it. Elapsed-time admission limit; late model responses cannot launch new commands. Latched at next task start.
 SET_TEMPERATURE	SET_TEMPERATURE([value])	Other Commands	set_temperature_command	Set inference.temperature, or omit value to read it. Sampling temperature used by Aurora where the selected model accepts it.
 SET_TEXT_MODEL	SET_TEXT_MODEL([value])	Other Commands	set_text_model_command	Set model.text, or omit value to read it. Model used for text-oriented Aurora turns.
 SET_TILE_GRID	SET_TILE_GRID(on|off)	Other Commands	set_tile_grid_command	Toggle the colored tile grid overlay.
 SET_TIME_LOGGING	SET_TIME_LOGGING(on|off)	Other Commands	set_time_logging_command	Toggle detailed timing/debug logging.
 SET_TURN_CAPTURE_WAKE	SET_TURN_CAPTURE_WAKE([value])	Other Commands	set_turn_capture_wake_command	Set scheduler.capture_wake_enabled, or omit value to read it. Whether settled capture changes may wake a model turn in hybrid scheduler mode.
 SET_TURN_CAPTURE_WAKE_DEBOUNCE_SECONDS	SET_TURN_CAPTURE_WAKE_DEBOUNCE_SECONDS([value])	Other Commands	set_turn_capture_wake_debounce_command	Set scheduler.capture_wake_debounce_seconds, or omit value to read it. Settle delay before a changed capture may wake a model turn.
-SET_TURN_HEARTBEAT_SECONDS	SET_TURN_HEARTBEAT_SECONDS([value])	Other Commands	set_turn_heartbeat_seconds_command	Set scheduler.heartbeat_seconds, or omit value to read it. Maximum quiet interval before the scheduler heartbeat can wake a turn.
+SET_TURN_HEARTBEAT_SECONDS	SET_TURN_HEARTBEAT_SECONDS([value])	Other Commands	set_turn_heartbeat_seconds_command	Set scheduler.heartbeat_seconds, or omit value to read it. Maximum quiet interval before a heartbeat can wake a turn; zero explicitly disables periodic model turns.
 SET_TURN_MIN_GAP_SECONDS	SET_TURN_MIN_GAP_SECONDS([value])	Other Commands	set_turn_min_gap_seconds_command	Set scheduler.min_gap_seconds, or omit value to read it. Minimum spacing between model-turn submissions.
 SET_TURN_POST_ACTION_SETTLE_SECONDS	SET_TURN_POST_ACTION_SETTLE_SECONDS([value])	Other Commands	set_turn_post_action_settle_command	Set scheduler.post_action_settle_seconds, or omit value to read it. Delay after an action result before scheduler follow-up may proceed.
 SET_TURN_SCHEDULER_MODE	SET_TURN_SCHEDULER_MODE([value])	Other Commands	set_turn_scheduler_mode_command	Set scheduler.mode, or omit value to read it. Wake strategy for capture-driven, event-driven, or hybrid turns.
 SET_TURN_SCHEDULER_PROFILE	SET_TURN_SCHEDULER_PROFILE([value])	Other Commands	set_turn_scheduler_profile_command	Set scheduler.profile, or omit value to read it. Named bundle for Aurora turn wake and pacing thresholds.
-SET_UMSGS_DECAY_CHECK	SET_UMSGS_DECAY_CHECK(on|off)	Other Commands	set_umsgs_decay_check_command	Explicitly control unimportant-message decay checks.
-SET_UNIMPORTANT_MESSAGES	SET_UNIMPORTANT_MESSAGES(on|off)	Other Commands	set_unimportant_messages_command	Explicitly enable or disable unimportant messages.
+SET_UMSGS_DECAY_CHECK	SET_UMSGS_DECAY_CHECK([on|off])	Other Commands	set_umsgs_decay_check_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+SET_UNIMPORTANT_MESSAGES	SET_UNIMPORTANT_MESSAGES([on|off])	Other Commands	set_unimportant_messages_command	Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 SET_VISION_MODEL	SET_VISION_MODEL([value])	Other Commands	set_vision_model_command	Set model.vision, or omit value to read it. Model selected for vision-oriented Aurora turns.
 SHOW_AGENTS	SHOW_AGENTS()	Other Commands	show_agents_command	Display metadata-only Agent Registry / History ACL state.
 SHOW_AGENT_HELPER_CLOSURE	SHOW_AGENT_HELPER_CLOSURE()	Other Commands	show_agent_helper_closure_command	Display Window 20 helper closure readiness, Pending cleanup status, manual-approval boundary, and guardrails.
@@ -321,7 +336,7 @@ STAGE_AGENT_SUGGESTION	STAGE_AGENT_SUGGESTION(suggestion_id|latest|agent_id, not
 STATUS	STATUS()	Other Commands	show_runtime_status_command	Display the current runtime mode and key toggles.
 SUGGEST_AGENT_COMMAND	SUGGEST_AGENT_COMMAND(agent_id, command=..., reason=..., risk=low|medium|high, target=pending_commands)	Other Commands	suggest_agent_command_command	Record a policy-tagged suggestion audit row without Pending Command insertion or execution.
 SUMMON_AGENT	SUMMON_AGENT(agent_id, role=..., rank=..., urgency=..., allow=..., deny=..., history=private|parent_visible)	Other Commands	summon_agent_command	Add or reactivate a sub-agent registry row without spawning a worker.
-TASKS	TASKS(...)	Runtime commands	tasks_command	Inspect the handler; detailed usage has not been reviewed.
+TASKS	TASKS()	Other Commands	tasks_command	Unimplemented legacy placeholder: reports failure and stops the batch tail; does not start inference.
 TOGGLE_ADD_IMSGS_TO_HISTORY	TOGGLE_ADD_IMSGS_TO_HISTORY(...)	Runtime commands	toggle_add_imsgs_to_history_command	Inspect the handler; detailed usage has not been reviewed.
 TOGGLE_ADD_UMSGS_TO_HISTORY	TOGGLE_ADD_UMSGS_TO_HISTORY(...)	Runtime commands	toggle_add_umsgs_to_history_command	Inspect the handler; detailed usage has not been reviewed.
 TOGGLE_ALWAYS	TOGGLE_ALWAYS(...)	Runtime commands	toggle_always_command	Inspect the handler; detailed usage has not been reviewed.
@@ -345,12 +360,13 @@ UPDATE_INVENTORY	UPDATE_INVENTORY(inventory_items)	Goal Management Commands	upda
 UPDATE_KNOWN_FAILURES	UPDATE_KNOWN_FAILURES(items)	Goal Management Commands	update_known_failures_command	Set actions or plans that are currently known to be failing or blocked.
 UPDATE_LAST_LANDMARK	UPDATE_LAST_LANDMARK(landmark)	Goal Management Commands	update_last_landmark_command	Record the most recent stable landmark.
 UPDATE_LOCAL_PATH_PLAN	UPDATE_LOCAL_PATH_PLAN(steps)	Goal Management Commands	update_local_path_plan_command	Set the short-horizon path steps; separate with semicolons.
-UPDATE_LONG_TERM_CONTEXT	UPDATE_LONG_TERM_CONTEXT(items)	Goal Management Commands	update_long_term_context_command	Set long-horizon strategic context; separate with semicolons.
-UPDATE_MID_TERM_CONTEXT	UPDATE_MID_TERM_CONTEXT(items)	Goal Management Commands	update_mid_term_context_command	Set the medium-horizon context or plan; separate with semicolons.
-UPDATE_NOTES	UPDATE_NOTES(items)	Goal Management Commands	update_notes_command	Set stable notes/reminders; separate with semicolons.
+UPDATE_LONG_TERM_CONTEXT	UPDATE_LONG_TERM_CONTEXT(text...)	Goal Management Commands	update_long_term_context_command	Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it.
+UPDATE_MESSAGE	UPDATE_MESSAGE(message_id, revision, text_json_base64url, on|off|keep)	Runtime commands	update_message_command	Use the current conversation ID/revision and base64url-encoded JSON text. Stale/missing/ambiguous IDs fail without mutation. Managed protection cannot be changed. Existing timestamp EDIT_MSGS and PIN(text) remain available.
+UPDATE_MID_TERM_CONTEXT	UPDATE_MID_TERM_CONTEXT(text...)	Goal Management Commands	update_mid_term_context_command	Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it.
+UPDATE_NOTES	UPDATE_NOTES(text)	Goal Management Commands	update_notes_command	Replace the semicolon-delimited notes list; explicit empty text clears it.
 UPDATE_PARTY	UPDATE_PARTY(party_status)	Goal Management Commands	update_party_command	Update your current party status; provide details for each Pokémon, separated by semicolons.
-UPDATE_PINNED_IMMEDIATE	UPDATE_PINNED_IMMEDIATE(actions)	Goal Management Commands	update_pinned_immediate_command	Set the immediate next actions; separate with semicolons.
-UPDATE_PINNED_SHORT_TERM	UPDATE_PINNED_SHORT_TERM(actions)	Goal Management Commands	update_pinned_short_term_command	Set the soon-ish action list; separate with semicolons.
+UPDATE_PINNED_IMMEDIATE	UPDATE_PINNED_IMMEDIATE(text...)	Goal Management Commands	update_pinned_immediate_command	Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it.
+UPDATE_PINNED_SHORT_TERM	UPDATE_PINNED_SHORT_TERM(text...)	Goal Management Commands	update_pinned_short_term_command	Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it.
 UPDATE_RECENT_MOVEMENT_RESULTS	UPDATE_RECENT_MOVEMENT_RESULTS(items)	Goal Management Commands	update_recent_movement_results_command	Set recent movement outcomes; separate with semicolons.
 UPDATE_ROUTE_BLOCKERS	UPDATE_ROUTE_BLOCKERS(items)	Goal Management Commands	update_route_blockers_command	Set route blockers or navigation constraints; separate with semicolons.
 UPDATE_ROUTE_INTENT	UPDATE_ROUTE_INTENT(intents)	Goal Management Commands	update_route_intent_command	Set the current high-level route or destination intent; separate with semicolons.

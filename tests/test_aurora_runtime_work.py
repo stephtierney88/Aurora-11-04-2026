@@ -1,5 +1,6 @@
 """Cancellation races, real dispatcher receipts, and immutable capture identity."""
 import ast
+from aurora_capture_provenance import CaptureService
 import datetime
 import hashlib
 import math
@@ -97,7 +98,7 @@ class RuntimeCancellationTests(unittest.TestCase):
         self.addCleanup(self.harness.doCleanups)
         self.scope = self.harness.scope
         self.scope.update({"queue": queue, "threading": threading, "traceback": traceback,
-                           "math": math, "is_agent_running": lambda: True})
+                           "math": math, "cancel_capture_requests": lambda reason: None, "is_agent_running": lambda: True, "TASK_CONTINUATION_MODE": "legacy"})
         names = ["wait_command", "cancel_active_work_command", "command_handler",
                  "pyautogui_hold", "pyautogui_hold_click", "handle_pyautogui_command",
                  "persist_runtime_capture", "perform_model_http_request", "set_live_mode",
@@ -309,11 +310,12 @@ class CaptureTests(unittest.TestCase):
     def test_real_persistence_function_shares_identity_with_sidecar_and_scheduler(self):
         with tempfile.TemporaryDirectory() as folder:
             state, sidecars, scheduler = {}, [], []
-            scope = {"datetime": datetime, "save_capture": save_capture, "logging_folder": folder,
+            scope = {"datetime": datetime, "time": time, "runtime_state": state, "CAPTURE_SERVICE": CaptureService(),
+                "mirror_capture_service_state": lambda: None, "save_capture": save_capture, "logging_folder": folder,
                 "set_image_timestamp_value": lambda value: value, "set_runtime_value": state.__setitem__,
                 "remember_screenshot_persist_result": lambda *args: None,
                 "compute_image_fingerprint": lambda path, **kwargs: hashlib.sha256(Path(path).read_bytes()).hexdigest(),
-                "write_image_context_sidecar": lambda path, **kwargs: sidecars.append((path, kwargs)),
+                "write_image_context_sidecar": lambda path, **kwargs: sidecars.append((path, kwargs)) or "fixture.sidecar",
                 "build_image_context_capture_reason": lambda reason: reason,
                 "register_turn_scheduler_capture": lambda path, **kwargs: scheduler.append((path, kwargs))}
             exec(compile(ast.Module(body=[ingress.FUNCTIONS["persist_runtime_capture"]], type_ignores=[]),

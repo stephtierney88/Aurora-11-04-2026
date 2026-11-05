@@ -1,4 +1,4 @@
-# Minimal Windows runtime + Control Panel dependencies; Python 3.11 recommended.
+# Windows runtime + Control Panel dependencies; Python 3.11 or 3.12.
 # The historical requirements.txt remains available for the original environment.
 numpy>=1.24,<3
 scipy>=1.11,<2
@@ -7,6 +7,7 @@ Pillow>=9.4,<13
 PyAutoGUI==0.9.54
 keyboard==0.13.5
 requests>=2.31,<3
+PyJWT[crypto]>=2.10,<3
 schedule>=1.2,<2
 sounddevice>=0.4,<1
 tiktoken>=0.7,<1
@@ -14,3 +15,7 @@ pygame>=2.5,<3
 colorama>=0.4,<1
 pydub==0.25.1
 ffmpeg-python==0.2.0
+# Windows does not normally provide an IANA timezone database for zoneinfo.
+tzdata>=2024.1
+# Included optional OBS read-only adapter and its offline protocol tests.
+websockets>=15,<16

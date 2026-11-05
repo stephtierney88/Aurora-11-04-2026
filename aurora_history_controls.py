@@ -22,6 +22,27 @@ from contextvars import ContextVar
 _HISTORY_ACTOR = ContextVar("aurora_history_actor", default="unknown")
 
 
+def history_entry_age_seconds(entry, now=None):
+    """Use timezone-bearing timestamps when available; unknown is not expired."""
+    def parse(value):
+        if isinstance(value, datetime.datetime):
+            return value
+        try:
+            return datetime.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        except (ValueError, TypeError):
+            return None
+    timestamp = parse(entry.get("timestamp_iso")) or parse(entry.get("timestamp"))
+    current = parse(now) if now is not None else datetime.datetime.now().astimezone()
+    if timestamp is None or current is None:
+        return None
+    # Legacy naive timestamps used the machine's local clock. Normalize both
+    # sides so an ISO offset cannot silently disable retention checks.
+    try:
+        return max(0.0, (current.astimezone(datetime.timezone.utc) - timestamp.astimezone(datetime.timezone.utc)).total_seconds())
+    except (ValueError, OSError, OverflowError):
+        return None
+
+
 def current_history_actor():
     return _HISTORY_ACTOR.get()
 
@@ -41,7 +62,7 @@ HISTORY_COMMANDS = {
     "CLEAR_NOPIN%": "clear_unprotected_percentage", "CLEAR": "clear_unprotected",
     "CLEAR_NONPIN": "clear_unprotected", "CLEAR_INIT": "clear_init", "CLEAR_PIN": "clear_pin",
     "CLEAR_HANDOFF": "clear_handoff", "EDIT_MSGS": "edit", "DELETE_MSG": "delete",
-    "SAVECH": "save", "DHISTORY": "show",
+    "SAVECH": "save", "DHISTORY": "show", "UPDATE_MESSAGE": "update_message",
 }
 PROTECTED_EXEMPTIONS = {"Pinned", "Init", "Handoff"}
 _LEGACY_PREFIXES = (("Pinned Init summary", "Init"), ("Pinned Handoff context", "Handoff"), ("Exemption", "Pinned"))
@@ -54,6 +75,8 @@ def history_text(entry):
 
 def history_exemption(entry):
     explicit = entry.get("Exemption", "None")
+    if entry.get("pin_state_explicit"):
+        return explicit or "None"
     if explicit not in {None, "", "None"}:
         return explicit
     text = re.sub(r"^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]\s*", "", history_text(entry))
@@ -89,6 +112,17 @@ def parse_history_arguments(name, args):
         if not args or len(args) % 2 or any(not value.strip() for value in args[::2]):
             raise ValueError("EDIT_MSGS requires complete timestamp, text pairs; text may be empty.")
         return {"operation": operation, "edits": list(zip(args[::2], args[1::2]))}
+    if operation == "update_message":
+        if len(args) != 4 or not args[0].strip() or not re.fullmatch(r"[0-9a-f]{64}", args[1]) or args[3].lower() not in {"on", "off", "keep"}:
+            raise ValueError("UPDATE_MESSAGE requires message_id, revision, JSON-encoded text as base64url, on|off|keep. Read the ID/revision from the current conversation snapshot.")
+        import base64
+        try:
+            text = json.loads(base64.b64decode(args[2].encode("ascii"), altchars=b"-_", validate=True).decode("utf-8"))
+        except (ValueError, UnicodeError):
+            raise ValueError("UPDATE_MESSAGE text must be a base64url-encoded JSON string.") from None
+        if not isinstance(text, str) or len(text) > 100_000:
+            raise ValueError("UPDATE_MESSAGE text must be a string of at most 100,000 characters.")
+        return {"operation": operation, "message_id": args[0], "revision": args[1], "text": text, "pin": args[3].lower()}
     if operation == "delete":
         if len(args) != 1 or not args[0].strip():
             raise ValueError("DELETE_MSG requires exactly one timestamp.")
@@ -105,6 +139,23 @@ def parse_history_arguments(name, args):
 def history_version(entries):
     return hashlib.sha256(json.dumps(entries, sort_keys=True, ensure_ascii=False,
                                      separators=(",", ":"), default=str).encode("utf-8")).hexdigest()
+
+
+def message_revision(entry):
+    """Content/identity revision; unrelated appends do not invalidate an open editor."""
+    return history_version([{key: entry.get(key) for key in
+        ("message_id", "content", "Exemption", "pin_state_explicit", "edited_by", "edited_at")}])
+
+
+def build_update_message_command(row, text, pin="keep"):
+    import base64
+    payload = base64.urlsafe_b64encode(json.dumps(text, ensure_ascii=False).encode("utf-8")).decode("ascii")
+    identifier, revision = row.get("message_id", ""), row.get("revision", "")
+    if not re.fullmatch(r"[0-9a-f]{32}", identifier):
+        raise ValueError("Only live messages with runtime IDs can be edited.")
+    args = [identifier, revision, payload, pin]
+    parse_history_arguments("UPDATE_MESSAGE", args)
+    return "UPDATE_MESSAGE(" + ",".join(args) + ")"
 
 
 def history_summary(entries):
@@ -143,6 +194,27 @@ def plan_history_change(entries, options, *, new_entry=None, sample=random.sampl
         remove = {index for index, row in enumerate(entries) if row.get("timestamp") == options["timestamp"]}
         if not remove:
             raise ValueError("No history message has the requested timestamp.")
+    elif operation == "update_message":
+        matches = [i for i, row in enumerate(result) if row.get("message_id") == options["message_id"]]
+        if len(matches) != 1:
+            raise ValueError("Message is missing or its ID is ambiguous; refresh the conversation.")
+        index = matches[0]
+        entry = result[index]
+        if history_exemption(entry) == "PinnedInfo":
+            raise ValueError("Runtime-maintained summaries are read-only here; select the original message.")
+        if message_revision(entry) != options["revision"]:
+            raise ValueError("Message changed since the editor opened; refresh before applying.")
+        if not isinstance(entry.get("content"), dict) or entry["content"].get("type", "text") != "text":
+            raise ValueError("Only text messages can be edited here.")
+        if options["pin"] != "keep" and history_exemption(entry) not in {"None", "Pinned"}:
+            raise ValueError("Managed Init/Handoff/Special entries keep their existing protection.")
+        if entry["content"].get("text", "") != options["text"]:
+            entry["content"] = {"type": "text", "text": options["text"]}
+            entry.update(edited_by=str(editor or "unknown"), edited_at=str(edited_at or "unknown"))
+        if options["pin"] != "keep":
+            entry.update(Exemption="Pinned" if options["pin"] == "on" else "None", pin_state_explicit=True)
+        if entry != entries[index]:
+            edited.append(index)
     elif operation == "edit":
         for timestamp, text in options["edits"]:
             index = next((i for i, row in enumerate(result) if row.get("timestamp") == timestamp), None)
@@ -213,6 +285,15 @@ def save_history_export(entries, prefix, *, now=None):
 
 def describe_history_contract(name):
     operation = HISTORY_COMMANDS[name.upper()]
+    if operation == "update_message":
+        return {"parameter_validation": "pre_dispatch", "parameters": [
+            {"name": "message_id", "type": "string", "required": True},
+            {"name": "revision", "type": "string", "required": True},
+            {"name": "text_json_base64url", "type": "string", "required": True},
+            {"name": "pin", "type": "string", "enum": ["on", "off", "keep"], "required": True}],
+            "effects": "Atomically edit/pin one retained text message through the shared history authority.",
+            "semantics": "Use the current conversation ID/revision and base64url-encoded JSON text. Stale/missing/ambiguous IDs fail without mutation. Managed protection cannot be changed. Existing timestamp EDIT_MSGS and PIN(text) remain available.",
+            "result": {"protocol": HISTORY_RESULT_SCHEMA, "receipt_field": "history_command_results", "failure_policy": "Validate before effects; stale edits stop the raw batch; cancel stale model work on change.", "verification": "Before/after history versions and message readback."}}
     parameters = ([{"name": "text", "type": "string", "variadic": True, "required": True}] if operation in {"pin", "replace_init"}
                   else [{"name": "percentage", "type": "number", "minimum": 0, "maximum": 100, "required": True}]
                   + ([{"name": "selection", "type": "string", "enum": ["random", "oldest", "newest"], "default": "random", "required": False}] if operation == "clear_unprotected_percentage" else []) if "percentage" in operation

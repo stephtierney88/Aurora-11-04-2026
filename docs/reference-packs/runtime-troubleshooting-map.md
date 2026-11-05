@@ -1,5 +1,17 @@
 # Runtime Troubleshooting Map
 
+## Capture request failed or worker remains blocked (Implementation 43)
+
+Inspect `capture_service.current_failure` (deadline_exceeded/attempts_exhausted), the failed generation/reason/latched limits, `acquisitions_inflight` and `worker_shutdown_survivors`. A terminal request is no longer pending; it is not a successful screenshot or native cancellation. Automatic inference cannot cross its failed observation boundary. Operator text remains usable without the stale image. Request a fresh capture explicitly, or Cancel work to acknowledge the wait; historical last_failure remains inspectable. A native call that never returns may need runtime restart; do not accumulate replacement workers.
+
+`SET_CAPTURE_REQUEST_TIMEOUT(0)` and `SET_CAPTURE_REQUEST_ATTEMPTS(0)` preserve unlimited legacy behavior for future requests. Positive limits are optional and latch; changing them does not extend an existing request. Max-attempt exhaustion also observes the one-second final publication lease, so slow drawing/storage can exhaust it. Active cursor GDI resources now release on all tested success/error paths; this repair alone does not establish the cause of earlier host lag.
+
+## Capture coordinates or foreground image disagree (Implementation 42)
+
+Inspect the exact selected request's `last_prompt_diagnostics.capture_frame.geometry`, not current setting values or the newest background frame. Its `acquired_size`, `image_size`, `crop_bounds`, `image_to_desktop`, `dpi_context` and target HWND/PID/DPI describe that acquisition. `bracketed` means matching pre/post geometry, not atomic capture or proof against occlusion. Unknown geometry is not usable as calibration.
+
+`SET_CAPTURE_GEOMETRY_POLICY(legacy)` restores prior capture/scaling; `SET_CAPTURE_TARGET(foreground)` requires verified geometry and selects the visible window rectangle, clipped to the virtual desktop (including window borders). Target movement/minimization, changed DPI/desktop bounds or mismatched pixel size rejects acquisition. Retry remains pending only within the selected limits; inspect CaptureService.last_error/current_failure and use explicit retry or cancellation. Cursor/overlays are later, game tile overlays are presets, and existing input commands do not automatically apply the transform. Native backend calibration is still an acceptance gate.
+
 ## Purpose
 - Map common Aurora runtime symptoms to likely causes and the safest next checks.
 

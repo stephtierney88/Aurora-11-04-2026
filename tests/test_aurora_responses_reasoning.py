@@ -199,7 +199,7 @@ resolve_next_inference_plan_for_turn set_next_reasoning_effort_command infer_tur
 get_next_inference_plan_snapshot execute_inference_plan_command""".split()
     scope = {"ASTRA_MODEL": ASTRA_MODEL, "ASTRA_EFFORTS": ASTRA_EFFORTS,
              "ResponsesReasoningError": ResponsesReasoningError, "RESPONSES_REASONING": ResponsesReasoningSession(),
-             "MODEL_TRANSPORT": "responses", "AUTH_MODE": "api_key", "DEFAULT_REASONING_EFFORT": "low",
+             "MODEL_TRANSPORT": "responses", "AUTH_MODE": "api_key", "DEFAULT_SERVICE_TIER": "regular", "DEFAULT_REASONING_EFFORT": "low",
              "MODEL_WORK": CancellationDomain(), "MODEL_IO": SimpleNamespace(busy=False), "re": re, "uuid": uuid,
              "SETTINGS_TRANSACTION_LOCK": threading.RLock(), "INFERENCE_PLAN_RESULT_SCHEMA": INFERENCE_PLAN_RESULT_SCHEMA,
              "parse_inference_plan_arguments": parse_inference_plan_arguments,
@@ -215,6 +215,7 @@ get_next_inference_plan_snapshot execute_inference_plan_command""".split()
              "build_queue_next_action_runtime_cue": lambda: "fixture", "normalize_model_name": lambda value: value,
              "infer_operating_context": lambda: {"signal_parts": []}, "refresh_gameplay_scene": lambda *args: {"scene": "overworld"},
              "BATTLE_REASONING_KEYWORDS": [], "signal_mentions_keyword": lambda *args: False,
+             "GAMEPLAY_SCENE_POLICY": "evidence",
              "detect_blocked_progress_signal": lambda: False, "has_recent_known_failures": lambda **kwargs: False,
              "AUTO_DYNAMIC_INFERENCE_ENABLED": False, "DEFAULT_MODEL_VERBOSITY": "low", "DEFAULT_REASONING_SUMMARY_MODE": "auto",
              "normalize_model_verbosity": lambda value, fallback="medium": value or fallback,
@@ -229,6 +230,15 @@ get_next_inference_plan_snapshot execute_inference_plan_command""".split()
 
 
 class RuntimeResponsesTests(unittest.TestCase):
+    def test_one_turn_service_priority_restores_session_default(self):
+        scope = runtime_scope()
+        scope["set_next_inference_plan_from_pairs"]({"service_tier": "priority"})
+        first = scope["infer_turn_model_controls"]("one", ASTRA_MODEL, 1)
+        second = scope["infer_turn_model_controls"]("two", ASTRA_MODEL, 2)
+        self.assertEqual(first["service_tier"], "priority")
+        self.assertEqual(second["service_tier"], "regular")
+        self.assertEqual(scope["DEFAULT_SERVICE_TIER"], "regular")
+
     def setUp(self):
         self.scope = runtime_scope()
         self.calls = []
@@ -360,12 +370,12 @@ class AssistantReasoningPolicyTests(unittest.TestCase):
         # Install the real controller functions in the same globals as admission.
         names = ["set_next_reasoning_effort_command", "reset_responses_session_command",
                  "set_next_inference_plan_from_pairs", "create_empty_next_inference_plan",
-                 "normalize_reasoning_effort", "evaluate_assistant_command_policy", "get_command_name",
+                 "normalize_reasoning_effort", "evaluate_assistant_command_policy", "evaluate_task_flow_permission", "get_command_name",
                  "get_next_inference_plan_snapshot", "execute_inference_plan_command"]
         scope.update({key: value for key, value in controller.items() if key not in scope})
         exec(compile(ast.Module(body=[ingress.FUNCTIONS[name] for name in names], type_ignores=[]),
                      str(ingress.ROOT/'aurora2.py'), "exec"), scope)
-        scope.update({"infer_operating_context": lambda: {}, "build_semantic_command_identity": lambda *a, **k: {},
+        scope.update({"ASSISTANT_POLICY": "legacy", "infer_operating_context": lambda: {}, "build_semantic_command_identity": lambda *a, **k: {},
                       "assess_command_risk": lambda *a: ("runtime", "review", "runtime setting"),
                       "infer_expected_outcome": lambda *a, **k: "runtime setting", "get_pyag_action_name": lambda *a: ""})
         scope["command_dispatch"].update({name: scope[handler] for name, handler in {

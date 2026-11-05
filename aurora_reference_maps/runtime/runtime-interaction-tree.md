@@ -1,5 +1,9 @@
 # Aurora 2 Runtime Interaction Tree
 
+## Acquisition/publication — Implementation 40
+
+`REQUEST_SCREENSHOT_CAPTURE` / command-result drain → atomic observation boundary + `CaptureService.request(generation)` → acquisition stamp → `CapturedFrame` queue → drawing (recapture gets a linked new stamp) → immutable artifact and sidecar → matching-generation publication → verified post-action scheduler → selected-frame diagnostics. Cancel/shutdown advances the lifecycle; late pixels cannot publish. Demand-disable preserves periodic observation. Failed/dropped frames leave requests eligible for retry; a one-second lease and 0.5s backoff do not mean a total timeout. `SET_CAPTURE_PROVENANCE_POLICY(legacy)` selects previous counter/wall freshness; it does not remove identity/cancellation protection. Next: CF1b transforms/target/lifecycle, then CF2c broader correlation/outcomes.
+
 ## Episodic retrieval — Implementation 15
 
 RETRIEVAL_PULL / RECALL / MEM -> _build_retrieval_request -> run_episodic_retrieval -> sanitized JSONL records -> required tag/source filters -> build_embedding_context (cache, bounded transport, coverage, atomic merge) -> _compute_retrieval_candidate (optional relevance gate and age decay) -> existing distribution selection -> preview/state/log. Planning assist uses the same runtime path with unchanged defaults. Explicit promotion remains separate. Cancellation tokens are checked before/after transport and before result publication.

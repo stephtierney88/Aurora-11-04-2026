@@ -12,10 +12,12 @@ from test_aurora_settings_registry import sample_state
 from aurora_command_catalog import parse_dispatch
 from aurora_command_contracts import (
     REGISTERED_SETTING_COMMANDS, parse_setting_command_arguments, setting_command_result, setting_shortcut_definition,
+    parse_boolean_command_arguments,
 )
 from aurora_runtime_work import WorkCancelled
 from aurora_responses_reasoning import ResponsesReasoningSession
-from aurora_settings_registry import SETTING_DEFINITIONS, build_setting_readback, build_settings_version
+from aurora_settings_registry import SETTING_DEFINITIONS, build_setting_readback, build_settings_version, resolve_setting_definition
+from aurora_task_continuation import TaskContinuation
 from aurora_settings_transactions import build_setting_command_invocation, setting_values_equal
 from offline_runtime_smoke import CONTRACT_FIXTURE, MODEL_FIXTURE
 
@@ -24,10 +26,15 @@ SETTERS = """set_auth_mode set_live_mode set_execution_mode set_action_mode set_
 set_text_model set_vision_model set_reasoning_model set_model_transport set_default_reasoning_effort set_model_verbosity
 set_model_temperature apply_turn_scheduler_profile set_turn_scheduler_mode set_turn_heartbeat_seconds
 set_turn_min_gap_seconds set_turn_capture_wake_enabled set_turn_capture_wake_debounce_seconds
-set_turn_post_action_settle_seconds set_screenshot_interval set_capture_mode set_demand_capture_enabled set_image_detail
-set_live_init_mode""".split()
+set_turn_post_action_settle_seconds set_screenshot_interval set_capture_mode set_capture_provenance_policy set_capture_geometry_policy set_capture_target set_capture_request_timeout set_capture_request_attempts set_demand_capture_enabled set_image_detail
+set_live_init_mode set_gameplay_scene_policy set_goal_save_format set_assistant_policy""".split()
 
 VALUES = {
+    "context.init_delivery": "system_once", "task.continuation_mode": "bounded",
+    "task.max_model_turns": 4, "task.max_seconds": 60, "scheduler.readback_wake_enabled": True, "scheduler.readback_scope": "reviewed",
+    "runtime.assistant_policy": "task_flow",
+    "inference.service_tier": "priority",
+    "game.scene_policy": "legacy", "goals.save_format": "legacy",
     "auth.mode": "auto", "runtime.live": True, "runtime.execution": "safe", "runtime.action": "pyag",
     "game.profile": "blue", "model.text": "future text model", "model.vision": "future vision model",
     "model.reasoning": "future reasoning model", "model.transport": "responses", "inference.reasoning_effort": "xhigh",
@@ -36,7 +43,7 @@ VALUES = {
     "scheduler.capture_wake_enabled": False, "scheduler.capture_wake_debounce_seconds": 0.4,
     "scheduler.post_action_settle_seconds": 0.3, "capture.screenshot_interval": 0.15,
     "capture.demand_enabled": False, "vision.image_detail": "original", "runtime.live_init": True,
-    "capture.mode": "request_only",
+    "capture.mode": "request_only", "capture.provenance_policy": "legacy", "capture.geometry_policy": "legacy", "capture.target": "foreground", "capture.request_timeout_seconds": 15.0, "capture.request_max_attempts": 3,
 }
 
 
@@ -58,24 +65,32 @@ class SettingCommandTests(unittest.TestCase):
             "normalize_model_verbosity", "_parse_boolean_command_arg", "infer_turn_scheduler_profile_name",
             "refresh_turn_scheduler_profile_state", "initialize_turn_scheduler_runtime_state",
             "execute_settings_transaction_request", "_invoke_registered_setting_change",
+            "build_task_continuation_snapshot", "invalidate_responses_history",
         }
         exec(compile(ast.Module(body=[ingress.FUNCTIONS[name] for name in sorted(names)], type_ignores=[]),
                      str(ingress.ROOT / "aurora2.py"), "exec"), scope)
         profiles = next(ast.literal_eval(n.value) for n in ingress.TREE.body if isinstance(n, ast.Assign)
                         and any(isinstance(t, ast.Name) and t.id == "TURN_SCHEDULER_PROFILES" for t in n.targets))
         scope.update({
+            "parse_boolean_command_arguments": parse_boolean_command_arguments,
             "parse_setting_command_arguments": parse_setting_command_arguments,
+            "resolve_setting_definition": resolve_setting_definition,
+            "INIT_DELIVERY_MODE": "legacy", "TASK_CONTINUATION_MODE": "legacy", "TASK_MAX_MODEL_TURNS": 8,
+            "TASK_MAX_SECONDS": 120.0, "READBACK_WAKE_ENABLED": False, "READBACK_SCOPE": "discovery", "COMMAND_DISCOVERY_CONTEXT": True,
+            "TASK_CONTINUATION": TaskContinuation(),
             "setting_shortcut_definition": setting_shortcut_definition,
             "setting_command_result": setting_command_result, "build_setting_readback": build_setting_readback,
             "build_settings_version": build_settings_version, "build_setting_command_invocation": build_setting_command_invocation,
             "setting_values_equal": setting_values_equal, "SETTINGS_TRANSACTION_LOCK": threading.RLock(),
             "AUTH_MODE": "api_key", "EXECUTION_MODE": "assist", "ACTIVE_ACTION_MODE": "none",
+            "GAMEPLAY_SCENE_POLICY": "evidence", "GOAL_SAVE_FORMAT": "versioned", "ASSISTANT_POLICY": "legacy",
             "SEND_TO_MODEL": False, "ENABLE_MODEL_RESPONSES": False, "LOAD_LIVE_INIT_PROMPT": False,
-            "ACTIVE_GAME_PROFILE": "firered", "GAME_PROFILE_SOURCE": "env", "time_interval": 0.12, "CAPTURE_MODE": "heartbeat",
+            "ACTIVE_GAME_PROFILE": "firered", "GAME_PROFILE_SOURCE": "env", "time_interval": 0.12, "CAPTURE_MODE": "heartbeat", "CAPTURE_PROVENANCE_POLICY": "verified", "CAPTURE_GEOMETRY_POLICY": "verified", "CAPTURE_TARGET": "legacy_options", "CAPTURE_REQUEST_TIMEOUT_SECONDS": 0.0, "CAPTURE_REQUEST_MAX_ATTEMPTS": 0,
+            "cancel_capture_requests": lambda reason, **kwargs: None,
             "ACTIVE_TEXT_MODEL": "fixture", "ACTIVE_VISION_MODEL": "fixture", "ACTIVE_REASONING_MODEL": "fixture",
             "MODEL_TRANSPORT": "chat_completions", "MODEL_IO": SimpleNamespace(busy=False),
             "RESPONSES_REASONING": ResponsesReasoningSession(),
-            "DEFAULT_REASONING_EFFORT": "none", "DEFAULT_MODEL_VERBOSITY": "medium", "DEFAULT_MODEL_TEMPERATURE": 0.0,
+            "DEFAULT_SERVICE_TIER": "regular", "DEFAULT_REASONING_EFFORT": "none", "DEFAULT_MODEL_VERBOSITY": "medium", "DEFAULT_MODEL_TEMPERATURE": 0.0,
             "ALLOWED_MODEL_VERBOSITY": {"low", "medium", "high"}, "image_detail": "low",
             "TURN_SCHEDULER_PROFILES": profiles, "TURN_SCHEDULER_PROFILE_NAME": "balanced",
             "TURN_SCHEDULER_MODE": "hybrid", "TURN_SCHEDULER_HEARTBEAT_SECONDS": 2.25,
@@ -109,7 +124,7 @@ class SettingCommandTests(unittest.TestCase):
         return build_settings_version(self.scope["build_registered_settings_runtime_state"]())
 
     def test_all_registered_commands_observe_the_requested_value(self):
-        self.assertEqual(len(REGISTERED_SETTING_COMMANDS), 25)
+        self.assertEqual(len(REGISTERED_SETTING_COMMANDS), 40)
         for name, definition in REGISTERED_SETTING_COMMANDS.items():
             with self.subTest(name=name):
                 value = VALUES[definition.key]

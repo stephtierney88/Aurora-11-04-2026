@@ -1,5 +1,13 @@
 # UI Troubleshooting Map
 
+## Viewer scaling and history labels — Implementation 28
+
+Conversation/minimap, preferences and chat strip/history now scale their design dimensions against Tk's display DPI. `AURORA_PANEL_SCALE=1` restores raw-pixel sizing; restart the panel after changing it. Main saved geometry remains physical pixels, subject to a readable minimum and monitor bounds. This is startup-display handling, not complete per-monitor DPI migration.
+
+The mini gear resets view defaults and inspects model text budgets. Reset also clears open budget fields. Unknown model capacity stays unknown. Red means outside effective current selection, not necessarily deleted or beyond a proven provider limit. A removed predecessor no longer marks every following message as moved. Legacy Popout chat remains a separate recent-history strip, not the minimap or exact provider context.
+
+User-authorized native synthetic viewer walkthrough is recorded in Implementation 28; older blanket GUI-testing-pause statements below are historical. General gameplay/capture qualification remains deferred.
+
 ## Pending selection correctness — Implementation 13
 
 Pending selected-item Approve/Clear now sends stable item IDs plus the version of the displayed queue. A changed queue is rejected with a receipt instead of targeting a different index. Selection survives refresh when the same ID remains visible. Existing index/risk/category/family/raw selectors and normal/insert/replace modes remain available; old snapshots retain index fallback. Reserved/uncertain state appears beside the mode, and full entries/routes/recovery evidence are available in pending_queue and SHOW_PENDING(). Model/parent authority and sub-agent manual gates remain unchanged. AST/guarded-state verification passes; visible GUI/scaling acceptance is still open under the native-testing pause. See docs/reviews/2026-09-07/implementation-13.md.

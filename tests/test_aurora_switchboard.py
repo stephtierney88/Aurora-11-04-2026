@@ -17,7 +17,9 @@ class SwitchboardTests(unittest.TestCase):
         self.assertEqual(next_inference_label({"planning": {"next_inference": {"temperature": 0}}}), "queued")
     def test_preview_reset_is_paused_bounded_and_preserves_auth(self):
         baseline = {row["key"]: row["value"] for row in preview_default_changes()}
-        self.assertEqual(len(baseline), 22)
+        self.assertEqual(len(baseline), 35)
+        self.assertEqual(baseline["task.continuation_mode"], "legacy")
+        self.assertFalse(baseline["scheduler.readback_wake_enabled"])
         self.assertFalse(baseline["runtime.live"])
         self.assertEqual(baseline["runtime.execution"], "safe")
         self.assertEqual(baseline["runtime.action"], "none")

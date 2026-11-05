@@ -13,10 +13,11 @@ import aurora_history_controls as history
 import test_aurora_command_ingress as ingress
 from aurora_command_contracts import describe_command_contract
 from aurora_runtime_work import WorkCancelled
+from aurora_conversation import ConversationArchive, ensure_message_ids
 
 
 def row(text, exemption="None", timestamp="2026-10-01 01:00:00"):
-    return {"timestamp": timestamp, "role": "user", "Exemption": exemption,
+    return {"timestamp": timestamp, "role": "user", "Exemption": exemption, "message_id": "fixture:" + timestamp + ":" + text,
             "content": {"type": "text", "text": text}}
 
 
@@ -94,10 +95,50 @@ class HistoryPlanTests(unittest.TestCase):
         self.assertEqual(history.history_exemption(row("Exemption: x", "Special")), "Special")
         self.assertEqual(history.history_exemption(row("unrelated", "Image")), "Image")
 
-    def test_all_thirteen_bindings_have_reviewed_contracts(self):
-        self.assertEqual(len(history.HISTORY_COMMANDS), 13)
+    def test_all_history_bindings_have_reviewed_contracts(self):
+        self.assertEqual(len(history.HISTORY_COMMANDS), 14)
         for name in history.HISTORY_COMMANDS:
             self.assertEqual(describe_command_contract(name)["result"]["receipt_field"], "history_command_results")
+
+    def test_identity_revision_edit_pin_and_literal_command_text(self):
+        import base64
+        import json
+        rows = [row('original'), row('same second')]
+        original_author = rows[1]['role']
+        text = 'literal: CLEAR(); "quoted", newline\nUnicode ☃'
+        encoded = base64.urlsafe_b64encode(json.dumps(text).encode()).decode()
+        args = [rows[1]['message_id'], history.message_revision(rows[1]), encoded, 'on']
+        changed, _ = history.plan_history_change(rows, history.parse_history_arguments('UPDATE_MESSAGE', args), editor='operator', edited_at='now')
+        self.assertEqual(changed[0], rows[0])
+        self.assertEqual(history.history_text(changed[1]), text)
+        self.assertEqual(changed[1]['role'], original_author)
+        self.assertEqual(changed[1]['edited_by'], 'operator')
+        self.assertEqual(history.history_exemption(changed[1]), 'Pinned')
+        with self.assertRaisesRegex(ValueError, 'changed since'):
+            self.plan(changed, 'UPDATE_MESSAGE', args)
+        args[1], args[3] = history.message_revision(changed[1]), 'off'
+        unpinned, _ = self.plan(changed, 'UPDATE_MESSAGE', args)
+        self.assertEqual(history.history_exemption(unpinned[1]), 'None')
+        self.assertEqual(rows[1]['content']['text'], 'same second')
+
+    def test_pin_only_preserves_edit_attribution_and_managed_protection(self):
+        import base64
+        import json
+        rows = [row('Exemption: legacy', 'Pinned')]
+        encoded = base64.urlsafe_b64encode(json.dumps(history.history_text(rows[0])).encode()).decode()
+        args = [rows[0]['message_id'], history.message_revision(rows[0]), encoded, 'off']
+        changed, _ = self.plan(rows, 'UPDATE_MESSAGE', args)
+        self.assertNotIn('edited_by', changed[0])
+        self.assertEqual(history.history_exemption(changed[0]), 'None')
+        self.assertEqual(self.plan(changed, 'CLEAR_NONPIN', [])[0], [])
+        rows[0]['Exemption'] = 'Init'
+        args[1] = history.message_revision(rows[0])
+        with self.assertRaisesRegex(ValueError, 'Managed'):
+            self.plan(rows, 'UPDATE_MESSAGE', args)
+        rows[0]['Exemption'] = 'PinnedInfo'
+        args[1], args[3] = history.message_revision(rows[0]), 'keep'
+        with self.assertRaisesRegex(ValueError, 'Runtime-maintained'):
+            self.plan(rows, 'UPDATE_MESSAGE', args)
 
 
 class HistoryExportTests(unittest.TestCase):
@@ -149,6 +190,7 @@ class HistoryRuntimeTests(unittest.TestCase):
         s.update({name: getattr(history, name) for name in ["HISTORY_RESULT_SCHEMA", "parse_history_arguments", "history_exemption",
                                                          "history_text", "history_summary", "plan_history_change", "save_history_export"]})
         s.update(copy=copy, HISTORY_LOCK=threading.RLock(), enable_important_messages=True, ADD_IMSGS_TO_HISTORY=True,
+                 ensure_message_ids=ensure_message_ids, CONVERSATION_ARCHIVE=ConversationArchive(),
                  enable_unimportant_messages=True, ADD_UMSGS_TO_HISTORY=True,
                  CHECK_UMSGS_DECAY=True, CHECK_IMSGS_DECAY=True, UMSGS_DECAY=100000, IMGS_DECAY=100000,
                  RESPONSES_REASONING=SimpleNamespace(snapshot=lambda: dict(self.provider_state), invalidate=self.invalidations.append),
@@ -165,14 +207,14 @@ class HistoryRuntimeTests(unittest.TestCase):
         names = """get_chat_history_store history_entry_age_minutes make_history_control_entry execute_history_command
             invalidate_responses_history update_chat_history init_command pin_command clear_nopin_percentage_command
             clear_percentage_command clear_all_command clear_nonpin_command clear_init_command clear_pin_command
-            clear_handoff_command edit_msgs_command delete_msg_command save_chat_history_command display_history_command
+            clear_handoff_command edit_msgs_command update_message_command delete_msg_command save_chat_history_command display_history_command
             clear_chat_history clear_chat_history_except_pinned clear_history_entries_by_exemption clear_non_pinned_entries
         """.split()
         exec(compile(ast.Module(body=[ingress.FUNCTIONS[name] for name in names], type_ignores=[]), "runtime-history", "exec"), s)
         names = {"INIT": "init_command", "PIN": "pin_command", "CLEAR_NOPIN%": "clear_nopin_percentage_command",
                  "CLEAR%": "clear_percentage_command", "CLEAR": "clear_all_command", "CLEAR_NONPIN": "clear_nonpin_command",
                  "CLEAR_INIT": "clear_init_command", "CLEAR_PIN": "clear_pin_command", "CLEAR_HANDOFF": "clear_handoff_command",
-                 "EDIT_MSGS": "edit_msgs_command", "DELETE_MSG": "delete_msg_command", "SAVECH": "save_chat_history_command",
+                 "EDIT_MSGS": "edit_msgs_command", "UPDATE_MESSAGE": "update_message_command", "DELETE_MSG": "delete_msg_command", "SAVECH": "save_chat_history_command",
                  "DHISTORY": "display_history_command"}
         s["command_dispatch"].update({name: s[handler] for name, handler in names.items()})
 
@@ -312,7 +354,41 @@ class HistoryRuntimeTests(unittest.TestCase):
         self.store.append({"content": "legacy"})
         self.scope["update_chat_history"]("user", "new")
         self.assertEqual(len(self.store), 2)
-        self.assertEqual(self.store[0], {"content": "legacy"})
+        self.assertEqual(self.store[0]["content"], "legacy")
+        self.assertTrue(self.store[0]["message_id"])
+
+    def test_decay_boundary_important_images_and_disabled_paths(self):
+        class Clock(datetime.datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return cls(2026, 11, 4, 12, 0, 0)
+        self.scope.update(datetime=SimpleNamespace(datetime=Clock), UMSGS_DECAY=10, IMGS_DECAY=20)
+        rows = [row("at boundary", timestamp="2026-11-04 11:50:00"),
+                row("expired", timestamp="2026-11-04 11:49:59"),
+                row("pin survives", "Pinned", "2026-11-04 11:45:00"),
+                row("expired init", "Init", "2026-11-04 11:39:59"),
+                row("image", "Image", "2026-10-01 01:00:00")]
+        rows[-1]["content"]["type"] = "image"
+        self.store.extend(rows)
+        self.scope["update_chat_history"]("user", "triggers expiry")
+        texts = [history.history_text(entry) for entry in self.store]
+        self.assertIn("at boundary", texts)
+        self.assertNotIn("expired", texts)
+        self.assertIn("pin survives", texts)
+        self.assertNotIn("expired init", texts)
+        self.assertIn("image", texts)
+        self.scope.update(CHECK_UMSGS_DECAY=False, CHECK_IMSGS_DECAY=False)
+        self.store.extend([rows[1], rows[3]])
+        self.scope["update_chat_history"]("user", "disabled checks")
+        self.assertIn(rows[1], self.store)
+        self.assertIn(rows[3], self.store)
+
+    def test_iso_age_offsets_invalid_future_and_legacy(self):
+        now = datetime.datetime.fromisoformat("2026-11-04T12:00:00-08:00")
+        self.assertEqual(history.history_entry_age_seconds({"timestamp_iso": "2026-11-04T19:49:59Z"}, now), 601)
+        self.assertEqual(self.scope["history_entry_age_minutes"]({"timestamp_iso": "2026-11-04T19:50:00Z"}, now), 10)
+        self.assertIsNone(history.history_entry_age_seconds({"timestamp": "31"}, now))
+        self.assertEqual(history.history_entry_age_seconds({"timestamp_iso": "2026-11-05T19:50:00Z"}, now), 0)
 
     def test_read_snapshot_preserves_selected_identity_and_detaches_contents(self):
         self.store.extend([row("selected", "Pinned"), row("other", "Init")])

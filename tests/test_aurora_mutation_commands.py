@@ -57,6 +57,24 @@ class MutationCommandTests(unittest.TestCase):
     def transaction(self, request, tail=""):
         return self.run_batch(build_settings_transaction_command(request) + tail)
 
+    def test_model_cannot_expand_task_limits_by_transaction_or_rollback(self):
+        before = self.fixture.version()
+        request = self.request(changes={"task.max_model_turns": 100, "inference.temperature": .5})
+        success, receipt = self.scope["execute_settings_transaction_request"](request, is_user=False)
+        self.assertFalse(success)
+        self.assertEqual(receipt["status"], "rejected")
+        self.assertEqual(self.fixture.version(), before)
+        success, applied = self.scope["execute_settings_transaction_request"](request, is_user=True)
+        self.assertTrue(success, applied)
+        rollback = self.request(operation="rollback", rollback_handle=applied["rollback_handle"]["handle_id"])
+        after = self.fixture.version()
+        success, rejected = self.scope["execute_settings_transaction_request"](rollback, is_user=False)
+        self.assertFalse(success)
+        self.assertEqual(self.fixture.version(), after)
+        success, restored = self.scope["execute_settings_transaction_request"](rollback, is_user=True)
+        self.assertTrue(success, restored)
+        self.assertEqual(self.fixture.version(), before)
+
     def test_invalid_transaction_tails_reject_before_an_earlier_mutation(self):
         good = self.request()
         variants = [{**good, field: value} for field, value in (

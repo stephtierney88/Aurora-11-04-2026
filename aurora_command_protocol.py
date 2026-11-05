@@ -61,7 +61,8 @@ def split_command_batch(text: str) -> tuple[str, ...]:
             continue
         if closed_call and not char.isspace():
             raise CommandSyntaxError(f"Unexpected text after command arguments at character {position + 1}.")
-        if char in "\"'":
+        word_apostrophe = char == "'" and position > 0 and position + 1 < len(text) and text[position-1].isalnum() and text[position+1].isalnum()
+        if char in "\"'" and not word_apostrophe:
             if not stack:
                 raise CommandSyntaxError("Quotes must appear inside command arguments.")
             quote = char

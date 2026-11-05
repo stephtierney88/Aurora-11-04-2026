@@ -5,6 +5,9 @@ argument behavior; discovery must not present heuristic signatures as schemas.
 """
 from __future__ import annotations
 
+from aurora_goal_store import (GOAL_FILE_COMMANDS, parse_task_file_arguments, describe_goal_file_contract,
+                               MEMORY_COMMANDS, HORIZON_COMMANDS, parse_memory_command_arguments, describe_memory_command_contract)
+
 import copy
 import hashlib
 import json
@@ -41,6 +44,38 @@ def _registered_setting_commands():
 
 
 REGISTERED_SETTING_COMMANDS = _registered_setting_commands()
+SIMPLE_BOOLEAN_COMMANDS = frozenset({
+    "SET_AUTO_DYNAMIC_INFERENCE", "SET_AUTO_PROMPT", "SET_SHOW_USER_TEXT", "SET_SHOW_AI_TEXT",
+    "SET_SHOW_AI_COMMANDS", "SET_SHOW_USER_COMMANDS", "SET_UNIMPORTANT_MESSAGES", "SET_IMPORTANT_MESSAGES",
+    "SET_ADD_UMSGS_TO_HISTORY", "SET_ADD_IMSGS_TO_HISTORY", "SET_UMSGS_DECAY_CHECK", "SET_IMSGS_DECAY_CHECK",
+    "SET_COMMAND_DRIP_SHOW_VARIANTS", "SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED", "SET_CHAT_HEAD_TOPMOST",
+    "SET_EPISODIC_MEMORY", "SET_EPISODIC_MEMORY_PERIODIC", "SET_EPISODIC_MEMORY_SCENE_TRIGGER",
+})
+
+
+def parse_boolean_command_arguments(name, args):
+    """Existing boolean aliases; omitted value is a query, not false."""
+    if not args:
+        return None
+    if len(args) != 1 or not isinstance(args[0], str):
+        raise ValueError(f"{name} accepts one on/off value, or no arguments to inspect it.")
+    value = args[0].strip().lower()
+    if value in {'on', 'true', '1', 'yes'}:
+        return True
+    if value in {'off', 'false', '0', 'no'}:
+        return False
+    raise ValueError(f"{name} requires on/off (also true/false, 1/0, yes/no).")
+
+
+def describe_boolean_command_contract(name):
+    return {"parameter_validation": "pre_dispatch", "min_arguments": 0, "max_arguments": 1,
+            "parameters": [{"name": "enabled", "type": "boolean", "required": False,
+                            "omitted": "read_current_value", "accepted_text": ["on", "off", "true", "false", "1", "0", "yes", "no"]}],
+            "effects": "Existing runtime toggle only; preserves current query and setting behavior. Not a registered settings transaction.",
+            "result": {"protocol": "boolean_handler_result", "failure_policy": "Validate the whole batch before effects; a handler failure stops its remaining commands.",
+                       "verification": "Query or inspect runtime state; no versioned setting receipt is implied."}}
+
+
 SETTING_SHORTCUT_COMMANDS = {
     "TOGGLE_LIVE_MODE": {"setting_command": "SET_LIVE_MODE", "operation": "toggle"},
     "TOGGLE_IMAGE_DETAIL": {"setting_command": "SET_IMAGE_DETAIL", "operation": "toggle"},
@@ -72,6 +107,7 @@ NEXT_INFERENCE_ALIASES = {
     "detail": "image_detail", "latest_detail": "latest_image_detail",
 }
 NEXT_INFERENCE_SETTING_KEYS = {
+    "service_tier": "inference.service_tier",
     "reasoning_effort": "inference.reasoning_effort", "verbosity": "inference.verbosity",
     "image_detail": "vision.image_detail", "latest_image_detail": "vision.image_detail",
     "temperature": "inference.temperature", "model": "model.text", "text_model": "model.text",
@@ -326,7 +362,9 @@ def parse_lock_command_arguments(name, args):
 
 
 def command_failure_stops_batch(name):
-    return bool(setting_command_definition(name) or name.upper() in LOCK_COMMANDS or name.upper() in TRANSACTION_COMMANDS or name.upper() in INPUT_CONTROL_COMMANDS or name.upper() in INFERENCE_PLAN_COMMANDS or name.upper() in DEFAULT_PROFILE_COMMANDS or name.upper() in PENDING_COMMANDS or name.upper() in HISTORY_COMMANDS or name.upper() in RETRIEVAL_RESULT_COMMANDS or name.upper() in EPISODIC_COMMANDS or name.upper() == "RESET_RESPONSES_SESSION")
+    if name.upper() in MEMORY_COMMANDS or name.upper() in SIMPLE_BOOLEAN_COMMANDS:
+        return True
+    return bool(name.upper() in GOAL_FILE_COMMANDS or setting_command_definition(name) or name.upper() in LOCK_COMMANDS or name.upper() in TRANSACTION_COMMANDS or name.upper() in INPUT_CONTROL_COMMANDS or name.upper() in INFERENCE_PLAN_COMMANDS or name.upper() in DEFAULT_PROFILE_COMMANDS or name.upper() in PENDING_COMMANDS or name.upper() in HISTORY_COMMANDS or name.upper() in RETRIEVAL_RESULT_COMMANDS or name.upper() in EPISODIC_COMMANDS or name.upper() == "RESET_RESPONSES_SESSION")
 
 
 def describe_setting_command_contract(name):
@@ -570,7 +608,13 @@ def validate_desktop_keys(name, values, *, keyboard_keys, game_key_validator):
 
 def validate_command_arguments(name: str, args) -> None:
     """Validate reviewed parameters before any member of a batch dispatches."""
-    if name.upper() in EPISODIC_COMMANDS:
+    if name.upper() in MEMORY_COMMANDS:
+        parse_memory_command_arguments(name, args)
+    elif name.upper() in SIMPLE_BOOLEAN_COMMANDS:
+        parse_boolean_command_arguments(name, args)
+    elif name.upper() in GOAL_FILE_COMMANDS:
+        parse_task_file_arguments(name, args)
+    elif name.upper() in EPISODIC_COMMANDS:
         parse_episodic_command(name, args)
     elif name.upper() in RETRIEVAL_RESULT_COMMANDS:
         parse_retrieval_result_arguments(name, args)
@@ -607,6 +651,15 @@ def desktop_result(name, *, success=True, effect_status="submitted", reason=""):
 
 
 def reviewed_command_description(name):
+    if name.upper() in SIMPLE_BOOLEAN_COMMANDS:
+        return {"signature": f"{name.upper()}([on|off])", "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."}
+    if name.upper() in MEMORY_COMMANDS:
+        signature = ("goal_text[, priority, significance]" if name.upper() == "ADD_GOAL" else
+                     "goal_id" if name.upper() == "COMPLETE_GOAL" else "" if name.upper() == "TASKS" else
+                     "text..." if name.upper() in HORIZON_COMMANDS else "text")
+        return {"signature": f"{name.upper()}({signature})", "summary": describe_memory_command_contract(name)["semantics"]}
+    if name.upper() in GOAL_FILE_COMMANDS:
+        return {"signature": f"{name.upper()}([path])", "summary": describe_goal_file_contract(name)["effects"]}
     if name.upper() in EPISODIC_COMMANDS:
         signature = ("query, [k,] options..." if name.upper() in {"RECALL", "MEM"} else
                      "query_or_filters, options..." if name.upper() == "RETRIEVAL_PULL" else
@@ -618,7 +671,8 @@ def reviewed_command_description(name):
         return {"signature": f"{name.upper()}({signature})", "summary": describe_retrieval_result_contract(name)["semantics"]}
     if name.upper() in HISTORY_COMMANDS:
         operation = HISTORY_COMMANDS[name.upper()]
-        signature = ("text..." if operation in {"pin", "replace_init"} else
+        signature = ("message_id, revision, text_json_base64url, on|off|keep" if operation == "update_message" else
+                     "text..." if operation in {"pin", "replace_init"} else
                      "percentage[, random|oldest|newest]" if operation == "clear_unprotected_percentage" else
                      "percentage" if operation == "clear_percentage" else
                      "timestamp, text[, timestamp, text...]" if operation == "edit" else
@@ -675,6 +729,12 @@ def command_result_failed(result: Any) -> bool:
 
 
 def describe_command_contract(name: str) -> dict[str, Any]:
+    if name.upper() in SIMPLE_BOOLEAN_COMMANDS:
+        return describe_boolean_command_contract(name)
+    if name.upper() in MEMORY_COMMANDS:
+        return describe_memory_command_contract(name)
+    if name.upper() in GOAL_FILE_COMMANDS:
+        return describe_goal_file_contract(name)
     """Expose exact coverage instead of inferring contracts from command names."""
     if name.upper() in EPISODIC_COMMANDS:
         return describe_episodic_contract(name)

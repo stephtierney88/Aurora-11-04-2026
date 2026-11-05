@@ -28,15 +28,18 @@ def sample_state():
         "modes": {
             "auth": "api_key",
             "live": False,
-            "execution": "assist",
+            "execution": "assist", "assistant_policy": "legacy",
             "action": "gb",
             "game_profile": "firered",
             "game_profile_source": "env",
             "screenshot_interval": 0.12,
-            "capture_mode": "heartbeat",
+            "capture_mode": "heartbeat", "capture_provenance_policy": "verified",
+            "capture_geometry_policy": "verified", "capture_target": "legacy_options",
+            "capture_request_timeout_seconds": 0.0, "capture_request_max_attempts": 0,
             "load_live_init_prompt": False,
         },
         "models": {
+            "service_tier": "regular",
             "text": "gpt-5.4",
             "vision": "gpt-5.4",
             "reasoning": "gpt-5.4",
@@ -44,7 +47,7 @@ def sample_state():
             "verbosity": "medium",
             "temperature": 0.0,
         },
-        "scheduler": {
+        "scheduler": {"readback_scope": "discovery",
             "profile": "balanced",
             "mode": "hybrid",
             "heartbeat_seconds": 2.25,
@@ -69,7 +72,7 @@ def sample_state():
         "defaults": {
             "system_profile": {
                 "auth_mode": "api_key",
-                "execution_mode": "assist",
+                "execution_mode": "assist", "assistant_policy": "legacy",
                 "action_mode": "gb",
                 "game_profile": "firered",
                 "text_model": "gpt-5.4",
@@ -86,7 +89,9 @@ def sample_state():
                 "turn_capture_wake_debounce_seconds": 0.9,
                 "turn_post_action_settle_seconds": 0.55,
                 "screenshot_interval": 0.12,
-            "capture_mode": "heartbeat",
+            "capture_mode": "heartbeat", "capture_provenance_policy": "verified",
+            "capture_geometry_policy": "verified", "capture_target": "legacy_options",
+            "capture_request_timeout_seconds": 0.0, "capture_request_max_attempts": 0,
                 "demand_capture_enabled": True,
                 "load_live_init_prompt": False,
                 "advanced": {"image_detail": "low"},
@@ -101,11 +106,11 @@ class AuroraSettingsRegistryTests(unittest.TestCase):
         definitions = list_setting_definitions()
 
         self.assertEqual(summary["schema_version"], "aurora_settings_registry_v1")
-        self.assertEqual(summary["setting_count"], 24)
-        self.assertEqual(len(definitions), 24)
+        self.assertEqual(summary["setting_count"], 39)
+        self.assertEqual(len(definitions), 39)
         self.assertTrue(summary["write_enabled"])
         self.assertEqual(summary["mutation_status"], "atomic_runtime_transactions")
-        self.assertEqual(len({definition.key for definition in definitions}), 24)
+        self.assertEqual(len({definition.key for definition in definitions}), 39)
 
     def test_alias_resolution_and_strict_key_errors(self):
         self.assertEqual(resolve_setting_definition("live").key, "runtime.live")
@@ -199,10 +204,10 @@ class AuroraSettingsRegistryTests(unittest.TestCase):
             state_age_seconds=0.1,
             category="capture",
         )
-        self.assertEqual(snapshot["count"], 3)
+        self.assertEqual(snapshot["count"], 8)
         self.assertEqual(
             {row["key"] for row in snapshot["settings"]},
-            {"capture.screenshot_interval", "capture.demand_enabled", "capture.mode"},
+            {"capture.screenshot_interval", "capture.demand_enabled", "capture.mode", "capture.provenance_policy", "capture.geometry_policy", "capture.target", "capture.request_timeout_seconds", "capture.request_max_attempts"},
         )
         self.assertTrue(snapshot["version"].startswith("sv1:"))
 

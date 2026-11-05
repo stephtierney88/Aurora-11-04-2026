@@ -26,6 +26,7 @@ def sample_state():
             "load_live_init_prompt": False,
         },
         "models": {
+            "service_tier": "regular",
             "text": "gpt-5.4",
             "vision": "gpt-5.4",
             "reasoning": "gpt-5.4",

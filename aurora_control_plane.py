@@ -452,7 +452,7 @@ def build_mutation_decision_receipt(
             "inference_plan_results",
             "default_profile_results",
             "pending_command_results",
-            "history_command_results", "retrieval_results",
+            "history_command_results", "retrieval_results", "goal_file_results", "memory_command_results",
             "pending_id",
             "pending_attempt_id",
             "desktop_results",

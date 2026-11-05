@@ -2,12 +2,24 @@
 from __future__ import annotations
 
 import ctypes
+import hashlib
 import json
+import math
 import os
 import tempfile
 import tkinter as tk
 from pathlib import Path
 from tkinter import ttk
+
+
+def ui_scale(widget):
+    """Convert 96-DPI design pixels to this Tk display's pixel scale."""
+    try:
+        override = os.getenv("AURORA_PANEL_SCALE", "").strip()
+        value = float(override) if override else float(widget.winfo_fpixels("1i")) / 96.0
+        return max(1.0, min(4.0, value)) if math.isfinite(value) else 1.0
+    except (ValueError, TypeError, AttributeError, tk.TclError):
+        return 1.0
 
 
 def load_layout_preferences(path):
@@ -31,6 +43,61 @@ def save_layout_preferences(path, preferences):
     finally:
         if temporary is not None:
             temporary.unlink(missing_ok=True)
+
+
+def receipt_tree_items(rows):
+    """Stable presentation identities, including repeated and unidentified receipts."""
+    counts = {}
+    items, by_id = [], {}
+    for row in rows:
+        identity = tuple(row.get(key) for key in ("kind", "request_id", "client_id", "timestamp", "command_name"))
+        digest = hashlib.sha256(json.dumps(identity, ensure_ascii=False).encode("utf-8")).hexdigest()
+        occurrence = counts.get(digest, 0)
+        counts[digest] = occurrence + 1
+        iid = f"receipt:{digest}:{occurrence}"
+        values = tuple(str(row.get(key) or fallback) for key, fallback in (
+            ("timestamp", "-"), ("command_name", "UNKNOWN"), ("status", "unknown"),
+            ("delivery_status", "unknown"), ("request_id", "-")))
+        items.append((iid, values))
+        by_id[iid] = row
+    return items, by_id
+
+
+def reconcile_tree_rows(tree, items):
+    """Update changed cells in place; retain focus, selection and the reading row."""
+    old = list(tree.get_children())
+    selected, focused = tree.selection(), tree.focus()
+    xview, yview = tree.xview(), tree.yview()
+    top = old[min(len(old) - 1, round(yview[0] * len(old)))] if old else None
+    wanted = [iid for iid, _values in items]
+    wanted_set = set(wanted)
+    stale = [iid for iid in old if iid not in wanted_set]
+    if stale:
+        tree.delete(*stale)
+    current = [iid for iid in old if iid in wanted_set]
+    for index, (iid, values) in enumerate(items):
+        if iid not in current:
+            tree.insert("", index, iid=iid, values=values)
+            current.insert(index, iid)
+        else:
+            if tuple(str(value) for value in tree.item(iid, "values")) != values:
+                tree.item(iid, values=values)
+            if current[index] != iid:
+                tree.move(iid, "", index)
+                current.remove(iid)
+                current.insert(index, iid)
+    retained = tuple(iid for iid in selected if iid in wanted_set)
+    if tree.selection() != retained:
+        tree.selection_set(retained)
+    if focused in wanted_set and tree.focus() != focused:
+        tree.focus(focused)
+    if xview and tree.xview()[0] != xview[0]:
+        tree.xview_moveto(xview[0])
+    # Stay at the latest row if already at the top; otherwise keep the same
+    # receipt at the top when new rows arrive ahead of it.
+    target = wanted.index(top) / len(wanted) if top in wanted_set and yview[0] > 0 else yview[0]
+    if tree.yview()[0] != target:
+        tree.yview_moveto(target)
 
 
 def monitor_work_areas(fallback=(0, 0, 1280, 720)):
@@ -61,7 +128,7 @@ def monitor_work_areas(fallback=(0, 0, 1280, 720)):
     return [fallback]
 
 
-def clamp_window_geometry(saved, work_areas):
+def clamp_window_geometry(saved, work_areas, minimum=(320, 240)):
     """Keep restored windows reachable after monitor removal or resolution changes."""
     areas = work_areas or [(0, 0, 1280, 720)]
     geometry = saved if isinstance(saved, dict) else {}
@@ -70,26 +137,29 @@ def clamp_window_geometry(saved, work_areas):
         return value if type(value) is int and abs(value) < 100000 else fallback
     x, y = number("x", areas[0][0] + 40), number("y", areas[0][1] + 40)
     width, height = number("width", 1600), number("height", 980)
-    width, height = max(320, width), max(240, height)
+    min_width, min_height = minimum
+    width, height = max(min_width, width), max(min_height, height)
     def overlap(area):
         left, top, right, bottom = area
         return max(0, min(x + width, right) - max(x, left)) * max(0, min(y + height, bottom) - max(y, top))
     area = max(areas, key=overlap)
     left, top, right, bottom = area
-    width = min(width, max(320, right - left - 32))
-    height = min(height, max(240, bottom - top - 64))
+    width = min(width, max(1, right - left - 32))
+    height = min(height, max(1, bottom - top - 64))
     return {"width": width, "height": height,
             "x": max(left + 8, min(x, right - width - 16)),
             "y": max(top + 8, min(y, bottom - height - 48))}
 
 
-def fit_popout_window(window, width, height, parent=None):
+def fit_popout_window(window, width, height, parent=None, *, position=None, minimum=(320, 240)):
     """Size to today's monitor work area and place using absolute coordinates."""
     areas = monitor_work_areas((0, 0, window.winfo_screenwidth(), window.winfo_screenheight()))
     saved = {"width": width, "height": height}
     if parent is not None:
         saved.update(x=parent.winfo_x() + 24, y=parent.winfo_y() + 24)
-    geometry = clamp_window_geometry(saved, areas)
+    if position is not None:
+        saved.update(x=position[0], y=position[1])
+    geometry = clamp_window_geometry(saved, areas, minimum)
     window.geometry(f"{geometry['width']}x{geometry['height']}")
 
     def place():
@@ -108,10 +178,84 @@ def fit_popout_window(window, width, height, parent=None):
         except (AttributeError, OSError):
             # Tk negative offsets mean distance from the right/bottom, not an
             # absolute virtual-desktop origin. Fall back to a reachable monitor.
-            fallback = clamp_window_geometry(saved, [a for a in areas if a[0] >= 0 and a[1] >= 0] or [(0, 0, 1280, 720)])
+            fallback = clamp_window_geometry(saved, [a for a in areas if a[0] >= 0 and a[1] >= 0] or [(0, 0, 1280, 720)], minimum)
             window.geometry(f"{fallback['width']}x{fallback['height']}+{max(0, fallback['x'])}+{max(0, fallback['y'])}")
     window.after_idle(place)
     return geometry
+
+
+def bind_label_wrap(label, *, source=None, inset=4):
+    """Wrap to allocated space without repeatedly invalidating unchanged geometry."""
+    source = source or label
+    def resize(event):
+        width = max(24, event.width - inset)
+        if int(float(label.cget("wraplength") or 0)) != width:
+            label.configure(wraplength=width)
+    source.bind("<Configure>", resize, add="+")
+    label._aurora_auto_wrap = True
+    return label
+
+
+def wrap_packed_labels(parent):
+    """Make fill-width explanatory labels follow their actual pane width."""
+    for child in parent.winfo_children():
+        if isinstance(child, (ttk.Label, tk.Label)) and not getattr(child, "_aurora_auto_wrap", False):
+            try:
+                if float(child.cget("wraplength") or 0) and child.winfo_manager() == "pack" and child.pack_info().get("fill") in {"x", "both"}:
+                    bind_label_wrap(child)
+                    child._aurora_auto_wrap = True
+            except (tk.TclError, ValueError):
+                pass
+        wrap_packed_labels(child)
+
+
+def bind_settled_repaint(widget):
+    """Repair stale Windows child pixels after a resize/dock operation settles.
+
+    Does not change text, selection, focus or scroll position. Set
+    AURORA_PANEL_SETTLED_REPAINT=0 to leave native painting untouched.
+    """
+    if os.getenv("AURORA_PANEL_SETTLED_REPAINT", "1") == "0":
+        return
+    pending = None
+    previous_size = None
+    def repaint():
+        nonlocal pending
+        pending = None
+        if not widget.winfo_exists() or not widget.winfo_viewable():
+            return
+        try:
+            from ctypes import wintypes
+            redraw = ctypes.windll.user32.RedrawWindow
+            redraw.argtypes = [wintypes.HWND, ctypes.c_void_p, wintypes.HRGN, wintypes.UINT]
+            redraw.restype = wintypes.BOOL
+            handle = int(widget.winfo_id())
+            # INVALIDATE | ERASE | ALLCHILDREN | UPDATENOW. Scoped to this
+            # widget's client area; never the desktop or another process.
+            if not handle or not redraw(handle, None, None, 0x0001 | 0x0004 | 0x0080 | 0x0100):
+                raise OSError("Widget repaint unavailable")
+        except (AttributeError, OSError):
+            widget.event_generate("<Expose>", x=0, y=0, width=widget.winfo_width(), height=widget.winfo_height())
+        widget._aurora_repaint_count = getattr(widget, "_aurora_repaint_count", 0) + 1
+    def resized(event):
+        nonlocal pending, previous_size
+        if event.widget is not widget:
+            return
+        size = widget.winfo_width(), widget.winfo_height()
+        if size == previous_size and event.type != tk.EventType.Map:
+            return
+        previous_size = size
+        if pending is not None:
+            widget.after_cancel(pending)
+        pending = widget.after(80, repaint)
+    def destroyed(event):
+        nonlocal pending
+        if event.widget is widget and pending is not None:
+            widget.after_cancel(pending)
+            pending = None
+    widget.bind("<Configure>", resized, add="+")
+    widget.bind("<Map>", resized, add="+")
+    widget.bind("<Destroy>", destroyed, add="+")
 
 
 class ScrollablePane(ttk.Frame):
@@ -131,11 +275,13 @@ class ScrollablePane(ttk.Frame):
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
         self.inner = ttk.Frame(self.canvas, padding=padding)
+        bind_settled_repaint(self.inner)
         self.inner._aurora_scroll_owner = self
         self.canvas._aurora_scroll_owner = self
         self.window = self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
         self._layout_after = None
-        self.inner.bind("<Configure>", self._schedule_layout)
+        self._layout_size = None
+        self.inner.bind("<Configure>", self._schedule_layout, add="+")
         self.canvas.bind("<Configure>", self._schedule_layout)
         self.bind("<Destroy>", self._on_destroy, add="+")
 
@@ -149,8 +295,10 @@ class ScrollablePane(ttk.Frame):
             return
         width = self.canvas.winfo_width() if self.fit_width else max(self.canvas.winfo_width(), self.inner.winfo_reqwidth())
         height = self.canvas.winfo_height() if self.fit_height else max(self.canvas.winfo_height(), self.inner.winfo_reqheight())
-        self.canvas.itemconfigure(self.window, width=width, height=height)
-        self.canvas.configure(scrollregion=(0, 0, width, height))
+        if self._layout_size != (width, height):
+            self._layout_size = (width, height)
+            self.canvas.itemconfigure(self.window, width=width, height=height)
+            self.canvas.configure(scrollregion=(0, 0, width, height))
 
     def _on_destroy(self, event):
         if event.widget is self and self._layout_after is not None:
@@ -167,6 +315,7 @@ class FlowBar(ttk.Frame):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
         self.items = []
+        self.hidden_items = set()
         self._pending = None
         self.bind("<Configure>", self._schedule)
         self.bind("<Destroy>", self._destroy, add="+")
@@ -177,6 +326,14 @@ class FlowBar(ttk.Frame):
         self._schedule()
         return widget
 
+    def set_visible(self, widget, visible):
+        if visible:
+            self.hidden_items.discard(widget)
+        else:
+            self.hidden_items.add(widget)
+            widget.place_forget()
+        self._schedule()
+
     def _schedule(self, _event=None):
         if self._pending is None:
             self._pending = self.after_idle(self._layout)
@@ -186,14 +343,18 @@ class FlowBar(ttk.Frame):
         available = max(1, self.winfo_width())
         x, y, row_height = 0, 0, 0
         for widget in self.items:
+            if widget in self.hidden_items:
+                continue
             width = widget.winfo_reqwidth() + 6
             height = widget.winfo_reqheight() + 4
             if x and x + width > available:
                 x, y, row_height = 0, y + row_height, 0
-            widget.place_configure(x=x, y=y)
+            if not widget.winfo_manager() or widget.winfo_x() != x or widget.winfo_y() != y:
+                widget.place_configure(x=x, y=y)
             x += width
             row_height = max(row_height, height)
-        self.configure(height=y + row_height)
+        if self.winfo_reqheight() != y + row_height:
+            self.configure(height=y + row_height)
 
     def _destroy(self, event):
         if event.widget is self and self._pending is not None:

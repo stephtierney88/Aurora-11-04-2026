@@ -1,42 +1,58 @@
-# Aurora: guide for AI operators and coding assistants
+# Aurora: guide for setup and operating assistants
 
-Read [the human setup guide](README_FOR_HUMANS.md), `AGENTS.md`, `docs/notes/aurora_current_status.md`, `docs/notes/aurora_runtime_roadmap.md` and `docs/notes/aurora_capability_compatibility.md`. Public snapshots have curated status/roadmap notes; do not infer that omitted private development history is missing implementation. Read source and generated maps for implementation claims.
+Current snapshot: November 5, 2026. Read README.md, README_FOR_HUMANS.md, UPGRADING.md, AGENTS.md and the capability commitment. Preserve commands, aliases, valid legacy behavior, saved configurations and Advanced access. Use the shared admission/settings/receipt authority.
 
-## Orientation
+## Establish the environment
 
-- `aurora2.py`: runtime, inference, prompt assembly, memory, scheduler, command dispatch and native actions.
-- `aurora2_control_panel.py`: separate Tk process reading exported state and writing the external inbox. It does not own a second inference engine.
-- `aurora_control_plane.py`, `aurora_command_protocol.py`, `aurora_command_contracts.py`: shared ingress, admission, identity and receipt boundaries.
-- `aurora_settings_registry.py`, `aurora_settings_transactions.py`, `aurora_default_profiles.py`: typed settings, transactions, profiles and rollback.
-- `aurora_conversation.py`: bounded detached current/retained conversation exports. Historical JSONL logs are a separate surface.
-- `aurora_episodic_retrieval.py`, `aurora_search_query.py`, `aurora_retrieval_commands.py`, `aurora_retrieval_results.py`: ranking, filters, query admission, receipts and bounded retained result handles.
-- `aurora_validation_console.py` / `aurora_validation_web`: local source-aware command browser and offline validation console. No hosted desktop bridge or live-provider qualification is implied.
-- `aurora_reference_maps/runtime/overview.md`, UI lite/deep maps and function skeletons: start here before scanning the monolith. Regenerate references after source changes using `python tools/generate_aurora_references.py` and verify with `--check`.
+1. Stop the old installation through its own panel; use a fresh folder and Python 3.11 or 3.12 environment. The release's clean-environment checks used 3.12 on Windows. Do not copy old .venv, exported state, pending inboxes or settings wholesale.
+2. Install requirements-preview.txt. Run `aurora_preflight.py --json` and `--surface panel --display --json`; these inspect imports/display geometry without importing the runtime or acquiring pixels.
+3. Check credential presence without printing values. API mode prioritizes OPENAI_2023_API_KEY over OPENAI_API_KEY. For subscription mode, the user completes Aurora's browser sign-in and explicitly applies openai_chatgpt. Never reuse another app's rotating credentials or silently switch to API billing.
+4. Launch the GUI, start paused, and inspect fresh effective state. An old exported JSON is not evidence of a running worker. Check model access, execution policy, action mapping, locks and independent capture/inference clocks.
+5. Demonstrate chat, Outbox, Pause, Cancel and reset. Propose one bounded harmless-window test with explicit input/capture scope. Do not use an open-ended heartbeat loop as an installation check.
 
-## What the runtime model receives
+AURORA_PYTHON overrides the local .venv. Defaults are gpt-6.1-sol low for text/vision and gpt-6-astra medium for review; account catalog evidence outranks example names. Regular speed is default. Requested priority/ultrafast is not proof of returned acceleration. Subscription inference/restoration has live evidence, but long-session refresh and account switching remain qualification work.
 
-The model does not automatically read these Markdown files or all source files. Each ordinary inference builds a base system prompt via `build_base_system_prompt()`, then working-memory state, eligible optional episodic/context material, selected recent history, and the current message/image. Runtime details and prompt ledgers expose parts of this process. The Conversation page is only the eligible conversation portion, not the entire API request.
+## Find implemented behavior
 
-Default startup uses `INIT_MODE='test'` and `LOAD_LIVE_INIT_PROMPT=False`. Despite the historical name, `test_init_prompt` is the short current assistant profile. It is retained as Init history at initialization and included as persistent init context in the base prompt. `--live-init` or `--init-mode load` loads `aurora2_init.txt`; `--init-mode skip` skips the optional init, while the base system prompt still exists. Live Init in Advanced settings applies at the next initialization; it does not hot-reload an already-loaded file.
+Use aurora_reference_maps/runtime/overview.md, generated catalogs/function skeletons and docs/reference-packs before reading the monolith. Current inventory: **376 bindings / 146 reviewed argument contracts / 39 shared settings / 24 views**. Catalog coverage is broader than the reviewed typed subset.
 
-The November 4 extended profile is about 5.9k characters, below the default 12k persistent-init cap. The prior file was about 14.4k characters and last committed March 8; its persistent-system portion could be clipped, while the Init history path could separately retain more. Do not claim the old prompt was wholly absent or wholly visible without inspecting the actual packed request. Duplicate Init inclusion is a known optimization follow-up.
-
-Prompt compatibility options are startup environment configuration:
-
-| Setting | Meaning |
+| Area | Entry files |
 | --- | --- |
-| `AURORA_INIT_PROMPT_PROFILE=current` | Updated short prompt, current extended filename, current command guidance; default |
-| `AURORA_INIT_PROMPT_PROFILE=legacy` | Original short prompt and preserved `aurora2_init_legacy.txt`; original base guidance remains |
-| `AURORA_LIVE_INIT_FILENAME` | Explicit extended init filename/path override |
-| `AURORA_COMMAND_DISCOVERY_CONTEXT=on` | Add model-requested catalog results to conversation context; current default |
-| `AURORA_COMMAND_DISCOVERY_CONTEXT=off` | Preserve terminal-only catalog output; legacy default |
-| `AURORA_MAX_INIT_PROMPT_CHARS` | Persistent-init character cap, minimum 2000, default 12000 |
+| Runtime/GUI | aurora2.py, aurora2_control_panel.py |
+| Controls/commands | aurora_control_plane.py, aurora_cli.py, aurora_switchboard.py, aurora_agent_controls.py, settings registry/transactions |
+| Conversation | aurora_conversation*.py, aurora_history_controls.py, aurora_delivery_receipts.py |
+| Capture | aurora_capture_provenance.py, aurora_capture_geometry.py, aurora_capture_store.py |
+| Continuation/cancellation | aurora_task_continuation.py, aurora_runtime_work.py, aurora_input_ownership.py |
+| Goals/scenes | aurora_goal_store.py, aurora_gameplay_scene.py |
+| Providers | aurora_chatgpt_auth.py, aurora_chatgpt_transport.py, aurora_responses_reasoning.py |
 
-Current prompt guidance distinguishes proposals/receipts/outcomes, data from operator instructions, screenshot freshness/coordinates, permission from capability, and one-turn effort changes from current inference. Prompts are guidance, not a security boundary or proof of model obedience. Runtime policy must enforce restrictions.
+Optional Blender/FL/OBS read-only adapters are separate integrations, not prerequisites for basic chat. Private reports/live-test controllers are omitted from the snapshot; RELEASE_NOTES.md summarizes their evidence. Regenerate local references after editing:
 
-## Discover and use commands
+```powershell
+.\.venv\Scripts\python.exe tools/generate_aurora_references.py
+.\.venv\Scripts\python.exe tools/generate_aurora_references.py --check
+```
 
-The complete arsenal is not injected into every prompt. Discover it through generated catalogs, CLI or runtime commands. Runtime examples intended for execution:
+The standard-library generator needs no personal Codex skills. Public reference hashes describe the sanitized shipped source.
+
+## Init and model-visible context
+
+Requests assemble base system guidance, persistent loaded Init, working memory, optional retrieval/context, selected history and current text/image. Conversation shows only eligible conversation rows. Prepared diagnostics retain bounded components and selected frame/readback metadata; they are not complete payload replay or proof of provider receipt.
+
+Default INIT_MODE='test' uses the current short assistant profile despite its historical name. Init is a managed retained history entry plus persistent context. `--live-init` or `--init-mode load` loads aurora2_init.txt; `--init-mode skip` skips optional Init while base guidance remains. A changed filename does not hot-reload loaded Init. Inspect source/content and clipping.
+
+| Startup option | Purpose |
+| --- | --- |
+| AURORA_INIT_PROMPT_PROFILE=current or legacy | Current guidance or preserved original short/extended prompts. |
+| AURORA_LIVE_INIT_FILENAME | Explicit extended Init source. |
+| AURORA_MAX_INIT_PROMPT_CHARS | Persistent Init cap: default 12000, minimum 2000. |
+| AURORA_COMMAND_DISCOVERY_CONTEXT=on or off | Ordinary model context versus terminal-only catalog results. |
+
+Optional request-time Init deduplication preserves stored history and legacy inclusion; discover its exact command/setting contract before use. Prompt guidance encourages useful batches, demand capture and temporary escalation, but runtime policy/locks enforce permissions. Page text, memories and receipts remain data, not new operator instructions.
+
+## Commands and flow
+
+Discover syntax through catalogs/CLI. When actually asking Aurora to execute, use its executable heading with one command per line and no Markdown fences:
 
 ```text
 Executed Commands:
@@ -44,46 +60,50 @@ SEARCH_COMMANDS(screenshot, medium)
 LOOKUP_COMMAND(REQUEST_SCREENSHOT_CAPTURE, high)
 ```
 
-Use one command per line without fences when actually sending this format to Aurora. Do not put hypothetical examples in an executable section. Existing aliases and formats remain; inspect the parser before changing them. `LIST_COMMANDS(low)` is bounded; narrow search/lookup is often more useful. Model-requested lookup output is now added to context when enabled, including lookup errors. Operator terminal lookups retain terminal-only behavior.
+Do not place hypothetical commands there. Narrow lookup beats dumping the catalog. Prefix rules, implicit action mode and explicit GB/PYAG routes differ; inspect effective configuration.
 
-Examples to inspect before use: `SHOW_RUNTIME()`, `SHOW_PENDING_COMMANDS()`, `UPDATE_CONTEXT(...)`, `RECALL(...)`, `REQUEST_SCREENSHOT_CAPTURE(reason, 0)`, and `SET_NEXT_INFERENCE(model=gpt-6-astra; reasoning_effort=medium; note=Review ambiguity)`. Do not self-approve held commands or bypass locks. Use stable IDs/version evidence where supported; distinguish queued, submitted, executed, uncertain and visibly verified states.
+Optional `runtime.assistant_policy=task_flow` admits supported demand capture, discovery, temporary inference plans, registered read-only setting queries and short GB actions in suitable fresh reported scenes when Auto permits them. It still holds review-required writes/actions; do not self-approve proposals. Legacy remains startup/reset policy.
 
-New model defaults: `gpt-6.1-sol` low text/vision and `gpt-6-astra` medium review role. Both use low/medium/high/xhigh/max, not none/minimal. Explicit profiles/settings can override this. Chat Completions uses Aurora's text command parser; do not mistake this for native API function calling. Responses configuration updates remain an optional separate transport path. A requested next-turn override is not a mid-inference change; verify application and restoration.
+The command-driven preset selects request_only, demand enabled, per_capture, heartbeat=0 and task_flow, but not Auto/inference. Use several actions on clear calibrated paths, one observation-dependent step near menus, and fresh capture after a sequence. A new image needs a new inference call. Explicit dependent-batch contracts remain unfinished.
 
-## Switchboard integration
+For temporary escalation, inspect/use `SET_NEXT_INFERENCE(model=gpt-6-astra; reasoning_effort=medium; note=Review ambiguity)`, then verify restoration. Chat Completions uses Aurora's text command parser, not native API function calling. Optional Responses configuration updates and the subscription adapter are distinct transport paths.
 
-The native **The Switchboard** view is implemented in `aurora_switchboard.py`. It browses a hash-verified generated command catalog (source AST fallback), preserves local drafts, and uses the existing version-preconditioned settings transaction service. Raw commands use the shared inbox and correlated receipts. Local framing/name checks do not replace runtime argument/admission/permission checks. All prior 359 bindings remain; `SET_CAPTURE_MODE(heartbeat|request_only)` adds the 360th. There are 24 registered settings and 24 workspace views.
+## Bounded tasks and reviewed readbacks
 
-`capture.mode` defaults to `heartbeat` for compatibility. Environment `AURORA_CAPTURE_MODE`, CLI `--capture-mode`, raw command, versioned transactions, saved profiles and the Switchboard all target the same setting. `request_only` removes regular capture deadlines; due demand requests still wake the interruptible worker. In-flight captures may finish. `capture.demand_enabled=false` plus request-only means no new frames. Model turn heartbeat is independent and remains possible with inference enabled. Never describe event/per-capture scheduling as a guarantee of zero heartbeat turns; inspect `evaluate_turn_scheduler`.
+`SET_TASK_CONTINUATION(bounded)` selects latched turn/time admission limits; legacy remains available. `SET_READBACK_WAKE(on)` separately enables eligible follow-up. `SET_READBACK_SCOPE(reviewed)` selects sanitized typed receipts instead of the default discovery scope. None enables inference, changes billing or grants actions.
 
-For a new operator, first run preflight, open Conversation, start paused, inspect Switchboard values and demonstrate an offline `SHOW_RUNTIME()` receipt. Explain API billing and repeated agent turns before enabling inference. Use the source-backed command examples and reveal Advanced sections only as needed. Avoid assuming a saved model, permission or screen coordinate is current. The flow graph describes observed configuration with stale/unknown gates, not causal execution telemetry.
+Receipts retain task/origin-request/batch identity and are selected independently of ordinary chat decay. Up to four bounded records enter a request; shortening/eviction are explicit. Prepared, submitted, responded, not_sent and uncertain are distinct. Failed/cancelled submissions are not automatically replayed; prior-task pending data is not assigned to new tasks.
 
-Context inspection does not rebuild prompts, retrieve memory, capture images or call a provider. `init_context` reports loaded runtime Init, its source and clipping, separately from the configured next-load file. `prompt_materials` records the last prepared system, working-memory, current-prompt and retrieval text (24k characters per component); preparation precedes provider transport and does not prove delivery. Current conversation is a separate bounded view. Missing preparation evidence stays unknown. These local exports may contain private prompt text and must not enter a public snapshot. Exact provider payload/session replay remains future work.
+Accounting tracks observed commands/local requests and reported tokens with known/unknown coverage. Missing usage is unknown, not zero. Counts are not verified physical outcomes, exact billing or spend caps. Explicit task outcomes, optional operation/usage limits and durable recovery remain open.
 
-## Validation and privacy checks
+## Message/goal/search semantics
 
-### First-run display and preset checklist
+- `UPDATE_MESSAGE(id,revision,encoded_text,on|off|keep)` provides revision-checked retained-text edit/pin. Use aurora_history_controls.build_update_message_command for safe encoding. GUI Edit / pin shares this authority; sender and editor are separate.
+- `PIN(text)` creates a new entry. EDIT_MSGS edits the first exact timestamp match; DELETE_MSG removes all exact matches. Same-second ambiguity remains. Neither performs date-range deletion.
+- Recursive goal persistence, nested IDs, both supported file formats and failed-load preservation are repaired. COMPLETE_GOAL needs an existing numeric ID; repeated completion is unchanged. Priority/significance are labels, not an automatic scheduler.
+- Task-flow horizons preserve comma prose; legacy first-argument behavior remains. Quote whole prose arguments. Manual-versus-derived horizons, near/extra-long horizons and richer notes remain staged.
+- Boolean/wildcard/date filtering exists for episodic records, not full ordinary-message/person/conversation search. Timestamp filtering does not reconstruct historical knowledge. Version history, supersession, as-of state and replay remain staged.
 
-1. Run `aurora_preflight.py --display --json` with the selected interpreter. This reads primary/virtual dimensions, monitor work areas and caller DPI awareness without importing the runtime, capturing pixels or sending input. Its coordinate space belongs to the diagnostic process; it does not prove runtime/input/capture agreement.
-2. Start the GUI worker paused. Read fresh effective state and setting receipts, not old exported JSON. Check environment/profile precedence, execution policy, action mode, selected game profile/key mapping, model access, capture mode/demand/interval and the separate inference scheduler. Main paused launch uses 2-second capture timing; direct legacy startup remains 0.12 seconds, orb activation 15 seconds, and preview reset request-only. Advanced controls retain the full command set; initial safe/action-none is not a permanent capability restriction.
-3. Inspect `TARGET_RESOLUTIONS`, current `target_width/height`, `original_width/height`, `scaling_factor_x/y`, screenshot options and any crop, overlay, cursor or game tile geometry. The legacy target is 1366×768; startup capture dimensions can go stale and resizing can distort aspect ratio. Do not confuse desktop input coordinates with resized image coordinates. Confirm source origin, dimensions and DPI in the actual runtime/capture process, including negative monitor origins, before deriving any transform.
-4. With explicit bounded capture/input scope, compare a fresh harmless-window capture with its actual bounds, verify one target and its outcome, and check requested screenshot timestamps. Foreground focus, cursor overlays and primary-monitor capture are not universal all-monitor support. Recheck after resolution, DPI, monitor or emulator changes. Preserve unknowns when the image lacks origin/scale metadata.
-5. Verify panel and popout reachability at the operator's resolution. Window clamping helps; it does not establish mixed-DPI acceptance or runtime coordinate correctness. Do not change their OS display settings just to fit the author's assumptions.
+Outbox and queued-input recovery are session-local; do not claim durable retry/cancellation after restart. Decay checks are append-triggered, not a continuous timer. Pinning does not guarantee inclusion beyond context budgets.
 
-The runtime currently calls `ImageGrab.grab()` during import to initialize scale. Existing post-import capture guards do not cover that call. Use static discovery/preflight for no-capture inspection; closing this import-time side effect and adding per-frame transform provenance remain roadmap work. Do not repeat historical zero-native-capture claims without checking guard placement.
+## Display/capture checks
 
-Current Init and the per-turn system prompt explicitly describe multiple command lines, capture-after-action, and independent capture/inference clocks with configured readbacks. The legacy prompt profile is preserved. `GB:move_key(direction, tiles)` is a duration heuristic with a 1.35s pre-delay; its tile accuracy needs ROM/emulator/speed calibration. Prefer GB's configured mapping for VBA-RR, not a silent PYAG fallback. A capture request wakes an enabled worker, then freshness/turn gates still apply; do not promise immediate delivery to the same inference. The bounded Pokemon fixture used one short action/turn and a five-second pacing delay, without production capture/inference schedulers.
+Preflight geometry belongs to the diagnostic process. Verify the runtime's actual fresh frame and a harmless target before broader input. Verified capture retains acquisition times, immutable frame IDs, request generations, source rectangles, original/resized dimensions and transforms; legacy metadata may remain unknown.
 
-Final acceptance found and fixed authored GB routing being canonicalized to explicit PYAG too early in `infer_pending_queue_directive`. Preserve original namespaces until shared preparation. `tests/offline_operator_scenarios.py` is a guarded **characterization** report: inspect each status, not just exit code. It verifies assistant/operator goals/labels/horizons/history actions and records unresolved flat/nested goal persistence and nested-ID defects, unsupported range deletion/full horizons, and scene false positives. `infer_gameplay_scene` currently matches `pp` inside `upper` and interprets negated battle text as battle evidence. Do not bypass the input policy; repair evidence provenance/recency/negation and G1 before claiming reliable gameplay. A bounded 83-second live run verified one game input and model-requested Sol -> Astra -> Sol, then stopped on that classifier defect. No ROM/save/emulator is distributed.
+Mouse commands use literal desktop coordinates, not automatic conversion from resized image coordinates. Check DPI, negative monitor origins, target/focus, display changes, game keys and speed. GB move_key is a duration heuristic, not guaranteed tile-perfect movement.
 
-The direct model selectors share Switchboard drafts but apply only model/effort keys. Header status distinguishes configured primary from `model_io.requested_model` (active/draining request) and last prepared model. Message provenance stores local-offset `timestamp_iso`, provider-reported or requested model plus source, and last editor/time. A context-local actor is captured into queued/pending commands so a later executing edit keeps its originating model; legacy unknowns stay unknown. This is not immutable message versioning.
+Optional request deadlines/attempt caps default to zero. Failure blocks automatic continuation until explicit retry/Cancel; a native OS acquisition can survive cancellation. Import-time ImageGrab acquisition was removed and guarded-tested, but runtime import still has other side effects: prefer AST/catalog/preflight for static inspection. Native mixed-DPI/input calibration and production endurance are unfinished.
 
-`preview_default_changes()` defines a bounded, explicit 22-setting baseline. Reset entry points all open the same observed-before/desired-after view and use shared preview/apply/rollback. The session becomes paused/safe/action-none with Sol low, Astra and request-only capture. Auth, game profile, other Advanced settings, saved profiles, files and history remain unchanged; it is not a factory reset and does not drain pending command queues. Use Cancel work separately. No automatic profile save or permission unlocking occurs.
+## Test and maintain
 
-Start with `aurora_preflight.py --json`, `python -m unittest discover -s tests -p "test_*.py"`, and `python tests/offline_runtime_smoke.py --contracts-only`. Native GUI fixtures need an interactive desktop; live-provider fixtures require explicit operator scope and bounded spending. Inspect each test's guards and copied-file list. No test name alone guarantees zero input/capture/API use.
+```powershell
+.\.venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py"
+.\.venv\Scripts\python.exe tests/offline_runtime_smoke.py --contracts-only
+.\.venv\Scripts\python.exe tests/offline_readback_smoke.py
+```
 
-Preserve all commands, aliases, profiles, toggles and valid legacy behavior. Compact GUI work must not reduce capability. Use one shared admission/settings/receipt authority. Do not import the full runtime merely for static discovery when AST/catalog helpers suffice: it has startup dependencies and side effects.
+Read each fixture's guards/cleanup first. GUI fixtures need an interactive desktop; live provider/input/capture tests need explicit operator scope and bounds. The ten-minute Pokémon result used a test controller, not the background production capture/inference loop.
 
-Never commit keys, OAuth caches, `.env` files, runtime history/state, personal defaults, screenshots or private Git history. Reuse configured keys without printing them. Track owned processes, windows, ports and temporary paths; clean only your resources. Preserve unrelated Portal/Browser/APP/OBS/SSH work.
+Never commit keys, OAuth caches, .env, histories, prompt/state exports, personal profiles, screenshots, ROMs/saves or private Git history. Track exact owned PIDs/creation times, ports and scratch paths; clean only owned resources. Do not copy old inboxes/receipts to retry uncertain work.
 
-Known limits: single-host native evidence; sparse Tk accessibility; session-local outgoing messages; production screenshot-coordinate/background-capture acceptance pending; catalog output is bounded; some historical prompt duplication; retrieval publication/concurrency work still pending. Timestamp filtering is not exact historical state reconstruction. Advanced versioned memory and fuller goal horizons remain staged options, not implemented guarantees.
+After changes update source, generated skeletons/maps, notes and active roadmap. Preserve all capabilities and uncertainty. Test the exact sanitized public tree before publication.

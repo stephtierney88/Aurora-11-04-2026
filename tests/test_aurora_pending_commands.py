@@ -107,7 +107,7 @@ class PendingRuntimeTests(unittest.TestCase):
                 self.assertEqual(self.store, [])
 
     def test_nested_batches_and_aliases_remain_supported(self):
-        result = self.run_command('QUEUE_PENDING("WAIT(0); UPDATE_NOTES(a,b)")')
+        result = self.run_command('QUEUE_PENDING("WAIT(0); UPDATE_NOTES(\'a,b\')")')
         self.assertTrue(result["success"], result)
         result = self.run_command("APPROVE_PENDING()")
         self.assertTrue(result["success"], result)
