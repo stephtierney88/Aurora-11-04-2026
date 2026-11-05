@@ -2,8 +2,30 @@
 import json
 import time
 import requests
+from urllib3 import exceptions as network_errors
 from aurora_chatgpt_auth import ChatGPTAuth, ChatGPTAuthError, RESOURCE, provider_error, safe_code
 from aurora_responses_reasoning import completed_response_text
+
+
+def network_failure_category(error):
+    """Describe bounded exception types, never URLs, headers or provider bodies."""
+    pending, seen, kinds = [error], set(), set()
+    while pending and len(seen) < 16:
+        item = pending.pop()
+        if not isinstance(item, BaseException) or id(item) in seen:
+            continue
+        seen.add(id(item))
+        if isinstance(item, requests.exceptions.ConnectTimeout) or type(item) is network_errors.ConnectTimeoutError:
+            kinds.add("connect_timeout")
+        if isinstance(item, (requests.exceptions.ReadTimeout, network_errors.ReadTimeoutError)):
+            kinds.add("read_timeout")
+        if isinstance(item, (requests.exceptions.SSLError, network_errors.SSLError)):
+            kinds.add("tls_error")
+        if isinstance(item, (requests.exceptions.ChunkedEncodingError, network_errors.ProtocolError)):
+            kinds.add("stream_interrupted")
+        pending.extend([item.__cause__, item.__context__])
+        pending.extend(arg for arg in item.args[:8] if isinstance(arg, BaseException))
+    return next((kind for kind in ("connect_timeout", "read_timeout", "tls_error", "stream_interrupted") if kind in kinds), "network_error")
 
 
 def subscription_payload(chat):
@@ -131,7 +153,46 @@ class CompletedSubscriptionResponse:
         return self.data
 
 
-def perform_subscription_request(chat, cancellation_token, auth=None):
+def request_subscription_stream(payload, bearer, cancellation_token, *, idle_seconds=30, total_seconds=180,
+                                diagnostics=None, phase_callback=None, chunk_size=None):
+    """One HTTP stream; legacy caller stays cooperative, bounded caller owns a process."""
+    diagnostics = diagnostics if diagnostics is not None else {}
+    started = last_line = time.monotonic()
+    phase = phase_callback or (lambda _value: None)
+    phase("waiting_headers")
+    try:
+        with requests.post(RESOURCE + "/responses", headers={"Authorization": "Bearer " + bearer, "Content-Type": "application/json", "Accept": "text/event-stream"},
+                           json=payload, stream=True, timeout=(15, idle_seconds)) as response:
+            diagnostics["headers_seconds"] = round(time.monotonic()-started, 3)
+            phase("headers_received")
+            if response.status_code != 200:
+                raise provider_error(response)
+            content_type = response.headers.get("Content-Type", "")
+            if content_type and "text/event-stream" not in content_type:
+                raise ChatGPTAuthError("Subscription provider did not return an event stream.")
+            lines = response.iter_lines() if chunk_size is None else response.iter_lines(chunk_size=chunk_size)
+            def observed_lines():
+                nonlocal last_line
+                for line in lines:
+                    now = time.monotonic()
+                    diagnostics["max_line_gap_seconds"] = round(max(diagnostics.get("max_line_gap_seconds", 0), now-last_line), 3)
+                    last_line = now
+                    diagnostics["line_count"] = diagnostics.get("line_count", 0)+1
+                    if diagnostics["line_count"] == 1:
+                        diagnostics["first_line_seconds"] = round(now-started, 3)
+                        phase("first_line")
+                    yield line
+            return consume_events(observed_lines(), cancellation_token, deadline=time.monotonic()+total_seconds)
+    except requests.RequestException as error:
+        category = network_failure_category(error)
+        raise ChatGPTAuthError("Subscription connection interrupted (" + category + "); no commands accepted and no request replayed.") from None
+    finally:
+        diagnostics["elapsed_seconds"] = round(time.monotonic()-started, 3)
+
+
+def perform_subscription_request(chat, cancellation_token, auth=None, *, policy="legacy"):
+    if policy not in {"legacy", "bounded"}:
+        raise ChatGPTAuthError("Unknown subscription request policy; no request sent.")
     auth = auth or ChatGPTAuth()
     payload, omitted = subscription_payload(chat)
     cancellation_token.check()
@@ -151,16 +212,13 @@ def perform_subscription_request(chat, cancellation_token, auth=None):
     if current != account:
         raise ChatGPTAuthError("ChatGPT account changed before inference; retry explicitly.")
     cancellation_token.check()
-    try:
-        with requests.post(RESOURCE + "/responses", headers={"Authorization": "Bearer " + token, "Content-Type": "application/json", "Accept": "text/event-stream"},
-                           json=payload, stream=True, timeout=(15, 30)) as response:
-            if response.status_code != 200:
-                raise provider_error(response)
-            content_type = response.headers.get("Content-Type", "")
-            if content_type and "text/event-stream" not in content_type:
-                raise ChatGPTAuthError("Subscription provider did not return an event stream.")
-            result, answer = consume_events(response.iter_lines(), cancellation_token, deadline=time.monotonic() + 180)
-        cancellation_token.check()
-        return CompletedSubscriptionResponse(result, answer, omitted=omitted, account=account, tier=payload.get("service_tier", "regular"))
-    except requests.RequestException:
-        raise ChatGPTAuthError("Subscription connection interrupted; no commands accepted and no request replayed.") from None
+    if policy == "bounded":
+        from aurora_subscription_worker import run_bounded_stream
+        result, answer, diagnostics = run_bounded_stream(payload, token, cancellation_token)
+    else:
+        diagnostics = {}
+        result, answer = request_subscription_stream(payload, token, cancellation_token, diagnostics=diagnostics)
+    cancellation_token.check()
+    response = CompletedSubscriptionResponse(result, answer, omitted=omitted, account=account, tier=payload.get("service_tier", "regular"))
+    response.data["aurora_subscription"].update(request_policy=policy, transport_diagnostics=diagnostics)
+    return response

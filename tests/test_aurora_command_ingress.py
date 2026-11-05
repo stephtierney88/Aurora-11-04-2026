@@ -1,5 +1,6 @@
 """Exercise real runtime ingress/dispatch with harmless handlers and temporary journals."""
 import ast
+import copy
 import datetime
 import json
 import os
@@ -15,6 +16,9 @@ from aurora_runtime_work import CancellationDomain, WorkCancelled
 from aurora_delivery_receipts import TrackedInput
 from aurora_input_ownership import HeldInputLedger, InputOwnershipError, cooperative_move
 from aurora_pending_commands import PENDING_WRAPPER_MODES
+from aurora_task_continuation import (TaskContinuation, TASK_CONTROL_COMMANDS, TASK_CONTROL_RESULT_SCHEMA,
+                                     TASK_BUDGET_RESULT_SCHEMA, TASK_ORIGIN_SCHEMA, scoped_task_id,
+                                     command_task_scope, current_command_task)
 
 from aurora_command_protocol import CommandSyntaxError, split_command_batch
 from aurora_command_contracts import (
@@ -37,6 +41,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TREE = ast.parse((ROOT / "aurora2.py").read_text(encoding="utf-8-sig"))
 FUNCTIONS = {node.name: node for node in TREE.body if isinstance(node, ast.FunctionDef)}
 RUNTIME_FUNCTIONS = """
+current_task_artifact_origin require_current_artifact_origin
 normalize_text_content normalize_memory_item normalize_action_mode strip_wrapping_quotes
 extract_command_arguments parse_command_signature_raw get_command_name_key
 is_privileged_operator_command can_dispatch_external_single_command
@@ -85,6 +90,11 @@ class RuntimeIngressTests(unittest.TestCase):
         self.inputs = queue.Queue()
         self.journal = MutationAdmissionJournal(self.temp.name, session_id="test")
         self.scope = {
+            "TASK_CONTINUATION_MODE": "legacy", "TASK_CONTINUATION": TaskContinuation(),
+            "TASK_CONTROL_COMMANDS": TASK_CONTROL_COMMANDS, "TASK_CONTROL_RESULT_SCHEMA": TASK_CONTROL_RESULT_SCHEMA,
+            "TASK_BUDGET_RESULT_SCHEMA": TASK_BUDGET_RESULT_SCHEMA,
+            "TASK_ORIGIN_SCHEMA": TASK_ORIGIN_SCHEMA, "scoped_task_id": scoped_task_id, "copy": copy,
+            "command_task_scope": command_task_scope, "current_command_task": current_command_task,
             "TrackedInput": TrackedInput,
             "current_history_actor": current_history_actor, "history_actor_scope": history_actor_scope,
             **runtime_constants(), "json": json, "re": re, "time": time, "os": os,

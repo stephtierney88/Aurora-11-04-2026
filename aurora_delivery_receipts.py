@@ -45,12 +45,21 @@ def queued_input_identities(values):
 
 
 class TurnDelivery:
-    def __init__(self, writer, references):
+    def __init__(self, writer, references, *, observer=None):
         self.writer, self.references = writer, input_identities(references)
         self.inference_request_id = "turn-" + uuid.uuid4().hex
         self.phase, self.sequence, self.model = "", 0, ""
         self.request_started = False
         self.receipt_errors = 0
+        self.observer, self.observer_errors = observer, 0
+
+    def observe(self, phase):
+        if self.observer is not None:
+            try:
+                self.observer(self, phase)
+            except Exception:
+                # Diagnostics must not lose input or trigger a retry.
+                self.observer_errors += 1
 
     def emit(self, phase, *, reason="", model="", provider_model=""):
         if phase not in TURN_PHASES or self.phase in TERMINAL_PHASES:
@@ -60,6 +69,7 @@ class TurnDelivery:
             self.model = str(model)
         if phase == "submitted":
             self.request_started = True
+        self.observe(phase)
         for identity in self.references:
             try:
                 self.writer("message_model_delivery", **identity,
@@ -78,8 +88,8 @@ def current_delivery():
 
 
 @contextmanager
-def delivery_turn(writer, references):
-    delivery = TurnDelivery(writer, references)
+def delivery_turn(writer, references, *, observer=None):
+    delivery = TurnDelivery(writer, references, observer=observer)
     token = _current.set(delivery)
     delivery.emit("preparing", reason="Selected from input queue; waiting for turn preparation.")
     try:

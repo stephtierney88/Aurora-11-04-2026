@@ -13,4 +13,4 @@ scenes/sources, recording state, unavailable/partial behavior and provenance
 against a real OBS instance, then expand this pack with verified usage.
 
 The intended scope is observation; no OBS mutation authority is added here.
-Current work order: [Aurora runtime roadmap](../notes/aurora_runtime_roadmap.md).
+Current work order: [Aurora runtime roadmap](../../docs/notes/aurora_runtime_roadmap.md).

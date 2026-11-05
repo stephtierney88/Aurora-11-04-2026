@@ -1,4 +1,4 @@
-# Aurora — November 5, 2026 developer preview
+# Aurora — November 5, 2026 developer preview · release 54
 
 Aurora is a Windows desktop-agent harness with a conversation-first Control Panel, a visual Switchboard and an operator shell. It gives models screenshots, executes permitted commands, maintains goals and memory, and continues tasks across observations. Its large command/settings arsenal is intentional; start in Conversation and open Advanced controls when needed.
 
@@ -15,6 +15,7 @@ py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-preview.txt
 .\.venv\Scripts\python.exe aurora_preflight.py --json
 .\.venv\Scripts\python.exe aurora_preflight.py --surface panel --display --json
+$env:AURORA_PYTHON = (Resolve-Path .\.venv\Scripts\python.exe).Path
 .\launch_aurora2_ui.cmd
 ```
 
@@ -24,20 +25,20 @@ Send a short text task, then choose **Enable inference**. **Pause inference**, *
 
 ## Progress since the previous public snapshot
 
-- **Gameplay:** repaired scene detection and recursive goal save/load. A bounded ten-minute FireRed run with Sol 6.1 low won the rival battle, healed and won a Route 1 wild battle. That used a test controller; the normal background loop still needs equivalent endurance qualification.
-- **Subscription access:** real ChatGPT subscription inference and Sol → one Astra turn → Sol restoration were verified on the development account. Long-session/account-switch recovery still needs testing.
-- **Conversation:** queued/awaiting messages and delivery stages, revision-checked edit/pin, a readable detachable mini-preview and clearer current-context/history views.
-- **Flow:** multiple-command guidance, command-driven capture, optional turn/time task limits, optional duplicate-Init removal and reviewed command-result readbacks. Reading a new image still takes another inference call.
-- **Reliability:** guarded tests cover frame identity/freshness, geometry, optional capture deadlines, cancellation, held inputs and more everyday goal/history commands.
-- **Usability:** clearer draft-versus-applied Switchboard settings, compact headers, receipt inspection, scrolling and repaint fixes. Broader mixed-DPI/live-load checks remain.
+- **Longer real gameplay:** a 25-minute FireRed run used Aurora's normal workers, won the rival battle, healed and reached Viridian after three wild victories. A later 20-minute Terra 6.1 low continuation delivered Oak's Parcel, verified the Pokédex and completed the saved goal. These were separate bounded runs, not a single 45-minute run or a promise of unattended play.
+- **Subscription resilience:** optional locally cancellable inference workers add idle/deadline limits and discard unfinished responses safely. Legacy remains available/default. Real subscription inference and Sol → Astra → Sol restoration were already verified; long-session refresh/account switching still needs testing.
+- **Task controls:** optional declared done/wait/approval/error stops, command allowances, reported-token thresholds and policies for carrying old plans/proposals into new tasks. Progress/readback/frame/request evidence is correlated. Token thresholds are not hard spending caps.
+- **Goals and planning:** explicit advisory hierarchy and preserved manual horizons now coexist with legacy behavior. Goal previews show real IDs/labels; Init guidance and heartbeat-zero handling are repaired. Save/load works, but stale medium-term plans and journal projection still need attention.
 
-Inventory: **376 command bindings, 146 reviewed argument contracts, 39 shared settings and 24 views**. Legacy behavior and Advanced settings remain available. [Release notes](RELEASE_NOTES.md) distinguish live evidence, offline checks and unfinished work.
+The earlier refresh already added visible queued messages, delivery stages, revision-checked edit/pin, a readable detachable mini-preview, clearer Switchboard drafts/receipts, capture provenance and optional command-result continuation/Init deduplication. Those features remain. New screenshots still require another inference call.
+
+Inventory: **387 command bindings, 157 reviewed argument contracts, 48 shared settings and 24 views**. Legacy behavior and Advanced settings remain available; experimental options have not silently replaced compatibility defaults. [Release notes](RELEASE_NOTES.md) distinguish live evidence, offline checks and unfinished work.
 
 ## Things to try
 
 Start with chat, command discovery, goals/save/load, message editing/pinning and Switchboard Preview → Apply → Undo. Then try a small screenshot/click/type/readback task on a harmless local page. Aurora has the primitives for supervised website navigation, form entry and reading visible pages; broad internet-task reliability is not established.
 
-For Pokémon, supply your own emulator/game and check focus, mapping, capture geometry and timing. Use a copied save. The successful run is evidence of progress, not a promise of unattended game completion.
+For Pokémon, supply your own emulator/game and check focus, mapping, capture geometry and timing. Use a copied save. Begin with a short supervised run before trying longer sessions. No game, emulator, saves or captured screenshots ship here.
 
 ## Ask your coding AI
 

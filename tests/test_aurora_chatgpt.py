@@ -9,13 +9,41 @@ from urllib.parse import parse_qs, urlsplit
 
 from aurora_chatgpt_auth import (ChatGPTAuth, ChatGPTAuthError, CredentialStore, ISSUER,
                                 merge_tokens, validate_callback, verify_identity)
-from aurora_chatgpt_transport import consume_events, subscription_payload, perform_subscription_request, CompletedSubscriptionResponse
+from aurora_chatgpt_transport import consume_events, subscription_payload, perform_subscription_request, CompletedSubscriptionResponse, network_failure_category
 from aurora_agent_controls import model_command
 from aurora_command_contracts import parse_inference_plan_arguments
 from aurora_settings_registry import coerce_setting_value
 
 
 class ChatGPTTests(unittest.TestCase):
+    def test_network_failure_types_are_bounded_and_do_not_leak_messages(self):
+        import requests
+        from urllib3.exceptions import ReadTimeoutError, NewConnectionError
+        wrapped = requests.ConnectionError(ReadTimeoutError(None, "/PRIVATE-TOKEN", "PRIVATE-BODY"))
+        wrapped.__context__ = wrapped
+        self.assertEqual(network_failure_category(wrapped), "read_timeout")
+        self.assertEqual(network_failure_category(NewConnectionError(None, "PRIVATE")), "network_error")
+        for error, expected in [(requests.ConnectTimeout("PRIVATE"), "connect_timeout"),
+                                (requests.exceptions.SSLError("PRIVATE"), "tls_error"),
+                                (requests.exceptions.ChunkedEncodingError("PRIVATE"), "stream_interrupted"),
+                                (requests.ConnectionError("PRIVATE"), "network_error")]:
+            self.assertEqual(network_failure_category(error), expected)
+
+    def test_interrupted_transport_reports_safe_category_without_replay(self):
+        import requests
+        from urllib3.exceptions import ReadTimeoutError
+        auth = Mock()
+        auth.access.return_value = ("synthetic-private-token", "one")
+        error = requests.ConnectionError(ReadTimeoutError(None, "/PRIVATE", "PRIVATE"))
+        with patch("aurora_chatgpt_transport.account_models", return_value=("one", [{"slug": "allowed"}])), \
+                patch("aurora_chatgpt_transport.requests.post", side_effect=error) as post:
+            with self.assertRaisesRegex(ChatGPTAuthError, "read_timeout") as result:
+                perform_subscription_request({"model": "allowed", "messages": [{"role": "user", "content": "hi"}]}, Mock(), auth)
+            self.assertNotIn("PRIVATE", str(result.exception))
+            self.assertIn("no request replayed", str(result.exception))
+            self.assertEqual(post.call_count, 1)
+            self.assertEqual(post.call_args.kwargs["timeout"], (15, 30))
+
     def test_missing_subscription_usage_is_unknown(self):
         for usage in (None, {}, "invalid"):
             response = CompletedSubscriptionResponse({"usage": usage}, "ready", omitted=[], account="fixture")

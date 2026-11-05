@@ -15,6 +15,7 @@ from aurora_control_plane import journal_offsets, wait_for_command_receipt
 from aurora_conversation import conversation_text
 from aurora_panel_layout import CollapsibleSection, FlowBar, ui_scale, wrap_packed_labels
 from aurora_settings_registry import SETTING_DEFINITIONS, coerce_setting_value
+from aurora_task_continuation import task_outcome_summary, task_budget_summary
 
 BG, CARD, INK, MUTED = "#0b1020", "#131c2b", "#e9eef5", "#a9b8cb"
 GREEN, YELLOW, PURPLE = "#8ce0b5", "#f2cd70", "#c2adf5"
@@ -665,7 +666,9 @@ class Switchboard(ttk.Frame):
             f"Review: {models.get('reasoning', 'unknown')} · {model_status.get('review_reasoning_effort', 'unknown')} effort · {review}   |   Dynamic inference: {model_status.get('auto_dynamic_inference', 'unknown')}\n"
             f"Mode: {modes.get('execution', 'unknown')} / {modes.get('action', 'unknown')} · {models.get('transport', 'unknown')}   |   Screenshot: {modes.get('capture_mode', 'unknown')} · {modes.get('effective_screenshot_interval', 'unknown')}s effective   |   Turn heartbeat: {(state.get('scheduler') or {}).get('heartbeat_seconds', 'unknown')}s\n"
             f"Turn: {(state.get('planning') or {}).get('inference_counter', 'unknown')} · Pending proposals: {len(state.get('pending_commands') or [])} displayed · Next-turn override: {next_inference_label(state)} · Model selectors below are drafts until Apply.\n"
-            f"Task: {continuation.get('mode', 'unknown')} · {task.get('status', 'unknown')} · {task.get('turns', 0)}/{task.get('max_turns', '?')} model turns · {task.get('stop_reason') or 'no stop recorded'} · Init: {modes.get('init_delivery', 'unknown')}")
+            f"Task: {continuation.get('mode', 'unknown')} · {task.get('status', 'unknown')} · {task.get('turns', 0)}/{task.get('max_turns', '?')} model turns · {task.get('stop_reason') or 'no stop recorded'} · Init: {modes.get('init_delivery', 'unknown')}"
+            + ("\n" + task_budget_summary(task) if (task.get("budgets") or {}).get("enabled") else "")
+            + ("\n" + task_outcome_summary(task) if task.get("reported_outcome") else ""))
         self.refresh_contents()
         transaction = self.app.settings_transaction_last_receipt
         receipt_signature = json.dumps(transaction, sort_keys=True)

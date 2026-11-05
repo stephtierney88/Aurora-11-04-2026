@@ -84,7 +84,7 @@ class DeliveryReceiptTests(unittest.TestCase):
         token = SimpleNamespace(check=lambda: None)
         response = SimpleNamespace(status_code=200)
         readback_calls = []
-        scope = dict(AUTH_MODE="api_key", API_KEY="", CODEX_OAUTH_CACHE_FILE="", CODEX_OAUTH_AUTH_FILE="",
+        scope = dict(AUTH_MODE="api_key", SUBSCRIPTION_POLICY="legacy", API_KEY="", CODEX_OAUTH_CACHE_FILE="", CODEX_OAUTH_AUTH_FILE="",
                      codex_oauth_cache_path="fixture", MODEL_WORK=SimpleNamespace(current=lambda: token),
                      current_delivery=current_delivery, service_runtime_control_during_model_wait=lambda: None,
                      COMMAND_READBACKS=SimpleNamespace(mark_request=lambda *args: readback_calls.append(args)),

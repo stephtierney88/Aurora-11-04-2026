@@ -1,50 +1,53 @@
-# November 5, 2026 preview refresh
+# Aurora preview — November 5, 2026 · release 54
 
-Compared with the previous public snapshot, commit `1ba4d49` from November 4. This refresh includes the private runtime/Control Panel work through Implementation 44, with release packaging and documentation cleanup. Old commands, aliases, valid legacy settings and advanced controls remain.
+This refresh brings the public snapshot from release 45 (runtime through Implementation 44) through **Implementation 53**, plus a release-54 GUI settings-readback repair and updated setup/upgrade guidance. The repository retains its original `Aurora-11-04-2026` name. This is still a Windows developer preview for supervised use.
 
-## Visible changes
+## New since the previous public release
 
-- **Chat feedback:** submitted/queued messages remain visible; Outbox and Awaiting reply distinguish ingestion, preparation, request start, response, failure and cancellation. Session-local state is not advertised as durable delivery.
-- **Readable conversation preview:** text excerpts, click-to-jump, docking/collapse/popout, current-context highlights and model-window estimates. The old compact colored map remains selectable.
-- **Message editing:** revision-checked Edit / pin, sender/editor attribution and explicit stale-target failures. Existing PIN/edit/exact-timestamp-delete commands remain.
-- **Switchboard and layout:** compact header, clearer unapplied drafts, hover contrast, measured flow cards, receipt inspection and refresh/scroll stability fixes. Full capabilities remain behind Advanced/raw commands.
-- **Agent controls and sign-in:** prominent OpenAI sign-in, model/effort controls and explicit subscription routing. Regular speed stays the default.
+- **Longer Pokémon runs through normal workers.** A completed 25-minute FireRed run won the rival battle, healed, won three wild battles and reached Viridian Pokémon Center. A separate later 20-minute Terra-low continuation delivered Oak's Parcel, received five Poké Balls, verified the Pokédex menu and then completed the goal. Aurora ran its production command, capture and inference scheduler paths; a bounded supervisor owned setup/shutdown and target guards, not per-turn gameplay decisions.
+- **Optional bounded subscription transport.** `SET_SUBSCRIPTION_POLICY(bounded)` adds an owned inference process, 90-second read-idle limit, 180-second inference deadline and cancellation during blocked reads. It validates complete output, discards partial output on failure and never automatically replays or switches to API billing. `legacy` remains the default. Auth/catalog preflight has separate parent-process timeouts; local cancellation is not confirmed remote cancellation. The setting is session-only and affects the next request.
+- **Optional task outcomes and budgets.** A task can declare done/wait/approval/error and stop automatic continuation. Operator-set command allowances reserve complete batches; reported-token thresholds stop after known usage reaches the limit. Missing usage stays unknown, the last request may overshoot, and a model's completion claim is not independently verified success. These are not hard dollar caps.
+- **Correlated progress and task transitions.** Command, receipt, frame and model-request identities plus local latency observations help explain stalls. Independent carry/discard/hold choices manage attributable old-task plans and proposals. Operator/unattributed or already-reserved work is preserved; this does not implement durable queue recovery.
+- **Planning controls with compatibility paths.** `SET_HIERARCHY_DISPATCH(advisory)` prevents stored Level 1 hierarchy from dispatching. `SET_HORIZON_SYNC(preserve)` keeps explicit horizons separate. Both retain legacy defaults and supported saved-profile behavior. Goal previews show IDs/labels clearly; Init now explains goal labels and dedicated horizons. A zero CLI heartbeat stays off.
+- **Scene and trial repairs.** Generic battle tutorial/result dialogue no longer conflicts with a fresh explicit battle scene in the repaired case. Several prior setup/connection failures are documented separately from completed runs; they are not counted as endurance passes.
+- **GUI settings regression caught before publication.** The new subscription policy was absent from the exported models snapshot, which made GUI Preview/Apply reject even unrelated settings as incomplete. The export now includes the effective policy. The guarded panel regression checks all registered values plus subscription Preview/Apply/Undo while inference remains paused.
 
-## Runtime repairs and additions
+Inventory is **387 command bindings / 157 reviewed argument contracts / 48 shared settings / 24 views**. A binding is not necessarily a unique action; most commands remain outside the reviewed typed subset. Existing commands, settings, aliases and legacy modes remain available. No broad default/profile promotion is made on the strength of one trial.
 
-- Evidence-aware scene classification handles token boundaries, negation, quoted/closed dialogue and location overlays more accurately; legacy behavior remains an option.
-- Recursive goal save/load, nested IDs and failure-preserving imports are repaired. Everyday goal/note/horizon/toggle contracts now reject malformed arguments and preserve fuller text in task-flow mode. Duplicate/completed goals and unsupported TASKS behavior report truthfully.
-- Multiple-command batches and command-driven screenshots reduce unnecessary pacing breaks. Post-action capture ordering is repaired; reading the result still needs another model call.
-- Optional bounded task turns/time, command lookup wake and request-time Init deduplication coexist with compatibility defaults.
-- New optional reviewed readbacks carry structured settings/retrieval/goal and other supported receipts into the same task's next eligible request. Task/request/batch correlation and initial usage/operation accounting distinguish reported values from unknowns; no spend cap or complete task lifecycle is claimed.
-- Capture workers now preserve acquisition identity, timestamps, request generations, crop/target geometry and resize transforms. Optional deadlines/attempt limits fence late publication. Import-time capture and a cursor GDI resource leak were repaired. Guarded tests cover these paths; native multi-monitor/input qualification is still outstanding.
-- Fresh-install checks found and fixed missing `tzdata` (Windows named timezones) and `websockets` (included optional OBS adapter/tests) dependencies. The old runtime smoke was updated to require truthful failure from the unimplemented TASKS command and to distinguish legacy handler failure from reviewed Boolean admission rejection.
+## Retained from the earlier refresh
 
-## What the tests actually showed
+Conversation has queued/awaiting messages and delivery stages, revision-checked edit/pin, readable detachable mini-preview and current/retained/history views. Switchboard has draft/apply receipts, shared Preview/Apply/Undo, context inspection and scoped reset. Header/layout/scroll/repaint fixes improve usability, with broader display qualification still open.
+
+Recursive goal save/load, nested IDs and failure-preserving imports are repaired. Everyday goal/note/history commands have clearer contracts. Optional command-driven capture, reviewed text-result continuation and request-time duplicate-Init removal reduce avoidable waits while retaining compatibility behavior. Capture metadata records acquisition identity/time, target/origin and transforms; optional deadlines fence late publication. Mouse input still uses literal desktop coordinates, so inspect calibration.
+
+Aurora-owned ChatGPT sign-in/inference and a Sol → one Astra medium turn → Sol low restoration were verified on the development account. API keys remain an independent billing route; there is no automatic subscription-to-API fallback.
+
+## What the tests establish
 
 | Evidence | Result and boundary |
 | --- | --- |
-| Ten-minute FireRed continuation | 606 seconds, 92 Sol 6.1 low requests; won the rival battle, healed, won a Route 1 wild battle and continued north. No held/uncertain inputs remained. Used the real parser/admission/subscription route with a bounded test controller and owned screenshots, not normal background capture/inference workers. |
-| Subscription/model switching | Live Aurora-owned ChatGPT sign-in/inference and Sol → one Astra medium turn → Sol low restoration were verified on the development account. Account/plan availability and long-session recovery can differ. |
-| Goals/history/commands | Recursive goals/horizons round-tripped during gameplay; later guarded tests cover edits/pins/deletes, both goal formats, labels, failures and cancellation. Does not establish all memory concurrency or full message search. |
-| Latest private regression baseline | 700 tests passed; 50 guarded readback/continuation checks; hidden Tk checks across 24 views and 36 synthetic Dashboard refreshes. Public export validation is recorded with the snapshot publication. |
-| This public snapshot | Fresh Python 3.12 Windows venv: 700 regressions passed in 216.809s, 144 guarded runtime receipts, 50 readback checks and 24-view synthetic Tk checks with no callback errors. Both preflights and dependency consistency passed. This is a fresh environment on the development host, not a second PC or a new live gameplay run. |
-| Website/desktop use | Isolated test-window clicking and screenshot recognition were verified earlier. The primitives support small supervised browser tasks, but broad website-task reliability and production-loop endurance are not yet established. |
+| Production-worker FireRed, Implementation 50 | **1,500.82 seconds / 198 responses**, uninterrupted timed attempt; rival victory/healing/Route 1/Viridian progress. Three earlier diagnostic attempts are separate. Inputs released and owned processes exited normally. |
+| Four-horizon Terra-low comparisons, Implementation 51 | Completed paired 15-minute retries: **92 and 127 responses**. Outcomes differed; detailed memory added about 12.7% memory-envelope characters and still retained stale steps. One temporary review restored low effort afterward. No conclusive best profile. |
+| Checkpoint maintenance comparison, Implementation 52 | Two planned 15-minute runs ended at **635.54s / 71 responses** and **868.90s / 113 responses** with subscription read timeouts. One obtained Oak's Parcel. Neither is a completed 15-minute pass. These failures motivated bounded transport. |
+| Bounded subscription continuation, Implementation 53 | **1,201.04 seconds / 117 completed responses / 118 requests**, returned model `gpt-6.1-terra`, requested low effort. Parcel/Pokédex visually verified before goal completion. No connection failure or failed assistant batch; timed shutdown cancelled the final request and closed its child. One operator checkpoint save supplied no gameplay decision. |
+| Frame/prompt evidence in that continuation | All 117 image requests matched saved production-frame identity/fingerprints/owned target; one intentional text-only readback request. One Init per request. Median completed-request latency 4.375s, p95 33.328s, maximum 76.062s. |
+| Memory persistence | Native saves and offline full-document/object round trips preserved completed goal ID/priority/importance and horizon content. Immediate/short plans changed; medium still retained a completed step. Timestamped past-goal history recorded completion even though the manual diary stayed old. |
+| Offline subscription boundary | Ten synthetic localhost/process tests cover slow completion, idle/deadline failure, cancellation, partial output, crashes, validation, cleanup and explicit new-request recovery. No real credentials/provider calls in those tests. |
+| Release-54 exported build | **778 regression tests passed** after the settings-snapshot repair; 144 guarded runtime receipts, 180 everyday-command checks, 50 readback checks and hidden Tk across 24 views/36 synthetic Dashboard refreshes. Policy Preview/Apply/Undo passed with no callback errors. Python 3.12.8 isolated environment on the development Windows host; no new live-provider/gameplay or displayed-pixel acceptance is implied. |
+| Websites and other PCs | Screenshot/mouse/keyboard primitives support supervised experiments. Comparable production-worker website acceptance, a second-PC installation and general mixed-DPI input calibration are **not yet established**. |
 
-The Pokémon result is a substantial improvement over the old 83-second scene-classifier failure; it is not a blanket claim that all Pokémon situations or unattended play work well. Native gameplay testing was not rerun just to publish this snapshot.
+The 25-minute and 20-minute results are separate scoped trials, not a 45-minute session. ROMs, copied saves, raw transcripts and screenshots are private test artifacts and are not distributed. This publication performs offline packaging/validation; it does not claim another live run.
 
 ## Still unfinished
 
-1. Full task done/wait/approval/error semantics, broader progress/latency and optional operation/usage budgets.
-2. Durable queued-message recovery, queued cancellation and deliberate retry after restart.
-3. Optional strict parsing/dependent batches and remaining everyday mutation contracts.
-4. Native production-loop website/gameplay acceptance, interruption/recovery, mixed-DPI input calibration and wider GUI coverage.
-5. Retrieval publication/concurrency, preservation of manual versus derived horizons, ordinary-message/person search, richer horizons/notes and versioned/as-of memory.
+1. Coherent memory projection across snapshot/pinned context, recent-journal selection, omitted counts, entry ownership/status and stale-plan reconciliation. Near/extra-long horizons, typed notes, enforced per-category caps and fuller Horizons profiles remain planned.
+2. Durable queued-message/task recovery, queued cancellation and deliberate retry after restart (CP1c). Same-task resume and broad crash/account-switch recovery remain incomplete.
+3. Optional strict parsing/dependent batches, remaining mutation contracts and fuller worker/queue accounting.
+4. Production-worker website acceptance, wider display/UI/input checks, optional game-client/aspect-preserving capture, duplicate-capture coalescing and predictable-dialogue batching.
+5. Retrieval publication/concurrency, full ordinary-message/person search and immutable versions → supersession → as-of state → replay. Timestamp filters are not historical state reconstruction.
 
-OAuth is now tested within the scope above. “Goal persistence is broken” and “subscription inference is unverified” in older notes are superseded. Long-session recovery and production-loop acceptance are still open. See [the active roadmap](docs/notes/aurora_runtime_roadmap.md).
+## Package and setup
 
-## Package contents
+The public snapshot contains runtime/UI source, launchers, dependencies, offline tests, command/reference tools and five functional UI artwork files. Optional read-only integration adapters remain available without being required for basic chat. Personal notification/email helpers, private history/reports, runtime state, screenshots, auth caches, API keys, emulator/ROMs and game saves are excluded. The export is checked for configured secrets, credential patterns, personal identifiers and unexpected media; public Git history is checked separately. These are scoped disclosure checks, not a formal security audit.
 
-The public snapshot contains relevant runtime/UI code, launchers, dependencies, offline tests, reference tools/maps and five UI artwork files. Personal notification/email helpers, private reports/history, runtime state, screenshots, auth caches, API keys and game assets are excluded. Public Git history is checked separately for credential patterns and non-artwork media. The private repository retains its existing test evidence; none is merged into public history.
-
-Use [UPGRADING](UPGRADING.md) for a fresh-folder replacement and [README_FOR_HUMANS](README_FOR_HUMANS.md) for GUI or shell setup.
+Use [UPGRADING](UPGRADING.md) to stop/rename an older copy and install into a fresh folder, [the human guide](README_FOR_HUMANS.md) for GUI/shell use, and [the AI guide](README_FOR_AI.md) for setup assistance. Keep your own credentials private and start paused. The active [roadmap](docs/notes/aurora_runtime_roadmap.md) distinguishes delivered controls from future work.

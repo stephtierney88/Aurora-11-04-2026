@@ -111,6 +111,24 @@ manual = list(runtime.pinned_immediate_actions)
 runtime.sync_action_horizons_from_hierarchical_tasks()
 check('legacy hierarchy synchronization still replaces manual horizon', runtime.pinned_immediate_actions != manual)
 runtime.parse_hierarchical_tasks('')
+run('SET_HIERARCHY_DISPATCH(advisory); SET_HORIZON_SYNC(preserve)')
+run('UPDATE_PINNED_IMMEDIATE("Keep explicit manual plan")')
+runtime.parse_hierarchical_tasks(hierarchy)
+runtime.sync_action_horizons_from_hierarchical_tasks()
+check('preserve keeps explicit horizons separate from hierarchy', runtime.pinned_immediate_actions == ['Keep explicit manual plan'])
+captured, real_route = [], runtime.route_assistant_commands
+runtime.route_assistant_commands = lambda *a, **k: captured.append((a, k))
+try:
+    runtime.execute_immediate_actions([{'command':'GB:press(a)'}])
+    check('advisory blocks hierarchy routing without erasing it', not captured and bool(runtime.hierarchical_tasks))
+    run('SET_HIERARCHY_DISPATCH(legacy)')
+    runtime.execute_immediate_actions([{'command':'GB:press(a)'}])
+    check('reenabling legacy does not rearm retained hierarchy', not captured and not runtime.HIERARCHY_DISPATCH_ARMED)
+finally:
+    runtime.route_assistant_commands = real_route
+runtime.parse_hierarchical_tasks('')
+run('SET_HORIZON_SYNC(legacy)')
+check('registered policy readback is effective', runtime.build_registered_settings_runtime_state()['modes']['horizon_sync'] == 'legacy')
 parent = runtime.tasks_list[0]
 runtime.add_sub_goal(parent.id, 'Child', 'Low', 'Optional')
 child = parent.sub_goals[0]

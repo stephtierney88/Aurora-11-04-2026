@@ -190,7 +190,8 @@ class ResponsesSessionTests(unittest.TestCase):
 
 
 def runtime_scope():
-    names = """post_openai_turn_request supports_reasoning_effort uses_max_completion_tokens
+    names = """current_task_artifact_origin require_current_artifact_origin
+post_openai_turn_request supports_reasoning_effort uses_max_completion_tokens
 get_supported_reasoning_efforts get_default_reasoning_effort_for_model normalize_reasoning_effort_for_model
 normalize_reasoning_effort supports_temperature_override supports_model_verbosity _parse_gpt_model_version
 set_model_transport reset_responses_session_command invalidate_responses_history
@@ -198,6 +199,9 @@ create_empty_next_inference_plan set_next_inference_plan_from_pairs clear_next_i
 resolve_next_inference_plan_for_turn set_next_reasoning_effort_command infer_turn_model_controls
 get_next_inference_plan_snapshot execute_inference_plan_command""".split()
     scope = {"ASTRA_MODEL": ASTRA_MODEL, "ASTRA_EFFORTS": ASTRA_EFFORTS,
+             "copy": copy, "TASK_CONTINUATION_MODE": "legacy", "TASK_ORIGIN_SCHEMA": ingress.TASK_ORIGIN_SCHEMA,
+             "current_history_actor": ingress.current_history_actor, "current_command_task": ingress.current_command_task,
+             "current_delivery": lambda: None, "scoped_task_id": ingress.scoped_task_id,
              "ResponsesReasoningError": ResponsesReasoningError, "RESPONSES_REASONING": ResponsesReasoningSession(),
              "MODEL_TRANSPORT": "responses", "AUTH_MODE": "api_key", "DEFAULT_SERVICE_TIER": "regular", "DEFAULT_REASONING_EFFORT": "low",
              "MODEL_WORK": CancellationDomain(), "MODEL_IO": SimpleNamespace(busy=False), "re": re, "uuid": uuid,

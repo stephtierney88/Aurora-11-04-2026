@@ -7,13 +7,17 @@ from tkinter import ttk
 
 from aurora_panel_layout import CollapsibleSection, FlowBar, ScrollablePane, ui_scale
 from aurora_settings_registry import coerce_setting_value, build_settings_snapshot
+from aurora_task_continuation import task_outcome_summary, task_budget_summary
 
 
 EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
 CONTROL_KEYS = ("model.text", "model.vision", "model.reasoning", "inference.reasoning_effort",
                 "inference.service_tier", "capture.mode", "scheduler.mode", "scheduler.heartbeat_seconds", "auth.mode", "runtime.assistant_policy", "runtime.execution",
-                "task.continuation_mode", "task.max_model_turns", "task.max_seconds", "scheduler.readback_wake_enabled", "context.init_delivery")
-CONTINUATION_KEYS = ("task.continuation_mode", "task.max_model_turns", "task.max_seconds", "scheduler.readback_wake_enabled", "context.init_delivery")
+                "task.continuation_mode", "task.max_model_turns", "task.max_seconds", "task.outcome_reporting", "scheduler.readback_wake_enabled", "context.init_delivery")
+BUDGET_KEYS = ("task.max_commands", "task.max_reported_tokens", "task.unknown_usage_policy")
+CARRY_KEYS = ("task.plan_carry_policy", "task.pending_carry_policy")
+CONTROL_KEYS += BUDGET_KEYS + CARRY_KEYS
+CONTINUATION_KEYS = ("task.continuation_mode", "task.max_model_turns", "task.max_seconds", "task.outcome_reporting", "scheduler.readback_wake_enabled", "context.init_delivery") + BUDGET_KEYS + CARRY_KEYS
 
 
 def model_command(model, effort, tier="regular"):
@@ -83,8 +87,25 @@ class AgentControls(CollapsibleSection):
             task_bar.add(ttk.Label(task_bar, text=label))
             task_bar.add(ttk.Entry(task_bar, textvariable=self.variables[key], width=7))
         self._select(task_bar, "Readback follow-up", "scheduler.readback_wake_enabled", ("true", "false"), 6)
+        self._select(task_bar, "Outcome reports", "task.outcome_reporting", ("false", "true"), 6)
         self._select(task_bar, "Init delivery", "context.init_delivery", ("legacy", "system_once"), 12)
         self.task_button = task_bar.add(ttk.Button(task_bar, text="Apply task controls", command=lambda: self.apply_keys(CONTINUATION_KEYS)))
+        task_bar.add(ttk.Button(task_bar, text="Inspect task", command=lambda: self.command("SHOW_TASK_STATUS()")))
+        carry_bar = FlowBar(task_section.body)
+        carry_bar.pack(fill="x", pady=4)
+        self._select(carry_bar, "Previous-task plans", "task.plan_carry_policy", ("carry", "discard_previous"), 18)
+        self._select(carry_bar, "Previous-task proposals", "task.pending_carry_policy", ("carry", "hold_previous", "discard_previous"), 18)
+        carry_bar.add(ttk.Button(carry_bar, text="Apply carry policies", command=lambda: self.apply_keys(CARRY_KEYS)))
+        budget_section = CollapsibleSection(task_section.body, "Optional command/token budgets (0 = off)", expanded=False)
+        budget_section.pack(fill="x", pady=4)
+        budget_bar = FlowBar(budget_section.body)
+        budget_bar.pack(fill="x")
+        for key, label in (("task.max_commands", "Commands"), ("task.max_reported_tokens", "Reported tokens")):
+            budget_bar.add(ttk.Label(budget_bar, text=label))
+            budget_bar.add(ttk.Entry(budget_bar, textvariable=self.variables[key], width=10))
+        self._select(budget_bar, "Missing usage", "task.unknown_usage_policy", ("continue", "stop"), 10)
+        budget_bar.add(ttk.Button(budget_bar, text="Apply budgets", command=lambda: self.apply_keys(BUDGET_KEYS)))
+        ttk.Label(budget_section.body, text="Budgets latch at the next task. Commands count reservations, not individual clicks; failures are not refunded.\nThe reported-token threshold can be exceeded by the last request. Missing usage follows the selected policy.", style="Muted.TLabel", wraplength=850).pack(fill="x", pady=4)
         self.task_status = tk.StringVar(value="Task status unknown.")
         ttk.Label(task_section.body, textvariable=self.task_status, style="Muted.TLabel", wraplength=850).pack(fill="x", pady=4)
         ttk.Label(task_section.body, text="Limits latch at task start. After a stop, new operator input starts another task. Readback follow-up requires bounded mode.\nLimits apply between operations; remote requests and already executing actions may finish later. Legacy keeps existing scheduling.", style="Muted.TLabel", wraplength=850).pack(fill="x")
@@ -175,7 +196,11 @@ class AgentControls(CollapsibleSection):
         task = continuation.get("active_task") or {}
         self.task_status.set(f"Observed: {continuation.get('mode', 'unknown')} · {task.get('status', 'unknown')} · "
                              f"{task.get('turns', 0)}/{task.get('max_turns', '?')} model turns · "
-                             f"{task.get('elapsed_seconds', 0)}s elapsed · {task.get('stop_reason') or 'no stop recorded'}")
+                             f"{task.get('elapsed_seconds', 0)}s elapsed · {task.get('stop_reason') or 'no stop recorded'} · "
+                             f"Outcome reports: {task.get('outcome_reporting', 'not latched')} (active task) / {continuation.get('outcome_reporting', 'unknown')} (next task)"
+                             + "\n" + task_budget_summary(task)
+                             + f"\nActive carry policies: plans {task.get('plan_carry_policy', 'not latched')} / proposals {task.get('pending_carry_policy', 'not latched')}"
+                             + ("\n" + task_outcome_summary(task) if task.get("reported_outcome") else ""))
         models, status, modes = (state.get(key) or {} for key in ("models", "model_status", "modes"))
         choices = (state.get("model_catalog") or {}).get("choices", [])
         catalog = getattr(self.app, "chatgpt_catalog", {})

@@ -1,5 +1,17 @@
 # Aurora Typed Settings and Transactions Reference
 
+## November 5 — subscription stream boundary (Implementation 53)
+
+Registry: **48 settings / 387 bindings / 157 reviewed contracts**. `auth.subscription_policy` / `SET_SUBSCRIPTION_POLICY([legacy|bounded])` is operator-only for changes, auth-locked, session-only and effective on the next subscription request. The startup environment selector is `AURORA_SUBSCRIPTION_POLICY`; legacy remains the default. Zero arguments query. Shared CLI/Advanced/Preview/Apply/Undo observe the same value; existing saved preference documents are unchanged. This does not change auth route, enable inference, retry a failed request or switch billing.
+
+Bounded runs one hidden owned inference process with 90-second socket-idle and a 180-second parent inference deadline. Cancel terminates that local worker; validated complete output alone can return. Auth/catalog preflight stays in the parent with existing timeouts/cooperative checks, so the deadline is not a full-request or provider-side cancellation guarantee. Safe phase/timing/cleanup diagnostics are in Model Status. The legacy stream reader remains available. Read Implementation 53 (development reference omitted from this snapshot) for evidence and limits.
+
+## November 5 — task outcome opt-in (Implementation 46)
+
+Current registry **40 settings / 379 bindings / 149 reviewed contracts**; preview reset 36, persisted preference fields remain 69. `task.outcome_reporting` / `SET_TASK_OUTCOME_REPORTING([on|off])` uses the execution lock and is operator-only for changes; zero arguments query. Default off preserves prior behavior. Startup `AURORA_TASK_OUTCOME_REPORTING` and session commands/Advanced/Agent controls share one authority; the setting latches at the next bounded task, so changing the configured value does not silently rewrite an active task. The panel displays both active and next-task values. Preview/Apply/Undo and reset affect configuration, not an already recorded outcome. No new saved-profile field is claimed.
+
+`SHOW_TASK_STATUS()` and `REPORT_TASK_OUTCOME(task_id, done|wait|approval|error, reason)` have reviewed standalone controller contracts. The latter stops automatic continuation only for the exact opted-in task and records an unverified declaration. It does not approve pending work, complete goals or cancel admitted actions. Full semantics are in the [scheduler reference](scheduler-reference.md).
+
 ## November 5 — reviewed receipt scope (Implementation 44)
 
 Current registry **39 settings / 376 bindings / 146 reviewed contracts**; preview reset 35, persisted preference fields remain 69.

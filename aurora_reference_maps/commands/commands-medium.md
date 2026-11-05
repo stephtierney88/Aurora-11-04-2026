@@ -114,6 +114,7 @@
 - `RELEASE_HELD_INPUTS()`: Cancel active/queued command batches and release Aurora-owned inputs. Model work and Live stay unchanged.
 - `REMOVE_MODEL(name)`: Remove a custom model from the Aurora catalog.
 - `REPLACE_PENDING(command)`: Hold a validated command/batch using the chosen normal, insert or replace mode.
+- `REPORT_TASK_OUTCOME(task_id, done|wait|approval|error, reason)`: Declare done, wait, approval or error for the current opted-in task and stop automatic continuation. This is not verified success, approval, cancellation or rollback.
 - `REQUEST_DEMAND_CAPTURE(optional_reason, optional_settle_seconds)`: Request a one-off screenshot capture without changing the normal timer heartbeat or reordering pending commands.
 - `REQUEST_PROMPT_PIN(target, note=...)`: Convenience command to request a metadata-only Prompt Pin.
 - `REQUEST_SCREENSHOT_CAPTURE(optional_reason, optional_settle_seconds)`: Request a one-off screenshot capture without changing the normal timer heartbeat or reordering pending commands.
@@ -187,7 +188,9 @@
 - `SET_GAMEPLAY_SCENE_POLICY([value])`: Set game.scene_policy, or omit value to read it. Evidence uses fresh model observation/scene sections with token boundaries and conflict checks. Legacy retains mixed-context substring inference.
 - `SET_GAME_PROFILE([value])`: Set game.profile, or omit value to read it. Gameplay assumptions, prompts, controls, and save-state guidance.
 - `SET_GOAL_SAVE_FORMAT([value])`: Set goals.save_format, or omit value to read it. Versioned saves add a schema envelope; legacy preserves the existing task document shape. Both use recursive IDs, validation and atomic replacement.
+- `SET_HIERARCHY_DISPATCH([value])`: Set goals.hierarchy_dispatch, or omit value to read it. Legacy routes Level 1 commands; advisory keeps hierarchy as notes. Explicit commands remain available.
 - `SET_HIGH_DETAIL(...)`: Inspect the handler; detailed usage has not been reviewed.
+- `SET_HORIZON_SYNC([value])`: Set goals.horizon_sync, or omit value to read it. Legacy replaces four horizon lists from hierarchy levels; preserve keeps explicit horizon lists and hierarchy separate.
 - `SET_IMAGE_DETAIL([value])`: Set vision.image_detail, or omit value to read it. Default image detail before model-specific compatibility normalization.
 - `SET_IMPORTANT_MESSAGES([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - `SET_IMSGS_DECAY_CHECK([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
@@ -224,9 +227,16 @@
 - `SET_SOUND_EFFECTS(on|off)`: Enable or disable sound effects.
 - `SET_STATEFUL_MODEL_PRESET(stateless-default|responses-link-preview|conversation-preview)`: Select the visible stateful preset profile metadata; live transport remains unchanged until a later transport slice.
 - `SET_STATUS_OVERLAY(on|off)`: Toggle the top status text overlay.
+- `SET_SUBSCRIPTION_POLICY([value])`: Set auth.subscription_policy, or omit value to read it. Legacy retains the cooperative stream reader. Bounded uses one owned HTTP worker with 90s read idle and a 180s inference deadline, locally terminable on Cancel.
 - `SET_TASK_CONTINUATION([value])`: Set task.continuation_mode, or omit value to read it. Bounded limits all model slots/wake reasons in one task; legacy retains unrestricted scheduler behavior.
+- `SET_TASK_MAX_COMMANDS([value])`: Set task.max_commands, or omit value to read it. Maximum expanded command bindings reserved for automatic admission in one bounded task. Zero disables this budget; latched at next task start.
 - `SET_TASK_MAX_MODEL_TURNS([value])`: Set task.max_model_turns, or omit value to read it. Maximum model-turn admissions, across primary/review slots. Latched at the next task start.
+- `SET_TASK_MAX_REPORTED_TOKENS([value])`: Set task.max_reported_tokens, or omit value to read it. Stop automatic continuation and response commands when provider-reported total tokens reach this threshold. Zero disables it; latched at next task start.
 - `SET_TASK_MAX_SECONDS([value])`: Set task.max_seconds, or omit value to read it. Elapsed-time admission limit; late model responses cannot launch new commands. Latched at next task start.
+- `SET_TASK_OUTCOME_REPORTING([value])`: Set task.outcome_reporting, or omit value to read it. Allow a standalone declared done/wait/approval/error report to stop automatic continuation. Latched at next bounded task start.
+- `SET_TASK_PENDING_CARRY_POLICY([value])`: Set task.pending_carry_policy, or omit value to read it. Carry, hold for operator review, or discard explicitly task-scoped unsubmitted proposals from previous tasks.
+- `SET_TASK_PLAN_CARRY_POLICY([value])`: Set task.plan_carry_policy, or omit value to read it. Carry queued plans, or discard explicitly task-scoped plans from a previous task. Operator and unattributed plans are preserved.
+- `SET_TASK_UNKNOWN_USAGE_POLICY([value])`: Set task.unknown_usage_policy, or omit value to read it. Continue with explicit unknown coverage, or stop after an unmetered request when a reported-token threshold is enabled. Latched at next task start.
 - `SET_TEMPERATURE([value])`: Set inference.temperature, or omit value to read it. Sampling temperature used by Aurora where the selected model accepts it.
 - `SET_TEXT_MODEL([value])`: Set model.text, or omit value to read it. Model used for text-oriented Aurora turns.
 - `SET_TILE_GRID(on|off)`: Toggle the colored tile grid overlay.
@@ -328,6 +338,7 @@
 - `SHOW_RUNTIME_HEALTH()`: Display the Window 18 operator health readout that summarizes monitor, state export, queue/bridge, capture, image-index cost, recovery/defaults, auth, and safety guardrail posture without changing settings.
 - `SHOW_SECURITY()`: Display the external-operator passcode/authorization state.
 - `SHOW_STATEFUL_MODEL_PRESETS()`: Display explicit stateful preset profiles and whether they are metadata-only or active.
+- `SHOW_TASK_STATUS()`: Inspect the controller's current bounded task, limits and declared outcome.
 - `SHOW_TURN_SCHEDULER()`: Display the current turn-scheduler mode, cadence, and last wake reason.
 - `SHOW_TURN_SCHEDULER_PROFILES()`: Display the named scheduler profiles and their thresholds.
 - `SHOW_WINDOW_18_21_CHECKPOINT_READINESS()`: Alias for SHOW_CHECKPOINT_READINESS().

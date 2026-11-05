@@ -39,6 +39,7 @@ def sample_state():
             "load_live_init_prompt": False,
         },
         "models": {
+            "subscription_policy": "legacy",
             "service_tier": "regular",
             "text": "gpt-5.4",
             "vision": "gpt-5.4",
@@ -106,11 +107,11 @@ class AuroraSettingsRegistryTests(unittest.TestCase):
         definitions = list_setting_definitions()
 
         self.assertEqual(summary["schema_version"], "aurora_settings_registry_v1")
-        self.assertEqual(summary["setting_count"], 39)
-        self.assertEqual(len(definitions), 39)
+        self.assertEqual(summary["setting_count"], 48)
+        self.assertEqual(len(definitions), 48)
         self.assertTrue(summary["write_enabled"])
         self.assertEqual(summary["mutation_status"], "atomic_runtime_transactions")
-        self.assertEqual(len({definition.key for definition in definitions}), 39)
+        self.assertEqual(len({definition.key for definition in definitions}), 48)
 
     def test_alias_resolution_and_strict_key_errors(self):
         self.assertEqual(resolve_setting_definition("live").key, "runtime.live")

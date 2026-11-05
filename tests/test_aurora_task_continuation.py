@@ -1,7 +1,11 @@
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 
 from aurora_task_continuation import TaskContinuation, CommandReadbacks, prepare_init_delivery, reported_token_usage
 from aurora_settings_registry import coerce_setting_value, InvalidSettingValueError
+from aurora_task_continuation import (TASK_OUTCOMES, parse_task_control_arguments, task_outcome_summary,
+                                     command_task_scope, current_command_task, task_budget_summary)
+from aurora_command_contracts import validate_command_arguments, describe_command_contract
 
 
 class TaskContinuationTests(unittest.TestCase):
@@ -61,6 +65,250 @@ class TaskContinuationTests(unittest.TestCase):
         for value in ("8.1", "nan", "inf", True, 0, 10001):
             with self.subTest(value=value), self.assertRaises(InvalidSettingValueError):
                 coerce_setting_value("task.max_model_turns", value)
+
+
+class TaskOutcomeTests(unittest.TestCase):
+    def setUp(self):
+        self.now = 100.0
+        self.task = TaskContinuation(clock=lambda: self.now)
+
+    def start(self, enabled=True):
+        self.assertTrue(self.task.reserve(max_turns=5, max_seconds=30, operator_input=True,
+                                          outcome_reporting=enabled))
+        return self.task.snapshot()["task_id"]
+
+    def report(self, task_id, outcome="done", reason="Observed fixture evidence", actor="model:fixture"):
+        return self.task.report_outcome(task_id, outcome, reason, actor=actor, origin_request_id="request-fixture")
+
+    def test_each_outcome_stops_without_verifying_success_and_new_task_clears_report(self):
+        previous = ""
+        for outcome in TASK_OUTCOMES:
+            task_id = self.start()
+            self.assertNotEqual(previous, task_id)
+            self.assertNotIn("reported_outcome", self.task.snapshot())
+            receipt = self.report(task_id, outcome)
+            self.assertTrue(receipt["success"])
+            self.assertEqual(receipt["before"]["status"], "running")
+            self.assertEqual(receipt["after"]["stop_reason"], "reported_" + outcome)
+            report = receipt["after"]["reported_outcome"]
+            self.assertEqual(report["verification"], "reported_not_verified")
+            self.assertEqual(report["origin_inference_request_id"], "request-fixture")
+            self.assertTrue(report["reported_at"].endswith("+00:00"))
+            self.assertFalse(self.task.can_dispatch())
+            self.assertFalse(self.task.check_deadline())
+            previous = task_id
+
+    def test_legacy_disabled_and_active_setting_latches(self):
+        task_id = self.start(enabled=False)
+        self.task.reserve(max_turns=5, max_seconds=30, outcome_reporting=True)
+        self.assertFalse(self.report(task_id)["success"])
+        self.assertEqual(self.task.snapshot()["status"], "running")
+        self.task.stop("operator_cancelled")
+        task_id = self.start()
+        self.task.reserve(max_turns=5, max_seconds=30, outcome_reporting=False)
+        self.assertTrue(self.report(task_id)["success"])
+
+    def test_stale_cancelled_and_expired_reports_cannot_relabel_task(self):
+        first = self.start()
+        self.task.stop("cancelled")
+        self.assertFalse(self.report(first)["success"])
+        self.assertEqual(self.task.snapshot()["stop_reason"], "cancelled")
+        second = self.start()
+        self.assertFalse(self.report(first)["success"])
+        self.now += 30
+        self.assertFalse(self.report(second)["success"])
+        self.assertEqual(self.task.snapshot()["stop_reason"], "time_limit")
+        self.assertNotIn("reported_outcome", self.task.snapshot())
+
+    def test_duplicate_is_immutable_and_conflicting_actor_or_reason_rejected(self):
+        task_id = self.start()
+        original = self.report(task_id)
+        self.assertEqual(self.report(task_id)["effect_status"], "unchanged")
+        self.assertFalse(self.report(task_id, "error")["success"])
+        self.assertFalse(self.report(task_id, actor="operator")["success"])
+        self.assertFalse(self.report(task_id, reason="different")["success"])
+        original["after"]["reported_outcome"]["reason"] = "mutated caller copy"
+        view = self.task.snapshot()
+        self.assertEqual(view["reported_outcome"]["reason"], "Observed fixture evidence")
+        view["reported_outcome"]["outcome"] = "error"
+        self.assertEqual(self.task.snapshot()["reported_outcome"]["outcome"], "done")
+
+    def test_concurrent_conflicting_reports_have_exactly_one_winner(self):
+        task_id = self.start()
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            receipts = list(pool.map(lambda value: self.report(task_id, value), TASK_OUTCOMES))
+        self.assertEqual(sum(row["success"] for row in receipts), 1)
+        winner = next(row for row in receipts if row["success"])["after"]["reported_outcome"]
+        self.assertEqual(self.task.snapshot()["reported_outcome"], winner)
+
+    def test_contract_validation_and_quoted_reason_are_data(self):
+        task_id = "task-" + "a" * 32
+        reason = '"Observed, then checked; no extra execution"'
+        parsed = parse_task_control_arguments("REPORT_TASK_OUTCOME", [task_id, "done", reason])
+        self.assertEqual(parsed["reason"], reason[1:-1])
+        for args in ([], [task_id, "done"], ["old", "done", "why"], [task_id, "success", "why"],
+                     [task_id, "done", " "], [task_id, "done", "x" * 2001], [task_id, "done", "x", "extra"]):
+            with self.subTest(args=args), self.assertRaises(ValueError):
+                validate_command_arguments("REPORT_TASK_OUTCOME", args)
+        with self.assertRaises(ValueError):
+            validate_command_arguments("SHOW_TASK_STATUS", ["extra"])
+        self.assertEqual(describe_command_contract("REPORT_TASK_OUTCOME")["result"]["receipt_field"], "task_control_results")
+        real_id = self.start()
+        self.report(real_id, reason='"literal quote"')
+        self.assertEqual(self.task.snapshot()["reported_outcome"]["reason"], '"literal quote"')
+
+    def test_ui_summary_is_bounded_and_explicitly_unverified(self):
+        self.report(self.start(), "approval", "a\n" * 200)
+        summary = task_outcome_summary(self.task.snapshot())
+        self.assertIn("Reported approval by model:fixture (unverified)", summary)
+        self.assertNotIn("\n", summary)
+        self.assertLess(len(summary), 240)
+        self.assertEqual(task_outcome_summary({}), "")
+
+
+class TaskBudgetTests(unittest.TestCase):
+    def setUp(self):
+        self.now = 100.0
+        self.task = TaskContinuation(clock=lambda: self.now)
+
+    def start(self, **limits):
+        self.assertTrue(self.task.reserve(max_turns=100, max_seconds=120, operator_input=True, **limits))
+        return self.task.snapshot()["task_id"]
+
+    def usage(self, task_id, request_id, usage, **options):
+        return self.task.record_request(task_id, request_id, started=True, phase="responded", usage=usage, **options)
+
+    def test_zero_defaults_preserve_unlimited_commands_and_missing_usage(self):
+        task_id = self.start(unknown_usage_policy="stop")
+        self.assertTrue(self.task.admit_commands(task_id, "large", 100000)["allowed"])
+        self.usage(task_id, "unknown", None)
+        self.usage(task_id, "known", {"total_tokens": 100000000})
+        self.assertTrue(self.task.can_dispatch())
+        self.assertFalse(self.task.budget_snapshot()["enabled"])
+
+    def test_whole_batch_reservation_and_no_partial_prefix(self):
+        task_id = self.start(max_commands=3)
+        first = self.task.admit_commands(task_id, "b1", 2)
+        self.assertTrue(first["allowed"])
+        self.assertEqual(first["before"]["remaining_commands"], 3)
+        self.assertEqual(first["after"]["remaining_commands"], 1)
+        rejected = self.task.admit_commands(task_id, "b2", 2)
+        self.assertFalse(rejected["allowed"])
+        self.assertEqual(rejected["code"], "command_limit")
+        self.assertEqual(self.task.snapshot()["stop_reason"], "command_limit")
+        self.assertEqual(self.task.budget_snapshot()["admitted_commands"], 2)
+        self.assertFalse(self.task.can_dispatch())
+
+    def test_exact_budget_stops_next_inference_but_reserved_work_is_not_cancelled(self):
+        task_id = self.start(max_commands=2)
+        self.assertTrue(self.task.admit_commands(task_id, "b1", 2)["allowed"])
+        self.assertTrue(self.task.check_deadline())
+        self.assertFalse(self.task.can_dispatch())
+        self.task.record_command(dict(task_id=task_id, command_batch_id="b1", executed_commands=["a"],
+                                      failed_commands=["b"], cancelled_commands=[]))
+        self.assertEqual(self.task.budget_snapshot()["admitted_commands"], 2)
+        self.assertEqual(self.task.snapshot()["accounting"]["failed_commands"], 1)
+
+    def test_duplicate_and_stale_admissions_cannot_replay_or_spend_new_task(self):
+        first_id = self.start(max_commands=4)
+        accepted = self.task.admit_commands(first_id, "batch", 2)
+        accepted["after"]["last_admission"]["allowed"] = False
+        duplicate = self.task.admit_commands(first_id, "batch", 2)
+        self.assertFalse(duplicate["allowed"])
+        self.assertEqual(duplicate["code"], "duplicate_batch")
+        self.assertEqual(self.task.budget_snapshot()["admitted_commands"], 2)
+        self.task.stop("cancelled")
+        second_id = self.start(max_commands=6)
+        self.assertNotEqual(first_id, second_id)
+        self.assertEqual(self.task.admit_commands(first_id, "old", 1)["code"], "stale_task")
+        self.assertEqual(self.task.budget_snapshot()["admitted_commands"], 0)
+
+    def test_concurrent_batches_cannot_oversubscribe(self):
+        task_id = self.start(max_commands=5)
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            results = list(pool.map(lambda n: self.task.admit_commands(task_id, f"b{n}", 1), range(12)))
+        self.assertEqual(sum(result["allowed"] for result in results), 5)
+        self.assertEqual(self.task.budget_snapshot()["admitted_commands"], 5)
+
+    def test_limits_and_unknown_policy_latch_for_task_across_model_turns(self):
+        self.start(max_commands=5, max_reported_tokens=100, unknown_usage_policy="stop")
+        self.task.reserve(max_turns=1000, max_seconds=1000, max_commands=500,
+                          max_reported_tokens=10000, unknown_usage_policy="continue", trigger="review_model")
+        budget = self.task.budget_snapshot()
+        self.assertEqual((budget["max_commands"], budget["max_reported_tokens"], budget["unknown_usage_policy"]), (5, 100, "stop"))
+
+    def test_usage_counts_once_before_commands_and_across_model_slots(self):
+        task_id = self.start(max_reported_tokens=100)
+        self.assertTrue(self.usage(task_id, "primary", {"total_tokens": 25}, model="sol"))
+        self.assertFalse(self.usage(task_id, "primary", {"total_tokens": 25}, model="sol"))
+        self.assertTrue(self.usage(task_id, "review", {"total_tokens": 80}, model="astra"))
+        snapshot = self.task.snapshot()
+        self.assertEqual(snapshot["stop_reason"], "reported_token_limit")
+        self.assertEqual(snapshot["budgets"]["known_total_tokens"], 105)
+        self.assertEqual(snapshot["accounting"]["requests_started"], 2)
+        self.assertFalse(self.task.admit_commands(task_id, "late", 1)["allowed"])
+        self.assertFalse(self.task.can_dispatch())
+
+    def test_unknown_continue_is_explicit_not_zero(self):
+        task_id = self.start(max_reported_tokens=100, unknown_usage_policy="continue")
+        self.usage(task_id, "missing", None)
+        self.assertTrue(self.task.can_dispatch())
+        budget = self.task.budget_snapshot()
+        self.assertEqual((budget["known_usage_requests"], budget["unknown_usage_requests"]), (0, 1))
+        self.assertIn("unknown usage 1 (continue)", task_budget_summary(self.task.snapshot()))
+
+    def test_unknown_stop_and_disabled_policy_distinguish_invalid_usage(self):
+        for usage in (None, {}, {"total_tokens": -1}, {"total_tokens": True}, {"total_tokens": "5"}):
+            task_id = self.start(max_reported_tokens=100, unknown_usage_policy="stop")
+            self.usage(task_id, "missing", usage)
+            self.assertEqual(self.task.snapshot()["stop_reason"], "usage_unknown")
+        task_id = self.start(max_reported_tokens=0, unknown_usage_policy="stop")
+        self.usage(task_id, "missing", None)
+        self.assertTrue(self.task.can_dispatch())
+
+    def test_failed_or_cancelled_work_never_refunds_or_relabels_prior_stop(self):
+        task_id = self.start(max_commands=5, max_reported_tokens=100, unknown_usage_policy="stop")
+        self.task.admit_commands(task_id, "reserved", 3)
+        self.task.stop("operator_cancelled")
+        self.usage(task_id, "late", {"total_tokens": 110})
+        self.assertEqual(self.task.snapshot()["stop_reason"], "operator_cancelled")
+        self.assertEqual(self.task.budget_snapshot()["admitted_commands"], 3)
+        self.assertEqual(self.task.budget_snapshot()["known_total_tokens"], 110)
+
+    def test_capacity_stops_enabled_budget_instead_of_allowing_untracked_work(self):
+        task_id = self.start(max_commands=10000)
+        for number in range(4096):
+            self.assertTrue(self.task.admit_commands(task_id, str(number), 1)["allowed"])
+        self.assertEqual(self.task.admit_commands(task_id, "overflow", 1)["code"], "command_budget_capacity")
+        task_id = self.start(max_reported_tokens=10000)
+        for number in range(4096):
+            self.usage(task_id, str(number), {"total_tokens": 0})
+        self.assertFalse(self.usage(task_id, "overflow", {"total_tokens": 1}))
+        self.assertEqual(self.task.snapshot()["stop_reason"], "usage_accounting_capacity")
+        self.assertTrue(self.task.snapshot()["accounting"]["capacity_exceeded"])
+
+    def test_command_context_preserves_parent_identity_and_restores_after_exception(self):
+        entry = dict(task_id="task-parent", inference_request_id="request-parent", command="private raw text",
+                     task_budget_results=[{"controller_pid": 123, "allowed": True}])
+        self.assertEqual(current_command_task(), {})
+        with command_task_scope(entry):
+            entry["task_budget_results"][0]["allowed"] = False
+            self.assertTrue(current_command_task()["task_budget_results"][0]["allowed"])
+            self.assertNotIn("command", current_command_task())
+            with self.assertRaises(ValueError):
+                with command_task_scope(dict(task_id="child")):
+                    raise ValueError("fixture")
+            self.assertEqual(current_command_task()["task_id"], "task-parent")
+        self.assertEqual(current_command_task(), {})
+
+    def test_registry_rejects_invalid_limits_and_accepts_disabled_values(self):
+        for key in ("task.max_commands", "task.max_reported_tokens"):
+            self.assertEqual(coerce_setting_value(key, "0"), 0)
+            for value in (-1, True, "nan", "inf", "2.1", 1000000001):
+                with self.subTest(key=key, value=value), self.assertRaises(InvalidSettingValueError):
+                    coerce_setting_value(key, value)
+        with self.assertRaises(InvalidSettingValueError):
+            coerce_setting_value("task.unknown_usage_policy", "assume_zero")
 
 
 class InitDeliveryTests(unittest.TestCase):

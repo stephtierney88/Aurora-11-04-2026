@@ -116,6 +116,7 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `RELEASE_HELD_INPUTS()`
 - `REMOVE_MODEL(name)`
 - `REPLACE_PENDING(command)`
+- `REPORT_TASK_OUTCOME(task_id, done|wait|approval|error, reason)`
 - `REQUEST_DEMAND_CAPTURE(optional_reason, optional_settle_seconds)`
 - `REQUEST_PROMPT_PIN(target, note=...)`
 - `REQUEST_SCREENSHOT_CAPTURE(optional_reason, optional_settle_seconds)`
@@ -189,7 +190,9 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SET_GAMEPLAY_SCENE_POLICY([value])`
 - `SET_GAME_PROFILE([value])`
 - `SET_GOAL_SAVE_FORMAT([value])`
+- `SET_HIERARCHY_DISPATCH([value])`
 - `SET_HIGH_DETAIL(...)`
+- `SET_HORIZON_SYNC([value])`
 - `SET_IMAGE_DETAIL([value])`
 - `SET_IMPORTANT_MESSAGES([on|off])`
 - `SET_IMSGS_DECAY_CHECK([on|off])`
@@ -226,9 +229,16 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SET_SOUND_EFFECTS(on|off)`
 - `SET_STATEFUL_MODEL_PRESET(stateless-default|responses-link-preview|conversation-preview)`
 - `SET_STATUS_OVERLAY(on|off)`
+- `SET_SUBSCRIPTION_POLICY([value])`
 - `SET_TASK_CONTINUATION([value])`
+- `SET_TASK_MAX_COMMANDS([value])`
 - `SET_TASK_MAX_MODEL_TURNS([value])`
+- `SET_TASK_MAX_REPORTED_TOKENS([value])`
 - `SET_TASK_MAX_SECONDS([value])`
+- `SET_TASK_OUTCOME_REPORTING([value])`
+- `SET_TASK_PENDING_CARRY_POLICY([value])`
+- `SET_TASK_PLAN_CARRY_POLICY([value])`
+- `SET_TASK_UNKNOWN_USAGE_POLICY([value])`
 - `SET_TEMPERATURE([value])`
 - `SET_TEXT_MODEL([value])`
 - `SET_TILE_GRID(on|off)`
@@ -330,6 +340,7 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SHOW_RUNTIME_HEALTH()`
 - `SHOW_SECURITY()`
 - `SHOW_STATEFUL_MODEL_PRESETS()`
+- `SHOW_TASK_STATUS()`
 - `SHOW_TURN_SCHEDULER()`
 - `SHOW_TURN_SCHEDULER_PROFILES()`
 - `SHOW_WINDOW_18_21_CHECKPOINT_READINESS()`

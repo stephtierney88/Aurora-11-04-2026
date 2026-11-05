@@ -70,6 +70,12 @@ def classify_scene(records, *, now, turn, operating_context="unknown"):
     if candidates and candidates <= {"battle", "dialog"} and "battle" in candidates:
         candidates = {"battle"}
     compatibility_notes = []
+    if explicit == {"battle"} and candidates == {"dialog"} and "dialog" not in negated:
+        # A fresh battle label need not repeat the word "battle" in every
+        # observation of its tutorial/result dialogue. Actual negative battle
+        # evidence and unrelated scenes still pass through conflict checks.
+        candidates = {"battle"}
+        compatibility_notes.append("dialog_overlay_with_reported_battle")
     if explicit == {"dialog"} and candidates and candidates <= {"overworld", "dialog"}:
         candidates = {"dialog"}
         compatibility_notes.append("dialog_overlay_with_current_location_evidence")

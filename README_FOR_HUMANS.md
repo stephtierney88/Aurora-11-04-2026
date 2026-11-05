@@ -1,6 +1,6 @@
 # Aurora: start here
 
-Aurora is an experimental Windows desktop agent. **Control Panel → Conversation** is the simplest entry point; the Switchboard, shell and Advanced settings retain the full controls. This guide describes the November 5, 2026 snapshot. For an older download, follow [UPGRADING](UPGRADING.md) first.
+Aurora is an experimental Windows desktop agent. **Control Panel → Conversation** is the simplest entry point; the Switchboard, shell and Advanced settings retain the full controls. This guide describes the November 5, 2026 refresh (release 54, including the GUI settings-snapshot repair). For an older download, follow [UPGRADING](UPGRADING.md) first.
 
 ## Install and open
 
@@ -31,6 +31,8 @@ $env:AURORA_PYTHON = (Resolve-Path .\.venv\Scripts\python.exe).Path
 
 Real subscription inference and Sol → Astra → Sol restoration passed on the development account. Your plan/model access can differ. Long-session refresh/account switching still needs qualification. There is no automatic subscription-to-API billing fallback.
 
+For subscription experiments, Advanced setting **auth.subscription_policy = bounded** adds a locally cancellable inference worker, a 90-second read-idle limit and a 180-second inference deadline. This optional path completed the latest 20-minute Pokémon run. The compatibility default is **legacy**; the choice is session-only and affects the next request. Authentication/catalog checks have separate timeouts, and local cancellation cannot guarantee provider-side cancellation. After a failure, inspect the outcome before explicitly sending another task; unfinished output is not replayed automatically.
+
 ## Your first conversation
 
 1. Open the panel and select **Start runtime**. This starts paused, with safe execution and no implicit action mapping.
@@ -46,7 +48,7 @@ Enabling inference starts an agent loop, not a guaranteed single request. Timers
 | Pause inference | Prevent new inference; inspect already-running work separately. |
 | Cancel work | Cancel active model/command work locally and release owned held inputs where possible. Does not delete queued chat or guarantee remote cancellation. |
 | Stop runtime | Shut down the worker. Closing a chat popout/panel alone is not a substitute. |
-| Reset to preview defaults | Review/apply a 35-control paused/safe/action-none baseline with Sol low/Astra, request-only capture and compatibility continuation settings. Credentials, files, history and saved profiles survive. |
+| Reset to preview defaults | Review/apply the listed paused/safe/action-none baseline with Sol low/Astra, request-only capture and compatibility continuation settings. This is a scoped settings reset, not every Advanced option. Credentials, files, history and saved profiles survive. |
 
 Reset is under **Panel options**, Switchboard and Commands. Same-session Undo is version-checked. Use Cancel separately for active work; inspect pending proposals too. The older orb double-click applies its activation profile and enables inference; labeled buttons are simpler for first use.
 
@@ -73,6 +75,14 @@ Outbox distinguishes queued, runtime receipt, prepared, request started and usab
 - **Task continuation & prompt delivery** offers bounded turns/time, readback wake and optional duplicate-Init removal. Reviewed receipt scope is also available through Advanced settings/commands. These options do not grant permissions or change billing.
 
 Several commands may run from one response. Use short batches on a clear path and fresh observations at uncertain transitions. Command-driven capture can avoid unnecessary heartbeat waits; interpreting its image still takes a new model call.
+
+## Goals and experimental task controls
+
+Aurora currently has **immediate, short, medium and long** horizon lists, goal priority/importance labels, notes, diary and inventory-related memory. Save/load is repaired. Fuller Horizons-2/3 profiles, near/extra-long stores and per-category hard caps are still planned. Recent trials favored keeping active plans small and updating affected steps at milestones, but did not establish a universal best preset.
+
+For advisory planning, select **goals.hierarchy_dispatch = advisory** and **goals.horizon_sync = preserve** in Advanced. Advisory stops stored Level 1 hierarchy from automatically dispatching; preserve keeps explicit horizon lists separate from derived hierarchy. Both retain **legacy** defaults and are included in saved personal/system profiles. These choices do not cancel commands already admitted. Inspect completed-goal history too: a stale medium-term plan or diary can remain after the goal itself completes.
+
+Optional bounded-task controls can stop on declared done/wait/approval/error, reserve a command allowance, stop at a reported-token threshold, and choose how old-task plans/proposals carry forward. They are disabled or compatibility-preserving by default. A reported completion is a model declaration; token thresholds are not dollar caps and may overshoot on the last request. Unknown usage remains unknown. Use the command lookup/Advanced help and inspect **SHOW_TASK_STATUS()** before relying on these controls.
 
 ## Before clicking on another PC
 
@@ -101,4 +111,4 @@ In another terminal in the same folder:
 
 The operator shell controls Aurora; it is not an OS shell. `launch_aurora_validation.cmd` opens the local command/offline-validation console. Browsing commands does not call a model.
 
-A controlled ten-minute FireRed test made useful battle/navigation progress. Website screenshot/click/type primitives are available, but validate one task at a time. No unattended-reliability or universal-screen-calibration claim is made. See [Release notes](RELEASE_NOTES.md) and [roadmap](docs/notes/aurora_runtime_roadmap.md).
+Recent FireRed tests completed **25 minutes** through the rival battle/healing/Route 1 to Viridian, and a later **20-minute continuation** delivered Oak's Parcel and verified the Pokédex before completing the goal. Both used Aurora's normal workers, with bounded supervisors and owned emulator/save copies. Earlier attempts also exposed connection and scene issues; one successful run does not qualify every game situation. Bring your own emulator/game and copied save. Website screenshot/click/type primitives are available, but comparable production-worker website acceptance is still pending. See [Release notes](RELEASE_NOTES.md) and [roadmap](docs/notes/aurora_runtime_roadmap.md).

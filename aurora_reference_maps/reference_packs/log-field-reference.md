@@ -1,5 +1,36 @@
 # Log and State Field Reference
 
+## Implementation 49 — queued task transition evidence
+
+- `task_origin` (`aurora_task_origin_v1`) on next-turn plans/pending representatives: trusted actor/kind, task ID, originating request and batch where known. Operator/unknown origin is intentionally unscoped; support-only changes do not reassign the representative's owner.
+- `continuation.plan_carry_policy` / `pending_carry_policy`: configured next-task values. `continuation.active_task` retains the latched values and `artifact_transition` (`aurora_task_transition_v1`).
+- Transition: previous/current task, plan disposition, plan IDs and before/after hashes, pending count/hashes, disposition counts and at most 64 ID/state rows with omission count. Compact prompt exports omit `pending_items`. No raw discarded contents are retained. `rollback_supported=false` is deliberate.
+- `task_artifact_transition` log event contains the committed transition. In-memory `journal_status=written|failed` and error type distinguish disk-write evidence; failure does not undo the change. Preparation failure records `success=false` and stops before provider submission.
+- Pending `task_held` / `task_hold`: prior/current task and hold policy. Only explicit operator approval/clear releases this workflow hold. `not_started` approval returns to `task_held`; unknown acknowledgement remains `uncertain`.
+
+## Implementation 48 — bounded task progress
+
+- `continuation.active_task.progress`: schema `aurora_task_progress_v1`, controller-relative monotonic observations, latest event/command/request and retention/eviction counters. Status export includes `commands`, `requests`, `events` (64 each); prompt status omits those arrays.
+- Command rows: `command_batch_id`, `origin_request_id`, `receipt_id`, status/counts, observation/capture-request generations, selected `frame_id`, first corresponding readback/frame inference IDs and local timestamps. Admission is not queue delivery; receipt is not physical success. Later observation boundaries clear the prior frame association.
+- Request rows: `inference_request_id`, requested model, phase/timestamps, selected frame and explicit `readback_batch_ids` / `frame_batch_ids`. A mismatched image path cannot report another file's identity. Missing/evicted joins remain absent instead of guessed.
+- `latency_ms`: local controller boundary differences only; unavailable/invalid/negative differences are null. Failed/cancelled requests may have `submitted_to_terminal` without `submitted_to_response`. No subtraction across capture-service/controller clocks.
+- `accounting.last_request.progress_errors`: count of phase-observer failures for that request. Observability failures do not alter delivery, issue retries or imply remote cancellation. No raw text, paths, pixels or provider error bodies are added to progress records.
+
+## Implementation 47 — task budget evidence
+
+- `continuation.max_commands`, `max_reported_tokens`, `unknown_usage_policy`: configured next-task values; active values live in `continuation.active_task` and its `budgets` object.
+- `budgets`: enabled, admitted command/batch counts, remaining commands (null when off), known total tokens, known/unknown usage request coverage, policy, controller PID and last admission. Binding counts are reservations, not verified physical effects; token totals are reported-only.
+- `task_budget_results`: typed `aurora_task_budget_result_v1` receipts with task/batch/controller, allowed/success, effect_status, code/reason and before/after. Foreign-controller nested denial reports `controller_required` without fabricating local before/after evidence. Rejected admission returns submission `not_started`; its execution receipt records failure without executed commands. Reviewed readbacks support this family.
+- Stop reasons: `command_limit`, `command_budget_capacity`, `reported_token_limit`, `usage_unknown`, `usage_accounting_capacity`. Existing cancellation/failure/timeout reasons are not overwritten. A command stop can occur before admission; a token stop occurs after usage is reported and may overshoot.
+- `last_model_turn_status` / model log status `task_budget_stopped`, plus log `task_budget_stop`: a usable response was retained but its commands/tail were withheld. Delivery remains responded; do not render this as a provider failure or locally cancelled reply.
+
+## Implementation 46 — task outcome evidence
+
+- `continuation.outcome_reporting`: configured value for the next bounded task; `continuation.active_task.outcome_reporting` is the latched active value.
+- `continuation.active_task.reported_outcome`: immutable task ID, outcome, reason, trusted actor, originating inference request ID (empty for an operator report), UTC report timestamp and `verification=reported_not_verified`.
+- `status=stopped` / `stop_reason=reported_done|reported_wait|reported_approval|reported_error`: automatic continuation ended by a declaration, not a fabricated provider failure or cancelled request.
+- `task_control_results`: typed controller inspection/report results in terminal command receipts, with success/effect status, rejection reason and before/after task evidence. Accepted model reports retain enclosing batch/task/request IDs. Reviewed readbacks can retain this family; a stopped task does not wake itself to consume it.
+
 ## Purpose
 - Explain the main exported fields Aurora and operators use during smoke and soak testing.
 

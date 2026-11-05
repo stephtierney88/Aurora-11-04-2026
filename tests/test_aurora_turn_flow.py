@@ -9,11 +9,41 @@ import unittest
 
 from aurora_runtime_work import CancellationDomain
 from aurora_task_continuation import TaskContinuation, CommandReadbacks
+from aurora_settings_registry import coerce_setting_value
 
 
 ROOT = Path(__file__).resolve().parents[1]
 TREE = ast.parse((ROOT / "aurora2.py").read_text(encoding="utf-8-sig"))
 FUNCTIONS = {node.name: node for node in TREE.body if isinstance(node, ast.FunctionDef)}
+
+
+class StartupHeartbeatTests(unittest.TestCase):
+    """Exercise the actual startup function without native/runtime imports."""
+
+    def apply(self, value, initial=2.25):
+        function = FUNCTIONS["apply_cli_args"]
+        fields = {node.attr for node in ast.walk(function)
+                  if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name)
+                  and node.value.id == "parsed_args"}
+        arguments = SimpleNamespace(**dict.fromkeys(fields))
+        arguments.turn_heartbeat_seconds = value
+        scope = {"TURN_SCHEDULER_HEARTBEAT_SECONDS": initial,
+                 "coerce_setting_value": coerce_setting_value,
+                 "infer_turn_scheduler_profile_name": lambda: "custom"}
+        exec(compile(ast.Module(body=[function], type_ignores=[]), "startup", "exec"), scope)
+        scope["apply_cli_args"](arguments)
+        return scope["TURN_SCHEDULER_HEARTBEAT_SECONDS"]
+
+    def test_startup_preserves_explicit_off_and_valid_intervals(self):
+        for value in (0, 0.1, 2.25, 30):
+            with self.subTest(value=value):
+                self.assertEqual(self.apply(value), value)
+        self.assertEqual(self.apply(None), 2.25)
+
+    def test_startup_rejects_invalid_intervals_instead_of_polling(self):
+        for value in (-1, float("nan"), float("inf")):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                self.apply(value)
 
 
 class TurnFlowTests(unittest.TestCase):

@@ -104,9 +104,9 @@ class ProfileContractTests(unittest.TestCase):
         node = ingress.FUNCTIONS["_build_runtime_preferences_snapshot"]
         raw = next(n.value for n in node.body if isinstance(n, ast.Return))
         self.assertEqual(set(fields(raw)), set(profiles.PROFILE_FIELDS))
-        self.assertEqual(len(fields(raw)), 69)
+        self.assertEqual(len(fields(raw)), 71)
         rows = {row["command"]: row for row in build_command_catalog(ingress.ROOT)["commands"]}
-        self.assertEqual(len(rows), 376)
+        self.assertEqual(len(rows), 387)
         for name in profiles.DEFAULT_PROFILE_COMMANDS:
             self.assertEqual(rows[name]["contract"], describe_command_contract(name))
             self.assertEqual(rows[name]["contract"]["result"]["receipt_field"], "default_profile_results")

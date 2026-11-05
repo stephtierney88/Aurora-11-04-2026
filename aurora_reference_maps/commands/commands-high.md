@@ -194,7 +194,7 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Binding: runtime
 - Aliases: none
 - Parameter validation: pre_dispatch
-- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock.
+- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock. Optional cross-task holds require explicit operator approval or clearing; models and auto approval cannot release them.
 
 Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
 
@@ -510,7 +510,7 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Binding: runtime
 - Aliases: CLEAR_PENDING_COMMANDS
 - Parameter validation: pre_dispatch
-- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock.
+- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock. Optional cross-task holds require explicit operator approval or clearing; models and auto approval cannot release them.
 
 Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
 
@@ -529,7 +529,7 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Binding: runtime
 - Aliases: CLEAR_PENDING
 - Parameter validation: pre_dispatch
-- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock.
+- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock. Optional cross-task holds require explicit operator approval or clearing; models and auto approval cannot release them.
 
 Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
 
@@ -813,7 +813,7 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Binding: runtime
 - Aliases: none
 - Parameter validation: pre_dispatch
-- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock.
+- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock. Optional cross-task holds require explicit operator approval or clearing; models and auto approval cannot release them.
 
 Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
 
@@ -1075,7 +1075,7 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Binding: runtime
 - Aliases: REPLACE_PENDING
 - Parameter validation: pre_dispatch
-- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock.
+- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock. Optional cross-task holds require explicit operator approval or clearing; models and auto approval cannot release them.
 
 Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
 
@@ -1604,7 +1604,7 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Binding: runtime
 - Aliases: none
 - Parameter validation: pre_dispatch
-- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock.
+- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock. Optional cross-task holds require explicit operator approval or clearing; models and auto approval cannot release them.
 
 Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
 
@@ -1728,7 +1728,7 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Binding: runtime
 - Aliases: OVERRIDE_PENDING
 - Parameter validation: pre_dispatch
-- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock.
+- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock. Optional cross-task holds require explicit operator approval or clearing; models and auto approval cannot release them.
 
 Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
 
@@ -1738,6 +1738,27 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Receipt field: `pending_command_results`
 - Verification: Queue receipts prove local transitions/submission only. No rollback of executed effects or persistence across runtime restart.
 - Failure policy: Stop the batch tail. Unstarted rows remain held; uncertain submission stays quarantined. Accepted submissions have separate correlated execution receipts; no automatic retry of a failed/uncertain execution.
+
+### REPORT_TASK_OUTCOME
+
+- Signature: `REPORT_TASK_OUTCOME(task_id, done|wait|approval|error, reason)` (reviewed_contract)
+- Summary: Declare done, wait, approval or error for the current opted-in task and stop automatic continuation. This is not verified success, approval, cancellation or rollback.
+- Handler: `report_task_outcome_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Declare done, wait, approval or error for the current opted-in task and stop automatic continuation. This is not verified success, approval, cancellation or rollback.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "task_id", "pattern": "^task-[0-9a-f]{32}$", "required": true, "type": "string"}`
+- Parameter: `{"enum": ["done", "wait", "approval", "error"], "name": "outcome", "required": true, "type": "string"}`
+- Parameter: `{"max_length": 2000, "min_length": 1, "name": "reason", "required": true, "type": "string"}`
+
+- Result protocol: `aurora_task_control_result_v1`
+- Receipt field: `task_control_results`
+- Verification: Declared outcome, not independent success verification. Already admitted work can finish. Plans and goals are preserved.
+- Failure policy: Reject stale/disabled/stopped/conflicting reports without changing the task; identical reports are idempotent.
 
 ### REQUEST_DEMAND_CAPTURE
 
@@ -2800,6 +2821,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
 - Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
 
+### SET_HIERARCHY_DISPATCH
+
+- Signature: `SET_HIERARCHY_DISPATCH([value])` (reviewed_contract)
+- Summary: Set goals.hierarchy_dispatch, or omit value to read it. Legacy routes Level 1 commands; advisory keeps hierarchy as notes. Explicit commands remain available.
+- Handler: `set_hierarchy_dispatch_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read goals.hierarchy_dispatch when omitted; otherwise set it in this runtime session. Legacy routes Level 1 commands; advisory keeps hierarchy as notes. Explicit commands remain available. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["legacy", "advisory"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `goals.hierarchy_dispatch`
+- Runtime lock: execution
+- Apply timing: next_response
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
 ### SET_HIGH_DETAIL
 
 - Signature: `SET_HIGH_DETAIL(...)` (placeholder)
@@ -2809,6 +2854,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Aliases: none
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
+
+### SET_HORIZON_SYNC
+
+- Signature: `SET_HORIZON_SYNC([value])` (reviewed_contract)
+- Summary: Set goals.horizon_sync, or omit value to read it. Legacy replaces four horizon lists from hierarchy levels; preserve keeps explicit horizon lists and hierarchy separate.
+- Handler: `set_horizon_sync_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read goals.horizon_sync when omitted; otherwise set it in this runtime session. Legacy replaces four horizon lists from hierarchy levels; preserve keeps explicit horizon lists and hierarchy separate. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["legacy", "preserve"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `goals.horizon_sync`
+- Runtime lock: execution
+- Apply timing: next_hierarchy
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
 
 ### SET_IMAGE_DETAIL
 
@@ -3419,6 +3488,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
 
+### SET_SUBSCRIPTION_POLICY
+
+- Signature: `SET_SUBSCRIPTION_POLICY([value])` (reviewed_contract)
+- Summary: Set auth.subscription_policy, or omit value to read it. Legacy retains the cooperative stream reader. Bounded uses one owned HTTP worker with 90s read idle and a 180s inference deadline, locally terminable on Cancel.
+- Handler: `set_subscription_policy_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read auth.subscription_policy when omitted; otherwise set it in this runtime session. Legacy retains the cooperative stream reader. Bounded uses one owned HTTP worker with 90s read idle and a 180s inference deadline, locally terminable on Cancel. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["legacy", "bounded"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `auth.subscription_policy`
+- Runtime lock: auth
+- Apply timing: next_model_request
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
 ### SET_TASK_CONTINUATION
 
 - Signature: `SET_TASK_CONTINUATION([value])` (reviewed_contract)
@@ -3436,6 +3529,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Registered setting: `task.continuation_mode`
 - Runtime lock: execution
 - Apply timing: immediate
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_TASK_MAX_COMMANDS
+
+- Signature: `SET_TASK_MAX_COMMANDS([value])` (reviewed_contract)
+- Summary: Set task.max_commands, or omit value to read it. Maximum expanded command bindings reserved for automatic admission in one bounded task. Zero disables this budget; latched at next task start.
+- Handler: `set_task_max_commands_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read task.max_commands when omitted; otherwise set it in this runtime session. Maximum expanded command bindings reserved for automatic admission in one bounded task. Zero disables this budget; latched at next task start. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"maximum": 1000000, "minimum": 0, "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "integer"}`
+
+- Registered setting: `task.max_commands`
+- Runtime lock: execution
+- Apply timing: next_task
 - Related effects: See setting metadata for application timing.
 
 - Result protocol: `aurora_setting_command_result_v1`
@@ -3467,6 +3584,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
 - Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
 
+### SET_TASK_MAX_REPORTED_TOKENS
+
+- Signature: `SET_TASK_MAX_REPORTED_TOKENS([value])` (reviewed_contract)
+- Summary: Set task.max_reported_tokens, or omit value to read it. Stop automatic continuation and response commands when provider-reported total tokens reach this threshold. Zero disables it; latched at next task start.
+- Handler: `set_task_max_reported_tokens_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read task.max_reported_tokens when omitted; otherwise set it in this runtime session. Stop automatic continuation and response commands when provider-reported total tokens reach this threshold. Zero disables it; latched at next task start. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"maximum": 1000000000, "minimum": 0, "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "integer"}`
+
+- Registered setting: `task.max_reported_tokens`
+- Runtime lock: execution
+- Apply timing: next_task
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
 ### SET_TASK_MAX_SECONDS
 
 - Signature: `SET_TASK_MAX_SECONDS([value])` (reviewed_contract)
@@ -3482,6 +3623,102 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Parameter: `{"finite": true, "maximum": 86400, "minimum": 1, "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "number"}`
 
 - Registered setting: `task.max_seconds`
+- Runtime lock: execution
+- Apply timing: next_task
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_TASK_OUTCOME_REPORTING
+
+- Signature: `SET_TASK_OUTCOME_REPORTING([value])` (reviewed_contract)
+- Summary: Set task.outcome_reporting, or omit value to read it. Allow a standalone declared done/wait/approval/error report to stop automatic continuation. Latched at next bounded task start.
+- Handler: `set_task_outcome_reporting_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read task.outcome_reporting when omitted; otherwise set it in this runtime session. Allow a standalone declared done/wait/approval/error report to stop automatic continuation. Latched at next bounded task start. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"accepted_text": ["on", "true", "1", "yes", "off", "false", "0", "no"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "boolean"}`
+
+- Registered setting: `task.outcome_reporting`
+- Runtime lock: execution
+- Apply timing: next_task
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_TASK_PENDING_CARRY_POLICY
+
+- Signature: `SET_TASK_PENDING_CARRY_POLICY([value])` (reviewed_contract)
+- Summary: Set task.pending_carry_policy, or omit value to read it. Carry, hold for operator review, or discard explicitly task-scoped unsubmitted proposals from previous tasks.
+- Handler: `set_task_pending_carry_policy_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read task.pending_carry_policy when omitted; otherwise set it in this runtime session. Carry, hold for operator review, or discard explicitly task-scoped unsubmitted proposals from previous tasks. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["carry", "hold_previous", "discard_previous"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `task.pending_carry_policy`
+- Runtime lock: execution
+- Apply timing: next_task
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_TASK_PLAN_CARRY_POLICY
+
+- Signature: `SET_TASK_PLAN_CARRY_POLICY([value])` (reviewed_contract)
+- Summary: Set task.plan_carry_policy, or omit value to read it. Carry queued plans, or discard explicitly task-scoped plans from a previous task. Operator and unattributed plans are preserved.
+- Handler: `set_task_plan_carry_policy_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read task.plan_carry_policy when omitted; otherwise set it in this runtime session. Carry queued plans, or discard explicitly task-scoped plans from a previous task. Operator and unattributed plans are preserved. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["carry", "discard_previous"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `task.plan_carry_policy`
+- Runtime lock: execution
+- Apply timing: next_task
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_TASK_UNKNOWN_USAGE_POLICY
+
+- Signature: `SET_TASK_UNKNOWN_USAGE_POLICY([value])` (reviewed_contract)
+- Summary: Set task.unknown_usage_policy, or omit value to read it. Continue with explicit unknown coverage, or stop after an unmetered request when a reported-token threshold is enabled. Latched at next task start.
+- Handler: `set_task_unknown_usage_policy_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read task.unknown_usage_policy when omitted; otherwise set it in this runtime session. Continue with explicit unknown coverage, or stop after an unmetered request when a reported-token threshold is enabled. Latched at next task start. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["continue", "stop"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `task.unknown_usage_policy`
 - Runtime lock: execution
 - Apply timing: next_task
 - Related effects: See setting metadata for application timing.
@@ -4199,7 +4436,7 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Binding: runtime
 - Aliases: SHOW_PENDING_COMMANDS
 - Parameter validation: pre_dispatch
-- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock.
+- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock. Optional cross-task holds require explicit operator approval or clearing; models and auto approval cannot release them.
 
 Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
 
@@ -4217,7 +4454,7 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Binding: runtime
 - Aliases: SHOW_PENDING
 - Parameter validation: pre_dispatch
-- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock.
+- Effects: Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock. Optional cross-task holds require explicit operator approval or clearing; models and auto approval cannot release them.
 
 Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
 
@@ -4705,6 +4942,24 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Aliases: none
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
+
+### SHOW_TASK_STATUS
+
+- Signature: `SHOW_TASK_STATUS()` (reviewed_contract)
+- Summary: Inspect the controller's current bounded task, limits and declared outcome.
+- Handler: `show_task_status_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Inspect the controller's current bounded task, limits and declared outcome.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+
+- Result protocol: `aurora_task_control_result_v1`
+- Receipt field: `task_control_results`
+- Verification: Declared outcome, not independent success verification. Already admitted work can finish. Plans and goals are preserved.
+- Failure policy: Reject stale/disabled/stopped/conflicting reports without changing the task; identical reports are idempotent.
 
 ### SHOW_TURN_SCHEDULER
 

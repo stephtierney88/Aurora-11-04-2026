@@ -1,6 +1,6 @@
 # Aurora 2 Control Panel — lite map
 
-Public snapshot: November 5, 2026. The Control Panel remains a client of the shared runtime/control plane; local drafts do not become effective state until an acknowledged apply. There are 24 views, with full access through the View selector/Advanced controls.
+Public snapshot: November 5, 2026, release 54. The Control Panel remains a client of the shared runtime/control plane; local drafts do not become effective state until an acknowledged apply. There are 24 views, with full access through the View selector/Advanced controls.
 
 | Surface | Main source and behavior |
 | --- | --- |
@@ -20,7 +20,11 @@ Mini-preview defaults to readable excerpts. Dock/collapse/popout and View option
 
 Outbox/Awaiting reply retain submitted text and initial delivery stages in the panel session. Restart recovery, queued cancellation and safe manual retry remain CP1c. Message editing keeps sender and editor separate and fails on stale revision rather than overwriting silently.
 
-Switchboard marks unapplied drafts amber. Preview and Apply use versioned settings; model selectors apply their own subset. Raw-command yellow prepares and green submits. A submission receipt is not proof of physical success. Reset exposes 35 reviewed controls without wiping credentials/files/history or the broader Advanced settings.
+Switchboard marks unapplied drafts amber. Preview and Apply use versioned settings; model selectors apply their own subset. Raw-command yellow prepares and green submits. A submission receipt is not proof of physical success. Reset lists its reviewed controls without wiping credentials/files/history; it is a scoped baseline, not every Advanced setting.
+
+Optional task outcomes/budgets and carry policies use the shared settings authority. Advisory hierarchy, preserved explicit horizons and bounded subscription policy are searchable Advanced controls; they retain legacy defaults. The subscription choice is session-only/next-request. SHOW_TASK_STATUS and Raw State expose bounded correlated progress, missing evidence and unverified declared outcomes. Task-held proposals still require deliberate operator handling.
+
+Release 54 restores the missing subscription-policy field in the full state export. Its absence had blocked unrelated GUI settings transactions too; effective-state checks and subscription Preview/Apply/Undo are now exercised in the guarded panel fixture.
 
 Remaining polish: less vertical stacking, reachable Apply/Undo/results on small displays, keyboard/focus coverage, very short preview legends, mixed-DPI and live-load rendering. Existing synthetic refresh checks are useful but do not certify every Windows driver/monitor combination.
 

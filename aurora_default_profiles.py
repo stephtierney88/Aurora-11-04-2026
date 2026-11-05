@@ -64,6 +64,8 @@ PROFILE_FIELDS = {
     "capture_provenance_policy": ("set_capture_provenance_policy", "capture.provenance_policy", ""),
     "gameplay_scene_policy": ("set_gameplay_scene_policy", "game.scene_policy", ""),
     "goal_save_format": ("set_goal_save_format", "goals.save_format", ""),
+    "hierarchy_dispatch": ("set_hierarchy_dispatch", "goals.hierarchy_dispatch", ""),
+    "horizon_sync": ("set_horizon_sync", "goals.horizon_sync", ""),
     "unchanged_screenshot_persist_interval": ("set_unchanged_screenshot_persist_interval", "persist_interval", "screenshot_interval"),
     "auto_dynamic_inference": ("set_auto_dynamic_inference_enabled", "boolean", "reasoning"),
     "review_turn_interval": ("set_review_turn_interval", "nonnegative_int", "reasoning"),

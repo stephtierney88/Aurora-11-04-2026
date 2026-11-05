@@ -55,7 +55,11 @@ from aurora_conversation import (build_conversation_snapshot, build_init_context
     ensure_message_ids, CONVERSATION_ARCHIVE)
 from aurora_history_controls import current_history_actor, history_actor_scope
 from aurora_delivery_receipts import TrackedInput, queued_input_identities, delivery_turn, current_delivery
-from aurora_task_continuation import TaskContinuation, CommandReadbacks, prepare_init_delivery
+from aurora_task_continuation import (TaskContinuation, CommandReadbacks, prepare_init_delivery,
+                                      TASK_CONTROL_COMMANDS, TASK_CONTROL_RESULT_SCHEMA, parse_task_control_arguments,
+                                      TASK_BUDGET_RESULT_SCHEMA, USAGE_BUDGET_STOP_REASONS,
+                                      command_task_scope, current_command_task, TASK_ORIGIN_SCHEMA, TASK_TRANSITION_SCHEMA,
+                                      scoped_task_id, reconcile_task_artifacts)
 from aurora_command_protocol import CommandSyntaxError, split_command_batch
 from aurora_command_contracts import (
     DesktopCommandError, command_result_failed, desktop_result, parse_desktop_arguments,
@@ -151,6 +155,7 @@ PIL_FLIP_TOP_BOTTOM = cast(Any, getattr(getattr(Image, "Transpose", Image), "FLI
 # - SHOW_AUTH() reports the configured and last-resolved auth path at runtime.
 API_KEY = os.getenv("OPENAI_2023_API_KEY") or os.getenv("OPENAI_API_KEY")
 AUTH_MODE = (os.getenv("AURORA_AUTH_MODE", "api_key").strip().lower() or "api_key")
+SUBSCRIPTION_POLICY = coerce_setting_value("auth.subscription_policy", os.getenv("AURORA_SUBSCRIPTION_POLICY", "legacy"))
 if AUTH_MODE not in {"api_key", "openai_chatgpt", "codex_oauth", "auto"}:
     AUTH_MODE = "auto"
 CODEX_OAUTH_AUTH_FILE = (os.getenv("AURORA_CODEX_AUTH_FILE", "").strip() or "")
@@ -524,6 +529,7 @@ READONLY_OPERATOR_COMMANDS = {
     "SHOW_SECURITY",
 }
 READONLY_OPERATOR_COMMANDS.update({
+    "SHOW_TASK_STATUS",
     "SHOW_REFERENCE_TOPICS",
     "SHOW_REFERENCE_PACK",
     "SEARCH_REFERENCE_PACK",
@@ -1671,11 +1677,14 @@ def build_registered_settings_runtime_state():
             "capture_request_max_attempts": CAPTURE_REQUEST_MAX_ATTEMPTS,
             "gameplay_scene_policy": GAMEPLAY_SCENE_POLICY,
             "goal_save_format": GOAL_SAVE_FORMAT,
+            "hierarchy_dispatch": HIERARCHY_DISPATCH,
+            "horizon_sync": HORIZON_SYNC,
             "assistant_policy": ASSISTANT_POLICY,
             "init_delivery": INIT_DELIVERY_MODE,
             "load_live_init_prompt": bool(LOAD_LIVE_INIT_PROMPT),
         },
         "models": {
+            "subscription_policy": SUBSCRIPTION_POLICY,
             "service_tier": DEFAULT_SERVICE_TIER,
             "text": ACTIVE_TEXT_MODEL,
             "vision": ACTIVE_VISION_MODEL,
@@ -2523,7 +2532,7 @@ def perform_model_http_request(packet, cancellation_token):
         if not packet["url"].endswith("/chat/completions"):
             raise ValueError("This endpoint is unavailable for ChatGPT subscription auth; no API-key fallback.")
         from aurora_chatgpt_transport import perform_subscription_request
-        response = perform_subscription_request(packet["payload"], cancellation_token)
+        response = perform_subscription_request(packet["payload"], cancellation_token, policy=config.get("subscription_policy", "legacy"))
         return response, "openai_chatgpt", "Aurora protected ChatGPT registration"
     if packet["payload"].get("service_tier"):
         raise ValueError("Accelerated tiers currently require the catalog-verified ChatGPT subscription route. Select Regular for this transport.")
@@ -2580,7 +2589,7 @@ def post_openai_model_request(payload, endpoint, timeout=None):
     packet = {
         "payload": payload, "timeout": timeout if timeout is not None else 60,
         "url": f"https://api.openai.com/v1/{endpoint}",
-        "auth": {"mode": AUTH_MODE, "api_key": API_KEY,
+        "auth": {"mode": AUTH_MODE, "api_key": API_KEY, "subscription_policy": SUBSCRIPTION_POLICY,
                  "cache_path": str(CODEX_OAUTH_CACHE_FILE or codex_oauth_cache_path),
                  "auth_path": str(CODEX_OAUTH_AUTH_FILE or "")},
     }
@@ -5678,6 +5687,7 @@ def format_responses_shadow_offline_posture_status(posture=None):
 
 
 def build_model_status_snapshot():
+    from aurora_subscription_worker import stream_worker_snapshot
     review_multiplier = get_reasoning_effort_latency_multiplier(REVIEW_REASONING_EFFORT)
     battle_multiplier = get_reasoning_effort_latency_multiplier(BATTLE_REASONING_EFFORT)
     critique_multiplier = get_reasoning_effort_latency_multiplier(CRITIQUE_REASONING_EFFORT)
@@ -5702,6 +5712,8 @@ def build_model_status_snapshot():
         "transport": MODEL_TRANSPORT,
         "effective_transport": "chatgpt_subscription_responses" if AUTH_MODE == "openai_chatgpt" else MODEL_TRANSPORT,
         "subscription_receipt": dict(runtime_state.get("last_subscription_receipt") or {}),
+        "subscription_policy": SUBSCRIPTION_POLICY,
+        "subscription_worker": stream_worker_snapshot(),
         "service_tier": DEFAULT_SERVICE_TIER,
         "responses_reasoning": RESPONSES_REASONING.snapshot(),
         "text_model": ACTIVE_TEXT_MODEL,
@@ -5939,12 +5951,16 @@ def prepare_command_batch(command_text, *, _pending_depth=0, _action_mode=""):
             elif cmd_name.upper() not in command_dispatch:
                 raise CommandSyntaxError(f"Unknown command: {cmd_name}")
             validate_command_arguments(cmd_name, args)
+            if cmd_name.upper() in TASK_CONTROL_COMMANDS and _pending_depth:
+                raise CommandSyntaxError("Task controls must run directly in the controller, not inside a pending wrapper.")
             if cmd_name.upper() in PENDING_WRAPPER_MODES:
                 prepare_command_batch(args[0], _pending_depth=_pending_depth + 1, _action_mode=action_mode)
             prepared.append((command, cmd_name, tuple(args), action_context))
             action_mode = projected_action_mode(cmd_name, args, action_mode)
     if not prepared:
         raise CommandSyntaxError("The request contains no commands.")
+    if len(prepared) != 1 and any(item[1].upper() in TASK_CONTROL_COMMANDS for item in prepared):
+        raise CommandSyntaxError("Task controls require a standalone batch. Inspect earlier receipts before reporting an outcome.")
     return tuple(prepared)
 
 
@@ -7115,7 +7131,7 @@ def complete_demand_capture(reason, capture_frame=None):
                 and completed.get("reason") == reason)
 
 
-def mark_turn_scheduler_command_result_pending(settle_seconds=None, demand_reason="command_result", request_capture=True):
+def mark_turn_scheduler_command_result_pending(settle_seconds=None, demand_reason="command_result", request_capture=True, command_entries=None):
     now = time.time()
     settle_seconds = get_demand_capture_settle_seconds(
         TURN_SCHEDULER_POST_ACTION_SETTLE_SECONDS if settle_seconds is None else settle_seconds
@@ -7133,6 +7149,10 @@ def mark_turn_scheduler_command_result_pending(settle_seconds=None, demand_reaso
         capture_status = CAPTURE_SERVICE.snapshot()
         request = capture_status["pending"] or capture_status["current_failure"]
         set_runtime_value("turn_scheduler_capture_request_generation", request.get("generation", 0))
+        if TASK_CONTINUATION_MODE == "bounded":
+            TASK_CONTINUATION.record_observation_wait(
+                command_entries if command_entries is not None else [current_command_task()],
+                runtime_state["turn_scheduler_post_action_boundary"], generation, request.get("generation", 0))
 
 
 def clear_turn_scheduler_command_result_pending(expected_generation=None):
@@ -7161,6 +7181,8 @@ def register_turn_scheduler_capture(screenshot_file_path, image_timestamp="", ca
     })
     if capture_hash and capture_hash != previous_hash:
         set_runtime_value("turn_scheduler_last_capture_changed_at_epoch", now)
+    if TASK_CONTINUATION_MODE == "bounded" and capture_frame:
+        TASK_CONTINUATION.record_frame_observed(capture_frame)
     return {
         "counter": capture_counter,
         "hash": capture_hash,
@@ -7452,7 +7474,7 @@ def has_effective_next_inference_plan(plan=None):
 def get_next_inference_plan_snapshot():
     """Return detached queued state; callers cannot mutate the pending plan."""
     with SETTINGS_TRANSACTION_LOCK:
-        return dict(agent_state.next_inference_plan)
+        return copy.deepcopy(agent_state.next_inference_plan)
 
 
 def clear_next_inference_plan(reason=""):
@@ -7472,6 +7494,8 @@ def set_next_inference_plan_from_pairs(pairs, source="operator", auto_generated=
         raise ValueError("Next inference settings require key=value pairs.")
     options = normalize_next_inference_pairs(pairs)
     with SETTINGS_TRANSACTION_LOCK:
+        origin = current_task_artifact_origin(automatic=auto_generated)
+        require_current_artifact_origin(origin, "plan_carry_policy")
         if any(options.get(key) for key in ("model", "text_model", "vision_model", "reasoning_model")):
             require_runtime_setting_unlocked("models", "Next inference model controls")
         if any(options.get(key) for key in ("reasoning_effort", "verbosity", "summary_mode", "service_tier")):
@@ -7485,9 +7509,10 @@ def set_next_inference_plan_from_pairs(pairs, source="operator", auto_generated=
         normalized_plan["plan_id"] = uuid.uuid4().hex
         normalized_plan["source"] = normalize_text_content(source).strip() or "operator"
         normalized_plan["auto_generated"] = bool(auto_generated)
+        normalized_plan["task_origin"] = origin
         agent_state.next_inference_plan = normalized_plan
         globals()["next_inference_plan"] = agent_state.next_inference_plan
-        result = dict(normalized_plan)
+        result = copy.deepcopy(normalized_plan)
     append_runtime_feedback(f"Queued next inference plan: {build_next_inference_plan_summary(result)}")
     return result
 
@@ -7502,7 +7527,7 @@ def resolve_next_inference_plan_for_turn(current_turn):
         target_turn = int(plan.get("target_turn", 0) or 0)
         if not target_turn or target_turn > current_turn:
             return None
-        applied_plan = dict(plan)
+        applied_plan = copy.deepcopy(plan)
         clear_next_inference_plan()
         return applied_plan
 
@@ -22438,6 +22463,17 @@ def _trim_panel_items(items, limit=8):
     return trimmed
 
 
+def _trim_panel_goals(items, limit=10):
+    """Keep the compact string-list contract, using goal fields instead of repr."""
+    with GOAL_LOCK:
+        return [
+            (f"ID {goal.id}: {normalize_memory_item(goal.text)} | priority={goal.priority} | "
+             f"significance={goal.significance} | status={goal.status} | subgoals={len(goal.sub_goals)}")
+            if isinstance(goal, Goal) else normalize_memory_item(goal)
+            for goal in items[:limit]
+        ]
+
+
 def _trim_pending_commands_for_panel(limit=12):
     rows = []
     for entry in get_pending_command_snapshot()["entries"][:limit]:
@@ -24648,6 +24684,7 @@ def _build_control_panel_state_snapshot_unlocked():
         "last_screenshot_timestamp": normalize_text_content(runtime_state.get("last_screenshot_timestamp", "")).strip(),
         "latest_feedback": list(runtime_state.get("recent_feedback", []) or []),
         "models": {
+            "subscription_policy": SUBSCRIPTION_POLICY,
             "service_tier": DEFAULT_SERVICE_TIER,
             "text": ACTIVE_TEXT_MODEL,
             "vision": ACTIVE_VISION_MODEL,
@@ -24690,6 +24727,8 @@ def _build_control_panel_state_snapshot_unlocked():
             "capture_request_max_attempts": CAPTURE_REQUEST_MAX_ATTEMPTS,
             "gameplay_scene_policy": GAMEPLAY_SCENE_POLICY,
             "goal_save_format": GOAL_SAVE_FORMAT,
+            "hierarchy_dispatch": HIERARCHY_DISPATCH,
+            "horizon_sync": HORIZON_SYNC,
             "assistant_policy": ASSISTANT_POLICY,
             "effective_screenshot_interval": get_effective_screenshot_interval(),
             "idle_screenshot_interval_floor": idle_screenshot_interval,
@@ -24874,8 +24913,9 @@ def _build_control_panel_state_snapshot_unlocked():
         },
         "locks": get_runtime_lock_snapshot(),
         "settings": build_settings_transaction_runtime_snapshot(),
+        "hierarchy_policy": {"dispatch": HIERARCHY_DISPATCH, "armed": HIERARCHY_DISPATCH_ARMED, "sync": HORIZON_SYNC},
         "route_state": json.loads(json.dumps(agent_state.route_state)),
-        "goals": _trim_panel_items(agent_state.tasks_list, limit=10),
+        "goals": _trim_panel_goals(agent_state.tasks_list, limit=10),
         "apriority_goals": _trim_panel_items(agent_state.apriority_tasks, limit=10),
         "overarching_goals": _trim_panel_items(agent_state.overarching_goals, limit=8),
         "unknown_priority_candidates": _trim_panel_items(agent_state.unknown_priority_candidates, limit=8),
@@ -26316,7 +26356,7 @@ def submit_pending_entry(entry, token, automatic=False):
         return {"status": "uncertain", "reason": str(error), "cancelled": isinstance(error, WorkCancelled)}
 
 
-def execute_pending_approval(args, automatic=False):
+def execute_pending_approval(args, automatic=False, operator=False):
     token = COMMAND_WORK.current()
     store = get_pending_command_store()
     with PENDING_COMMAND_LEDGER.lock:
@@ -26326,7 +26366,8 @@ def execute_pending_approval(args, automatic=False):
             indexes = _resolve_pending_indexes(args)
             if automatic:
                 indexes = [index for index in indexes if is_pending_entry_auto_approvable(store[index])[0]]
-            reserved = PENDING_COMMAND_LEDGER.reserve(store, indexes, prepare=prepare_pending_entry, check=token.check)
+            reserved = PENDING_COMMAND_LEDGER.reserve(store, indexes, prepare=prepare_pending_entry, check=token.check,
+                                                      allow_task_held=operator and not automatic)
         except Exception as error:
             return record_pending_command_result(pending_result(
                 "auto_approve" if automatic else "approve", before, PENDING_COMMAND_LEDGER.snapshot(store),
@@ -26654,7 +26695,7 @@ def refresh_pending_command_estimates():
 
 def is_pending_entry_auto_approvable(entry):
     if not pending_entry_available(entry):
-        return False, "pending submission is reserved or uncertain", {}
+        return False, "pending submission is reserved, uncertain or held for an operator", {}
     current_policy = evaluate_pending_command_policy(entry.get("command", ""), entry.get("_prepared_commands"))
     decision = current_policy.get("decision", "hold")
     category = current_policy.get("category", entry.get("category", "other"))
@@ -26683,6 +26724,8 @@ def is_pending_entry_auto_approvable(entry):
 
 def auto_execute_pending_commands():
     if EXECUTION_MODE.lower() != "auto":
+        return []
+    if TASK_CONTINUATION_MODE == "bounded" and not TASK_CONTINUATION.check_deadline():
         return []
     result = execute_pending_approval(["all"], automatic=True)
     return result.pop("_accepted_entries", [])
@@ -26922,7 +26965,7 @@ def build_agent_state_snapshot():
 
     if goal_store:
         goal_lines = [
-            f"- {goal.text} | priority={goal.priority} | significance={goal.significance} | status={goal.status}"
+            f"- ID {goal.id}: {goal.text} | priority={goal.priority} | significance={goal.significance} | status={goal.status}"
             for goal in goal_store[:MAX_STATE_ITEMS_PER_SECTION]
         ]
         sections.append("Goals:\n" + "\n".join(goal_lines))
@@ -28717,7 +28760,11 @@ def build_base_system_prompt():
         "Keep responses compact but information-dense.",
         "When appropriate, update goals, recent context, or inventory using explicit commands rather than only prose.",
         "Prefer structured memory when it reduces drift across turns: use Overarching Goals, Route State, Route Intent, Local Path Plan, Route Blockers, Recent Movement Results, Notes, Journal, immediate/short-term/mid-term/long-term horizon buckets, and pinned action lists when they carry continuity better than freeform narration.",
-        "If you use Hierarchical Tasks, treat Level 1 as immediate executable actions, Level 2 as next/short-term actions, and deeper levels as broader decomposition rather than direct commands.",
+        f"Hierarchy policy: dispatch={HIERARCHY_DISPATCH}, armed={HIERARCHY_DISPATCH_ARMED}, horizon_sync={HORIZON_SYNC}. "
+        + ("Hierarchy is advisory; use explicit Executed Commands for actions. Descriptive pinned horizons never execute. " if HIERARCHY_DISPATCH == "advisory" else
+           "Level 1 command entries can execute after responses when armed; changing dispatch policy requires a fresh hierarchy to rearm. ")
+        + ("Explicit horizon lists are preserved separately from hierarchy." if HORIZON_SYNC == "preserve" else
+           "A new hierarchy replaces immediate/short/mid/long lists from levels 1/2/3/4+; missing levels clear their list."),
         "If the next turn should use different reasoning, use SET_NEXT_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max, optional_note). Some effort values are model-specific. For broader one-turn posture changes, use SET_NEXT_INFERENCE(reasoning_effort=..., verbosity=..., summary_mode=..., note=...). Do not change session/default reasoning unless the operator explicitly asks.",
         "Treat pending suggested commands as prior-turn votes. If the same action still looks correct, support it again or replace it with a better one; do not ignore the queue.",
         ("Treat screenshots as evidence at their capture time; newer verified observations supersede older ones."
@@ -28742,7 +28789,7 @@ def build_base_system_prompt():
             "End the sequence before an uncertain doorway, menu, dialog or battle and request a fresh screenshot. "
             "Keep one action for menus/uncertain states. Record memory when something changes, not every field every turn. "
             "Use a bare Scene label on its own line (for example Scene: dialog); put location and explanation in Observation. "
-            "After two unchanged or failed attempts, inspect receipts and the new image, change the hypothesis or request an Astra review; do not loop identical moves."
+            "After two unchanged or failed attempts, inspect receipts and the new image, change the hypothesis or request a configured review-model turn; do not loop identical moves."
         )
         prompt_sections.append(
             "Current command protocol: put only commands intended for execution below Executed Commands:, one per line; "
@@ -28751,7 +28798,7 @@ def build_base_system_prompt():
             "Discover rather than guess: SEARCH_COMMANDS(screenshot, medium), LOOKUP_COMMAND(SET_NEXT_INFERENCE, high), "
             "LIST_COMMANDS(low). Catalog output is bounded; ask narrower questions if it is incomplete. "
             "Model-requested catalog results are added to conversation context when COMMAND_DISCOVERY_CONTEXT is enabled. "
-            "For an approved one-turn escalation: SET_NEXT_INFERENCE(model=gpt-6-astra; reasoning_effort=medium; note=Review ambiguity). "
+            f"For an approved one-turn escalation: SET_NEXT_INFERENCE(model={ACTIVE_REASONING_MODEL}; reasoning_effort=medium; note=Review ambiguity). "
             "This queues a subsequent turn and does not change your current inference; inspect receipts and the next turn's effective settings. "
             "Sol/Astra use low, medium, high, xhigh or max; do not assume none or minimal is supported. "
             "Permission and capability are distinct: never self-approve a held proposal or bypass operator locks. "
@@ -28791,9 +28838,25 @@ def build_base_system_prompt():
     if init_context:
         prompt_sections.append("Persistent init context:\n" + init_context)
     if TASK_CONTINUATION_MODE == "bounded":
-        prompt_sections.append("Bounded task continuation: " + json.dumps(build_task_continuation_snapshot(), ensure_ascii=False)
+        prompt_sections.append("Bounded task continuation: " + json.dumps(build_task_continuation_snapshot(include_progress=False), ensure_ascii=False)
                                + "\nTask limits belong to the operator. They apply across model switches; do not try to renew them. "
                                "Command readbacks may trigger a text-only follow-up when enabled. The reviewed scope supplies task-correlated receipt data with truncation/coverage labels; discovery retains legacy history delivery. Visual actions still require fresh observation. A response or executed-command count is not proof that the task is done.")
+        task = TASK_CONTINUATION.snapshot()
+        if (task.get("budgets") or {}).get("enabled"):
+            prompt_sections.append(
+                "Optional task budgets are active. The command budget counts expanded command bindings reserved before submission, "
+                "including nested submissions; one binding may contain multiple inputs. Group useful known commands within the remaining budget: "
+                "a batch must fit in full and has no partial prefix. Failures/cancellation do not refund reservations. "
+                "The token threshold uses reported total usage after each response; missing usage follows the displayed policy. "
+                "It is not a hard spending cap. Do not change or bypass operator limits. Budget stops preserve goals/plans and require new operator input.")
+        if task.get("outcome_reporting") and task.get("status") == "running":
+            prompt_sections.append(
+                "Task outcome reporting is enabled. After inspecting receipts/observations, use a standalone Executed Commands section with "
+                f'REPORT_TASK_OUTCOME({task["task_id"]}, done, "reason and evidence"). '
+                "Choose done, wait, approval or error: done declares completion; wait needs input; approval requests human authorization; error reports failure. "
+                "Each stops automatic continuation. No command, immediate action or pending approval should accompany the report. "
+                "A declaration does not prove success, complete stored goals, grant approval or cancel already admitted actions. "
+                "Plans and pending proposals remain for inspection; new operator input starts a new bounded task. SHOW_TASK_STATUS() inspects the controller state.")
     if runtime_snapshot:
         prompt_sections.append("Live runtime summary:\n" + runtime_snapshot)
     return "\n\n".join(prompt_sections)
@@ -28892,18 +28955,31 @@ CAPTURE_REQUEST_TIMEOUT_SECONDS = coerce_setting_value("capture.request_timeout_
 CAPTURE_REQUEST_MAX_ATTEMPTS = coerce_setting_value("capture.request_max_attempts", os.getenv("AURORA_CAPTURE_REQUEST_ATTEMPTS", "0"))
 GAMEPLAY_SCENE_POLICY = coerce_setting_value("game.scene_policy", os.getenv("AURORA_GAMEPLAY_SCENE_POLICY", "evidence"))
 GOAL_SAVE_FORMAT = coerce_setting_value("goals.save_format", os.getenv("AURORA_GOAL_SAVE_FORMAT", "versioned"))
+HIERARCHY_DISPATCH = coerce_setting_value("goals.hierarchy_dispatch", os.getenv("AURORA_HIERARCHY_DISPATCH", "legacy"))
+HORIZON_SYNC = coerce_setting_value("goals.horizon_sync", os.getenv("AURORA_HORIZON_SYNC", "legacy"))
+HIERARCHY_DISPATCH_ARMED = HIERARCHY_DISPATCH == "legacy"
 ASSISTANT_POLICY = coerce_setting_value("runtime.assistant_policy", os.getenv("AURORA_ASSISTANT_POLICY", "legacy"))
 INIT_DELIVERY_MODE = coerce_setting_value("context.init_delivery", os.getenv("AURORA_INIT_DELIVERY", "legacy"))
 TASK_CONTINUATION_MODE = coerce_setting_value("task.continuation_mode", os.getenv("AURORA_TASK_CONTINUATION", "legacy"))
 TASK_MAX_MODEL_TURNS = coerce_setting_value("task.max_model_turns", os.getenv("AURORA_TASK_MAX_MODEL_TURNS", "8"))
 TASK_MAX_SECONDS = coerce_setting_value("task.max_seconds", os.getenv("AURORA_TASK_MAX_SECONDS", "120"))
+TASK_OUTCOME_REPORTING = coerce_setting_value("task.outcome_reporting", os.getenv("AURORA_TASK_OUTCOME_REPORTING", "off"))
+TASK_MAX_COMMANDS = coerce_setting_value("task.max_commands", os.getenv("AURORA_TASK_MAX_COMMANDS", "0"))
+TASK_MAX_REPORTED_TOKENS = coerce_setting_value("task.max_reported_tokens", os.getenv("AURORA_TASK_MAX_REPORTED_TOKENS", "0"))
+TASK_UNKNOWN_USAGE_POLICY = coerce_setting_value("task.unknown_usage_policy", os.getenv("AURORA_TASK_UNKNOWN_USAGE_POLICY", "continue"))
+TASK_PLAN_CARRY_POLICY = coerce_setting_value("task.plan_carry_policy", os.getenv("AURORA_TASK_PLAN_CARRY_POLICY", "carry"))
+TASK_PENDING_CARRY_POLICY = coerce_setting_value("task.pending_carry_policy", os.getenv("AURORA_TASK_PENDING_CARRY_POLICY", "carry"))
 READBACK_WAKE_ENABLED = coerce_setting_value("scheduler.readback_wake_enabled", os.getenv("AURORA_READBACK_WAKE", "off"))
 READBACK_SCOPE = coerce_setting_value("scheduler.readback_scope", os.getenv("AURORA_READBACK_SCOPE", "discovery"))
 
 
-def build_task_continuation_snapshot():
+def build_task_continuation_snapshot(*, include_progress=True):
     return {"mode": TASK_CONTINUATION_MODE, "max_model_turns": TASK_MAX_MODEL_TURNS,
-            "max_seconds": TASK_MAX_SECONDS, "active_task": TASK_CONTINUATION.snapshot(),
+            "max_seconds": TASK_MAX_SECONDS, "outcome_reporting": TASK_OUTCOME_REPORTING,
+            "max_commands": TASK_MAX_COMMANDS, "max_reported_tokens": TASK_MAX_REPORTED_TOKENS,
+            "unknown_usage_policy": TASK_UNKNOWN_USAGE_POLICY,
+            "plan_carry_policy": TASK_PLAN_CARRY_POLICY, "pending_carry_policy": TASK_PENDING_CARRY_POLICY,
+            "active_task": TASK_CONTINUATION.snapshot(include_progress=include_progress),
             "source": "runtime_session", "readback_wake_effective": bool(
                 READBACK_WAKE_ENABLED and TASK_CONTINUATION_MODE == "bounded" and (COMMAND_DISCOVERY_CONTEXT or READBACK_SCOPE == "reviewed")),
             "readback_scope": READBACK_SCOPE}
@@ -30728,11 +30804,104 @@ def chatgpt_process(input_queue, response_queue, shared_chat_history, error_queu
         raise
 
 
+def current_task_artifact_origin(automatic=False):
+    """Use trusted execution context, never a source label supplied in a command."""
+    actor = current_history_actor()
+    if actor == "operator" and not automatic:
+        return {"schema": TASK_ORIGIN_SCHEMA, "kind": "operator", "actor": actor, "task_id": ""}
+    parent, delivery = current_command_task(), current_delivery()
+    task_id = parent.get("task_id") or getattr(delivery, "task_id", "")
+    return {"schema": TASK_ORIGIN_SCHEMA, "kind": ("model" if actor.startswith("model:") else "runtime") if task_id else "unknown",
+            "actor": actor, "task_id": task_id,
+            "inference_request_id": parent.get("inference_request_id") or getattr(delivery, "inference_request_id", ""),
+            "command_batch_id": parent.get("command_batch_id") or ""}
+
+
+def require_current_artifact_origin(origin, policy_key):
+    """Strict policies reject a late prior-task publication before any store change."""
+    if TASK_CONTINUATION_MODE != "bounded":
+        return
+    active = TASK_CONTINUATION.snapshot()
+    origin_id = scoped_task_id({"task_origin": origin})
+    if origin_id and origin_id != active.get("task_id") and active.get(policy_key, "carry") != "carry":
+        raise RuntimeError("Prior-task work cannot publish a new queued artifact under the current task policy.")
+
+
+def reserve_task_continuation_for_turn(operator_input=False, trigger="manual"):
+    """Latch a new task and reconcile queued artifacts before model preparation.
+
+    Lock order is settings -> pending -> task controller; command submission never
+    happens here. Existing same-task turns do not repeat the transition.
+    """
+    transition = None
+    with SETTINGS_TRANSACTION_LOCK, PENDING_COMMAND_LEDGER.lock:
+        previous_id = TASK_CONTINUATION.snapshot().get("task_id", "")
+        if not TASK_CONTINUATION.reserve(max_turns=TASK_MAX_MODEL_TURNS, max_seconds=TASK_MAX_SECONDS,
+                outcome_reporting=TASK_OUTCOME_REPORTING, max_commands=TASK_MAX_COMMANDS,
+                max_reported_tokens=TASK_MAX_REPORTED_TOKENS, unknown_usage_policy=TASK_UNKNOWN_USAGE_POLICY,
+                plan_carry_policy=TASK_PLAN_CARRY_POLICY, pending_carry_policy=TASK_PENDING_CARRY_POLICY,
+                operator_input=operator_input, trigger=trigger):
+            return False
+        active = TASK_CONTINUATION.snapshot()
+        if active["task_id"] != previous_id:
+            store = get_pending_command_store()
+            try:
+                prepared_store = copy.deepcopy(store)
+                before_pending = PENDING_COMMAND_LEDGER.snapshot(prepared_store)
+                before_plan = get_next_inference_plan_snapshot()
+                new_plan, new_pending, transition = reconcile_task_artifacts(before_plan, prepared_store, active["task_id"],
+                    active["plan_carry_policy"], active["pending_carry_policy"])
+                if new_plan is None:
+                    new_plan = create_empty_next_inference_plan()
+                after_pending = PENDING_COMMAND_LEDGER.snapshot(new_pending)
+                transition.update(previous_task_id=previous_id, before_plan_version=inference_plan_version(before_plan),
+                    after_plan_version=inference_plan_version(new_plan), before_pending_version=pending_queue_version(before_pending),
+                    after_pending_version=pending_queue_version(after_pending))
+                # Keep unchanged row objects, especially in-flight reservations.
+                # Only prepared safe edits commit; carry remains a no-op.
+                old_rows = {prepared["pending_id"]: original for prepared, original in zip(prepared_store, store)}
+                committed = [old_rows[row["pending_id"]] if row == old_rows[row["pending_id"]] else row for row in new_pending]
+                agent_state.next_inference_plan = new_plan
+                globals()["next_inference_plan"] = new_plan
+                store[:] = committed
+                TASK_CONTINUATION.record_artifact_transition(transition)
+            except Exception as error:
+                TASK_CONTINUATION.record_artifact_transition(dict(schema=TASK_TRANSITION_SCHEMA, success=False,
+                    task_id=active["task_id"], previous_task_id=previous_id, reason=type(error).__name__))
+                TASK_CONTINUATION.stop("artifact_transition_failed")
+                raise
+    if transition is not None:
+        try:
+            write_command_execution_log("task_artifact_transition", **transition)
+            transition["journal_status"] = "written"
+        except Exception as error:
+            # The committed transition remains authoritative if disk logging
+            # fails. Do not lose an operator turn merely to report the change.
+            transition.update(journal_status="failed", journal_error=type(error).__name__)
+        TASK_CONTINUATION.record_artifact_transition(transition)
+    return True
+
+
+def record_task_model_request(delivery, phase):
+    """Charge reported usage before response commands; finalization deduplicates it."""
+    manifest = getattr(delivery, "command_readbacks", {})
+    return TASK_CONTINUATION.record_request(getattr(delivery, "task_id", ""), delivery.inference_request_id,
+        started=delivery.request_started, phase=phase, model=delivery.model,
+        provider_model=getattr(delivery, "provider_model", ""), usage=getattr(delivery, "reported_usage", None),
+        frame_id=getattr(delivery, "frame_id", ""), progress_errors=getattr(delivery, "observer_errors", 0),
+        readback_ids=[row["record_id"] for row in manifest.get("records", [])])
+
+
+def record_task_progress(delivery, phase):
+    """Observe local request phases without changing scheduling or delivery."""
+    return TASK_CONTINUATION.record_request_progress(delivery, phase)
+
+
 def serialized_model_turn(function):
     """Preserve legacy synchronous callers while allowing control during I/O."""
     @wraps(function)
     def run(*args, **kwargs):
-        with delivery_turn(write_external_bridge_log, kwargs.get("delivery_refs", ())) as delivery:
+        with delivery_turn(write_external_bridge_log, kwargs.get("delivery_refs", ()), observer=record_task_progress) as delivery:
             if not is_agent_running():
                 delivery.emit("not_sent", reason="Runtime stopped before this turn began. Inspect Outbox before resending.")
                 return None
@@ -30747,8 +30916,7 @@ def serialized_model_turn(function):
                             delivery.emit("not_sent", reason="Runtime stopped before preparation.")
                             return None
                         bounded = TASK_CONTINUATION_MODE == "bounded" and SEND_TO_MODEL and ENABLE_MODEL_RESPONSES
-                        if bounded and not TASK_CONTINUATION.reserve(
-                            max_turns=TASK_MAX_MODEL_TURNS, max_seconds=TASK_MAX_SECONDS,
+                        if bounded and not reserve_task_continuation_for_turn(
                             operator_input="user_input" in kwargs.get("wake_reason", "").split(",") or bool(kwargs.get("delivery_refs")),
                             trigger=kwargs.get("wake_reason") or "manual",
                         ):
@@ -30757,6 +30925,7 @@ def serialized_model_turn(function):
                             return None
                         if bounded:
                             delivery.task_id = TASK_CONTINUATION.snapshot().get("task_id", "")
+                            delivery.observe("preparing")
                         result = function(*args, **kwargs)
                         if bounded and result is None:
                             TASK_CONTINUATION.stop(runtime_state.get("last_model_turn_status", "model_turn_failed"))
@@ -30778,12 +30947,7 @@ def serialized_model_turn(function):
             finally:
                 phase = delivery.phase if delivery.phase in {"responded", "failed", "cancelled", "not_sent"} else "failed"
                 COMMAND_READBACKS.mark_request(delivery.inference_request_id, phase)
-                manifest = getattr(delivery, "command_readbacks", {})
-                TASK_CONTINUATION.record_request(getattr(delivery, "task_id", ""), delivery.inference_request_id,
-                    started=delivery.request_started, phase=phase, model=delivery.model,
-                    provider_model=getattr(delivery, "provider_model", ""), usage=getattr(delivery, "reported_usage", None),
-                    frame_id=getattr(delivery, "frame_id", ""),
-                    readback_ids=[row["record_id"] for row in manifest.get("records", [])])
+                record_task_model_request(delivery, phase)
     return run
 
 
@@ -31008,7 +31172,8 @@ def send_prompt_to_chatgpt(
         prepared_at=timestamp, model=model_name,
     ))
     CONVERSATION_ARCHIVE.record_prepared(runtime_state.get("last_prompt_materials", {}))
-    delivery.frame_id = (capture_frame or {}).get("provenance", {}).get("frame_id", "") if image_path else ""
+    delivery.frame_id = ((capture_frame or {}).get("provenance", {}).get("frame_id", "")
+                         if image_path and capture_frame and capture_frame.get("path") == image_path else "")
     delivery.emit("prepared", model=model_name, reason="Current input included in the prepared turn; no provider response yet.")
     set_runtime_value("last_prompt_diagnostics", {
         "inference_request_id": delivery.inference_request_id,
@@ -31176,10 +31341,18 @@ def send_prompt_to_chatgpt(
         MODEL_WORK.current().check()
         delivery.emit("responded", provider_model=response_data.get("model", ""),
                       reason="Usable model response received. History retention follows settings; command results are separate.")
-        if TASK_CONTINUATION_MODE == "bounded" and not TASK_CONTINUATION.check_deadline():
+        record_task_model_request(delivery, "responded")
+        budget_stop = (TASK_CONTINUATION.snapshot().get("stop_reason", "")
+                       if TASK_CONTINUATION_MODE == "bounded" else "")
+        skip_commands = budget_stop in USAGE_BUDGET_STOP_REASONS
+        if skip_commands:
+            set_runtime_value("last_model_turn_status", "task_budget_stopped")
+            append_runtime_feedback(f"Task budget stopped ({budget_stop}). Response retained; its commands and automatic action tail were not admitted. New operator input starts another task.")
+        elif TASK_CONTINUATION_MODE == "bounded" and not TASK_CONTINUATION.check_deadline():
             raise WorkCancelled("Task time limit reached before command admission.")
-        with history_actor_scope("model:" + model_name):
-            process_assistant_response(ai_response)
+        else:
+            with history_actor_scope("model:" + model_name):
+                process_assistant_response(ai_response)
         turn_duration_ms = int((time.perf_counter() - turn_started_at) * 1000)
         completed_epoch = time.time()
         set_runtime_value("last_turn_duration_ms", turn_duration_ms)
@@ -31190,7 +31363,8 @@ def send_prompt_to_chatgpt(
             task_id=getattr(delivery, "task_id", ""),
             command=summarize_runtime_text(prompt, max_chars=260),
             source="send_prompt_to_chatgpt",
-            status="success",
+            status="task_budget_stopped" if skip_commands else "success",
+            task_budget_stop=budget_stop if skip_commands else "",
             model=model_name,
             transport=MODEL_TRANSPORT,
             responses_reasoning=RESPONSES_REASONING.snapshot() if MODEL_TRANSPORT == "responses" else None,
@@ -33768,9 +33942,12 @@ def evaluate_assistant_command_policy(command):
     decision = "hold"
     policy_reason = rationale
     one_turn_reasoning = get_command_name(command).upper() == "SET_NEXT_REASONING_EFFORT"
+    task_control = get_command_name(command).upper() in TASK_CONTROL_COMMANDS
     flow_permission = evaluate_task_flow_permission(command, operating_context, gameplay_scene, pyag_action, args)
 
-    if flow_permission is not None:
+    if task_control:
+        decision, policy_reason = "allow", "controller task inspection or an opt-in stopping declaration; no action authorization"
+    elif flow_permission is not None:
         decision, policy_reason = flow_permission
     elif one_turn_reasoning:
         try:
@@ -33896,6 +34073,7 @@ def evaluate_assistant_command_policy(command):
     return {
         "decision": decision,
         "one_turn_reasoning": one_turn_reasoning,
+        "task_control": task_control,
         "category": category,
         "risk": risk,
         "rationale": rationale,
@@ -33913,11 +34091,11 @@ def evaluate_assistant_command_policy(command):
 
 
 def is_urgent_control_command(prepared_commands):
-    """Only a standalone stop request may overtake queued work after admission."""
+    """Standalone stop/task controls stay in the controller, ahead of queued work."""
     if not prepared_commands or len(prepared_commands) != 1:
         return False
     _, name, args, _ = prepared_commands[0]
-    return name in {"SHUTDOWN_RUNTIME", "CANCEL_ACTIVE_WORK", "RELEASE_HELD_INPUTS"} or (
+    return name in TASK_CONTROL_COMMANDS or name in {"SHUTDOWN_RUNTIME", "CANCEL_ACTIVE_WORK", "RELEASE_HELD_INPUTS"} or (
         name == "SET_LIVE_MODE" and len(args) == 1
         and args[0].strip().lower() in {"off", "false", "0", "safe"}
     )
@@ -33925,7 +34103,7 @@ def is_urgent_control_command(prepared_commands):
 
 def execute_command_entry(command_entry):
     """Preserve request identity and full results on queued and urgent paths."""
-    with HELD_INPUTS.owner_scope(command_entry), history_actor_scope(command_entry.get("history_actor", "operator" if command_entry.get("is_user") else "unknown")):
+    with command_task_scope(command_entry), HELD_INPUTS.owner_scope(command_entry), history_actor_scope(command_entry.get("history_actor", "operator" if command_entry.get("is_user") else "unknown")):
         execution_result = handle_commands(
             command_entry["command"], command_entry["is_user"],
             prepared_commands=command_entry.get("prepared_commands"),
@@ -33975,10 +34153,16 @@ def enqueue_or_execute_command(
     execution_context_fingerprint = runtime_state.get("context_fingerprint", "")
     execution_image_hash = runtime_state.get("last_image_hash", "")
     origin_delivery = current_delivery() if not is_user else None
+    parent_task = current_command_task() if not is_user else {}
+    parent_budget = (parent_task.get("task_budget_results") or [{}])[-1]
+    active_budget = TASK_CONTINUATION.budget_snapshot() if TASK_CONTINUATION_MODE == "bounded" else {}
+    budgeted = not is_user and bool(active_budget.get("enabled") or parent_budget)
+    task_identity = (getattr(origin_delivery, "task_id", "") or parent_task.get("task_id") or
+                     (TASK_CONTINUATION.snapshot().get("task_id", "") if budgeted else ""))
     command_entry = {
         'command_batch_id': 'batch-' + uuid.uuid4().hex,
-        'task_id': getattr(origin_delivery, 'task_id', ''),
-        'inference_request_id': getattr(origin_delivery, 'inference_request_id', ''),
+        'task_id': task_identity,
+        'inference_request_id': getattr(origin_delivery, 'inference_request_id', '') or parent_task.get('inference_request_id') or '',
         'command': command,
         'is_user': is_user,
         'history_actor': "operator" if is_user else (history_actor or current_history_actor()),
@@ -34005,6 +34189,31 @@ def enqueue_or_execute_command(
         'execution_image_hash': execution_image_hash,
         'executed_inference_turn': agent_state.inference_counter,
     }
+    if budgeted and any(item[1].upper() not in TASK_CONTROL_COMMANDS for item in prepared_commands):
+        if parent_budget and parent_budget.get("controller_pid") != os.getpid():
+            admission = dict(schema_version=TASK_BUDGET_RESULT_SCHEMA, success=False, allowed=False,
+                effect_status="not_started", code="controller_required", task_id=task_identity,
+                command_batch_id=command_entry["command_batch_id"], controller_pid=parent_budget.get("controller_pid"),
+                reason="Nested budgeted submission requires the owning controller; legacy process workers cannot spend a separate local budget.")
+        else:
+            admission = TASK_CONTINUATION.admit_commands(task_identity, command_entry["command_batch_id"], len(prepared_commands))
+        command_entry["task_budget_results"] = [admission]
+        if not admission["allowed"]:
+            execution_result = {key: value for key, value in command_entry.items() if key not in {"command", "prepared_commands"}}
+            execution_result.update(action=command, status="failed", success=False, executed_commands=[],
+                failed_commands=[{"command": command, "reason": admission["reason"], "effect_status": "not_started"}])
+            ingest_command_result(execution_result)
+            return dict(command_entry, submission_status="not_started", execution_result=execution_result)
+    if (not is_user and TASK_CONTINUATION_MODE == "bounded"
+            and not TASK_CONTINUATION.check_deadline()
+            and any(item[1].upper() not in TASK_CONTROL_COMMANDS for item in prepared_commands)):
+        reason = "Bounded task stopped; no new automatic command batch was admitted. Operator controls remain available."
+        execution_result = {key: value for key, value in command_entry.items() if key not in {"command", "prepared_commands"}}
+        execution_result.update(action=command, status="failed", success=False, executed_commands=[],
+                                failed_commands=[{"command": command, "reason": reason, "effect_status": "not_started"}])
+        ingest_command_result(execution_result)
+        return dict(command_entry, submission_status="failed", execution_result=execution_result)
+    TASK_CONTINUATION.record_command_admission(command_entry)
     if active_command_queue is not None and not is_urgent_control_command(prepared_commands):
         active_command_queue.put(command_entry)
         return dict(command_entry, submission_status="queued")
@@ -34019,6 +34228,8 @@ def enqueue_or_execute_command(
 def queue_pending_model_command(command, associated_goal="No specific goal", source="assistant", reason="held for review", policy=None, queue_mode=None):
     with PENDING_COMMAND_LEDGER.mutation(get_pending_command_store()):
         MODEL_WORK.current().check()
+        origin = current_task_artifact_origin()
+        require_current_artifact_origin(origin, "pending_carry_policy")
         pending_store = get_pending_command_store()
         prepared = prepare_command_batch(command)
         policy = policy or evaluate_pending_command_policy(command, prepared)
@@ -34046,7 +34257,7 @@ def queue_pending_model_command(command, associated_goal="No specific goal", sou
 
         if any(not pending_entry_available(row) and row.get("operating_context", "unknown") == operating_context
                and row.get("family_key") == family_key for row in pending_store):
-            raise ValueError("This pending family has a reserved/uncertain submission; inspect it before proposing a replacement.")
+            raise ValueError("This pending family is reserved, uncertain or held for an operator; inspect it before proposing a replacement.")
 
         supersede_conflicting_pending_entries(
             pending_store,
@@ -34101,6 +34312,7 @@ def queue_pending_model_command(command, associated_goal="No specific goal", sou
                 matching_entry["command"] = command
                 matching_entry["_prepared_commands"] = prepared
                 matching_entry["history_actor"] = current_history_actor()
+                matching_entry["task_origin"] = origin
             if resolved_queue_mode == "replace":
                 replace_immediate_pending_entries(
                     pending_store,
@@ -34156,6 +34368,7 @@ def queue_pending_model_command(command, associated_goal="No specific goal", sou
             "command": command,
             "_prepared_commands": prepared,
             "history_actor": current_history_actor(),
+            "task_origin": origin,
             "associated_goal": associated_goal,
             "source": source,
             "mode": EXECUTION_MODE,
@@ -34210,7 +34423,7 @@ def queue_pending_model_command(command, associated_goal="No specific goal", sou
             removable = next((index for index, row in enumerate(pending_store)
                               if row is not entry and pending_entry_available(row)), None)
             if removable is None:
-                raise ValueError("Pending capacity is occupied by reserved/uncertain items; inspect and clear them explicitly.")
+                raise ValueError("Pending capacity is occupied by reserved, uncertain or task-held items; inspect and clear them explicitly.")
             pending_store.pop(removable)
         PENDING_COMMAND_LEDGER.ensure_identities(pending_store)
         append_recent_command_proposal(
@@ -34246,7 +34459,27 @@ def route_assistant_commands(command_text, associated_goal="No specific goal", s
 
     try:
         proposals = split_command_batch(command_text)
-    except CommandSyntaxError as error:
+        has_task_control = False
+        for proposal in proposals:
+            probe = proposal
+            for _ in range(33):
+                name = get_command_name(probe).upper()
+                if name in TASK_CONTROL_COMMANDS:
+                    has_task_control = True
+                    break
+                if name not in PENDING_WRAPPER_MODES:
+                    break
+                nested_args = extract_command_arguments(probe)
+                if not nested_args:
+                    break
+                probe = nested_args[0]
+        if has_task_control:
+            # Do not split an invalid mixed control/action batch into separate
+            # proposals or unwrap a pending control before validating it.
+            prepare_command_batch(command_text)
+        elif TASK_CONTINUATION_MODE == "bounded" and not TASK_CONTINUATION.check_deadline():
+            raise CommandSyntaxError("Bounded task stopped; automatic proposals cannot execute or enter the pending queue.")
+    except (CommandSyntaxError, ValueError) as error:
         append_runtime_feedback(f"Rejected malformed {source} command batch: {error}")
         return {"executed_entry": None, "held_commands": [], "rejected_commands": [
                     {"command": command_text, "reason": str(error), "context": operating_context}],
@@ -34319,7 +34552,8 @@ def route_assistant_commands(command_text, associated_goal="No specific goal", s
             queue_mode is None
             and decision == "allow"
             and (
-                execution_mode == "auto"
+                policy.get("task_control", False)
+                or execution_mode == "auto"
                 or (execution_mode == "assist" and (command_category == "memory" or policy.get("one_turn_reasoning", False)))
             )
         )
@@ -34600,6 +34834,8 @@ def ingest_command_result(action_entry, shared_recent_executed_actions=None):
                 "retrieval_results": action_entry.get("retrieval_results", []),
                 "goal_file_results": action_entry.get("goal_file_results", []),
                 "memory_command_results": action_entry.get("memory_command_results", []),
+                "task_control_results": action_entry.get("task_control_results", []),
+                "task_budget_results": action_entry.get("task_budget_results", []),
                 "desktop_results": action_entry.get('desktop_results', []),
                 "input_cleanup_results": action_entry.get("input_cleanup_results", []),
                 "held_input_results": action_entry.get("held_input_results", []),
@@ -34676,6 +34912,8 @@ def ingest_command_result(action_entry, shared_recent_executed_actions=None):
   retrieval_results=action_entry.get('retrieval_results', []),
   goal_file_results=action_entry.get('goal_file_results', []),
   memory_command_results=action_entry.get('memory_command_results', []),
+  task_control_results=action_entry.get('task_control_results', []),
+  task_budget_results=action_entry.get('task_budget_results', []),
   pending_id=action_entry.get('pending_id', ''),
   pending_attempt_id=action_entry.get('pending_attempt_id', ''),
   desktop_results=action_entry.get('desktop_results', []),
@@ -34999,6 +35237,7 @@ def score_recent_action_outcomes(section_items=None, narrative_text=""):
 
 # Function to process assistant's response
 def process_assistant_response(response_text):
+    global HIERARCHY_DISPATCH_ARMED
     executed_commands, tasks_section, section_items, narrative_text = split_response_sections(response_text)
     write_chat_history_log(
         "assistant_response_parsed",
@@ -35017,7 +35256,10 @@ def process_assistant_response(response_text):
         record_gameplay_scene_observation(section_items, narrative_text)
         refresh_gameplay_scene()
     score_recent_action_outcomes(section_items, narrative_text)
-    maybe_run_game_focus_recovery(section_items, narrative_text)
+    outcome_attempt = any(get_command_name(command).upper() == "REPORT_TASK_OUTCOME"
+                          for command in split_commands_preserving_parentheses(executed_commands))
+    if not outcome_attempt and (TASK_CONTINUATION_MODE != "bounded" or TASK_CONTINUATION.check_deadline()):
+        maybe_run_game_focus_recovery(section_items, narrative_text)
 
     # Handle executed commands
     if executed_commands:
@@ -35025,19 +35267,23 @@ def process_assistant_response(response_text):
 
     # Update hierarchical tasks
     if tasks_section:
-        parse_hierarchical_tasks(tasks_section)
-        sync_action_horizons_from_hierarchical_tasks()
+        with SETTINGS_TRANSACTION_LOCK, GOAL_LOCK:
+            parse_hierarchical_tasks(tasks_section)
+            sync_action_horizons_from_hierarchical_tasks()
+            HIERARCHY_DISPATCH_ARMED = HIERARCHY_DISPATCH == "legacy"
 
     promote_response_memory(section_items, narrative_text)
     if tasks_section:
         promote_associated_goals_from_tasks()
 
     # Execute immediate actions from the updated tasks
-    if hierarchical_tasks and hierarchical_tasks[0]:  # Check if Level 1 actions exist
+    continue_actions = not outcome_attempt and (TASK_CONTINUATION_MODE != "bounded" or TASK_CONTINUATION.check_deadline())
+    if continue_actions and HIERARCHY_DISPATCH == "legacy" and HIERARCHY_DISPATCH_ARMED and hierarchical_tasks and hierarchical_tasks[0]:
         immediate_actions = hierarchical_tasks[0]  # Level 1 actions
         execute_immediate_actions(immediate_actions, skip_commands=queued_command_set)
 
-    auto_execute_pending_commands()
+    if continue_actions and (TASK_CONTINUATION_MODE != "bounded" or TASK_CONTINUATION.check_deadline()):
+        auto_execute_pending_commands()
 
     # Update pinned information
     update_pinned_information()
@@ -35050,22 +35296,26 @@ def process_assistant_response(response_text):
 def execute_immediate_actions(actions, skip_commands=None):
     skip_commands = skip_commands or set()
     for action in actions:
-        command = action.get('command')
-        if command and not command.startswith('TBD'):
-            normalized_command = normalize_action_command(command).lower()
-            if normalized_command in skip_commands:
+        with SETTINGS_TRANSACTION_LOCK:
+            if HIERARCHY_DISPATCH != "legacy" or not HIERARCHY_DISPATCH_ARMED:
+                break
+            command = action.get('command')
+            if command and not command.startswith('TBD'):
+                normalized_command = normalize_action_command(command).lower()
+                if normalized_command in skip_commands:
+                    continue
+                associated_goal = action.get('associated_goal', 'No specific goal')
+                route_assistant_commands(
+                    command,
+                    associated_goal=associated_goal,
+                    source='immediate_task',
+                    why=action.get('why', ''),
+                    thought=action.get('thought', '')
+                )
+            else:
+                # Handle placeholders or general suggestions.
                 continue
-            associated_goal = action.get('associated_goal', 'No specific goal')
-            route_assistant_commands(
-                command,
-                associated_goal=associated_goal,
-                source='immediate_task',
-                why=action.get('why', ''),
-                thought=action.get('thought', '')
-            )
-        else:
-            # Handle placeholders or general suggestions.
-            continue
+
 
 
 def summarize_hierarchical_action(item):
@@ -35077,6 +35327,8 @@ def summarize_hierarchical_action(item):
 
 
 def sync_action_horizons_from_hierarchical_tasks():
+    if HORIZON_SYNC == "preserve":
+        return
     immediate_items = []
     short_term_items = []
     mid_term_items = []
@@ -35677,6 +35929,7 @@ is_known_command_prefixes = [
 # Function to check if a message is a known command
 is_known_command_prefixes.extend([
     'SET_SERVICE_TIER', 'set_service_tier',
+    'SET_SUBSCRIPTION_POLICY', 'set_subscription_policy',
     'SHOW_REFERENCE_TOPICS', 'show_reference_topics',
     'SHOW_REFERENCE_PACK', 'show_reference_pack',
     'SEARCH_REFERENCE_PACK', 'search_reference_pack',
@@ -35955,6 +36208,7 @@ def handle_commands(command_input, is_user=True, prepared_commands=None, command
     retrieval_results = []
     goal_file_results = []
     memory_command_results = []
+    task_control_results = []
     desktop_results = []
     input_cleanup_results = []
     held_input_results = []
@@ -36040,6 +36294,8 @@ def handle_commands(command_input, is_user=True, prepared_commands=None, command
                             goal_file_results.append(dict(result, input=command))
                         if isinstance(result, dict) and result.get("schema_version") == "aurora_memory_command_result_v1":
                             memory_command_results.append(dict(result, input=command))
+                        if isinstance(result, dict) and result.get("schema_version") == TASK_CONTROL_RESULT_SCHEMA:
+                            task_control_results.append(dict(result, input=command))
                         if isinstance(result, dict) and "input_cleanup" in result:
                             input_cleanup_results.append(dict(result["input_cleanup"], command=cmd_name))
                         if isinstance(result, dict) and "held_inputs" in result:
@@ -36105,6 +36361,7 @@ def handle_commands(command_input, is_user=True, prepared_commands=None, command
         "retrieval_results": retrieval_results,
         "goal_file_results": goal_file_results,
         "memory_command_results": memory_command_results,
+        "task_control_results": task_control_results,
         "desktop_results": desktop_results,
         "input_cleanup_results": input_cleanup_results,
         "held_input_results": held_input_results,
@@ -37587,6 +37844,98 @@ def set_task_max_seconds_command(args, is_user):
     display_message("system", f"Next task time limit: {TASK_MAX_SECONDS:g}s (admission boundary, not remote cancellation)")
 
 
+def set_task_max_commands_command(args, is_user):
+    global TASK_MAX_COMMANDS
+    if args:
+        if not is_user:
+            raise ValueError("Only the operator may change task budgets.")
+        require_runtime_setting_unlocked("execution", "Task command budget")
+        TASK_MAX_COMMANDS = coerce_setting_value("task.max_commands", args[0])
+    display_message("system", f"Next bounded task command budget: {TASK_MAX_COMMANDS} (0 = off; expanded bindings, not individual input events).")
+    return True
+
+
+def set_task_max_reported_tokens_command(args, is_user):
+    global TASK_MAX_REPORTED_TOKENS
+    if args:
+        if not is_user:
+            raise ValueError("Only the operator may change task budgets.")
+        require_runtime_setting_unlocked("execution", "Task reported-token threshold")
+        TASK_MAX_REPORTED_TOKENS = coerce_setting_value("task.max_reported_tokens", args[0])
+    display_message("system", f"Next bounded task reported-token threshold: {TASK_MAX_REPORTED_TOKENS} (0 = off; the last request may overshoot).")
+    return True
+
+
+def set_task_plan_carry_policy_command(args, is_user):
+    global TASK_PLAN_CARRY_POLICY
+    if args:
+        if not is_user:
+            raise ValueError("Only the operator may change task artifact policies.")
+        require_runtime_setting_unlocked("execution", "Next-task plan policy")
+        TASK_PLAN_CARRY_POLICY = coerce_setting_value("task.plan_carry_policy", args[0])
+    display_message("system", f"Next bounded task plan policy: {TASK_PLAN_CARRY_POLICY}; operator/unattributed plans are preserved.")
+    return True
+
+
+def set_task_pending_carry_policy_command(args, is_user):
+    global TASK_PENDING_CARRY_POLICY
+    if args:
+        if not is_user:
+            raise ValueError("Only the operator may change task artifact policies.")
+        require_runtime_setting_unlocked("execution", "Next-task pending policy")
+        TASK_PENDING_CARRY_POLICY = coerce_setting_value("task.pending_carry_policy", args[0])
+    display_message("system", f"Next bounded task pending policy: {TASK_PENDING_CARRY_POLICY}; operator/unattributed and reserved/uncertain rows are preserved.")
+    return True
+
+
+def set_task_unknown_usage_policy_command(args, is_user):
+    global TASK_UNKNOWN_USAGE_POLICY
+    if args:
+        if not is_user:
+            raise ValueError("Only the operator may change task budgets.")
+        require_runtime_setting_unlocked("execution", "Missing token usage")
+        TASK_UNKNOWN_USAGE_POLICY = coerce_setting_value("task.unknown_usage_policy", args[0])
+    display_message("system", f"Next bounded task missing-usage policy: {TASK_UNKNOWN_USAGE_POLICY}; applies only with a reported-token threshold.")
+    return True
+
+
+def set_task_outcome_reporting_command(args, is_user):
+    global TASK_OUTCOME_REPORTING
+    if args:
+        if not is_user:
+            raise ValueError("Only the operator may enable task outcome reporting.")
+        require_runtime_setting_unlocked("execution", "Task outcome reporting")
+        TASK_OUTCOME_REPORTING = coerce_setting_value("task.outcome_reporting", args[0])
+    display_message("system", f"Next bounded task outcome reporting: {TASK_OUTCOME_REPORTING}; current task keeps its latched setting.")
+    return True
+
+
+def show_task_status_command(args, is_user):
+    parse_task_control_arguments("SHOW_TASK_STATUS", args)
+    result = dict(schema_version=TASK_CONTROL_RESULT_SCHEMA, command="SHOW_TASK_STATUS",
+                  success=True, effect_status="observed", continuation=build_task_continuation_snapshot())
+    display_message("system", json.dumps(result, ensure_ascii=False))
+    return result
+
+
+def report_task_outcome_command(args, is_user):
+    values = parse_task_control_arguments("REPORT_TASK_OUTCOME", args)
+    delivery = current_delivery() if not is_user else None
+    error = ""
+    if TASK_CONTINUATION_MODE != "bounded":
+        error = "Task outcome reporting requires bounded mode; legacy behavior is unchanged."
+    elif not is_user and (getattr(delivery, "task_id", "") != values["task_id"] or not getattr(delivery, "inference_request_id", "")):
+        error = "Model report lacks a matching originating task/request; it cannot report on another task."
+    if error:
+        result = dict(schema_version=TASK_CONTROL_RESULT_SCHEMA, command="REPORT_TASK_OUTCOME",
+                      success=False, effect_status="not_started", reason=error)
+    else:
+        result = TASK_CONTINUATION.report_outcome(**values, actor="operator" if is_user else current_history_actor(),
+                    origin_request_id=getattr(delivery, "inference_request_id", ""))
+    display_message("system", json.dumps(result, ensure_ascii=False))
+    return result
+
+
 def set_readback_scope_command(args, is_user):
     global READBACK_SCOPE
     if args:
@@ -37619,6 +37968,60 @@ def set_goal_save_format(value):
     require_runtime_setting_unlocked("execution", "Goal save format")
     GOAL_SAVE_FORMAT = coerce_setting_value("goals.save_format", value)
     return GOAL_SAVE_FORMAT
+
+
+def set_subscription_policy(value):
+    global SUBSCRIPTION_POLICY
+    with SETTINGS_TRANSACTION_LOCK:
+        require_runtime_setting_unlocked("auth", "Subscription stream policy")
+        SUBSCRIPTION_POLICY = coerce_setting_value("auth.subscription_policy", value)
+        return SUBSCRIPTION_POLICY
+
+
+def set_subscription_policy_command(args, is_user):
+    if args:
+        if not is_user:
+            raise ValueError("Only the operator may change the subscription stream policy.")
+        set_subscription_policy(args[0])
+    display_message("system", f"Subscription stream policy: {SUBSCRIPTION_POLICY}; applies to the next subscription request, without replay or API fallback.")
+    return True
+
+
+def set_hierarchy_dispatch(value):
+    global HIERARCHY_DISPATCH, HIERARCHY_DISPATCH_ARMED
+    with SETTINGS_TRANSACTION_LOCK:
+        require_runtime_setting_unlocked("execution", "Hierarchy command dispatch")
+        value = coerce_setting_value("goals.hierarchy_dispatch", value)
+        if value != HIERARCHY_DISPATCH:
+            HIERARCHY_DISPATCH = value
+            HIERARCHY_DISPATCH_ARMED = False
+        return HIERARCHY_DISPATCH
+
+
+def set_horizon_sync(value):
+    global HORIZON_SYNC
+    with SETTINGS_TRANSACTION_LOCK:
+        require_runtime_setting_unlocked("execution", "Horizon synchronization")
+        HORIZON_SYNC = coerce_setting_value("goals.horizon_sync", value)
+        return HORIZON_SYNC
+
+
+def set_hierarchy_dispatch_command(args, is_user):
+    if args:
+        if not is_user:
+            raise ValueError("Only the operator may change hierarchy dispatch.")
+        set_hierarchy_dispatch(args[0])
+    display_message("system", f"Hierarchy dispatch: {HIERARCHY_DISPATCH}; armed={HIERARCHY_DISPATCH_ARMED}. Policy changes require a fresh hierarchy before legacy dispatch resumes.")
+    return True
+
+
+def set_horizon_sync_command(args, is_user):
+    if args:
+        if not is_user:
+            raise ValueError("Only the operator may change horizon synchronization.")
+        set_horizon_sync(args[0])
+    display_message("system", f"Horizon synchronization: {HORIZON_SYNC}. Explicit horizon commands remain available.")
+    return True
 
 
 def set_gameplay_scene_policy_command(args, is_user):
@@ -37923,6 +38326,8 @@ def _build_runtime_preferences_snapshot():
         "capture_request_max_attempts": CAPTURE_REQUEST_MAX_ATTEMPTS,
         "gameplay_scene_policy": GAMEPLAY_SCENE_POLICY,
         "goal_save_format": GOAL_SAVE_FORMAT,
+        "hierarchy_dispatch": HIERARCHY_DISPATCH,
+        "horizon_sync": HORIZON_SYNC,
         "assistant_policy": ASSISTANT_POLICY,
         "turn_scheduler_profile": TURN_SCHEDULER_PROFILE_NAME,
         "turn_scheduler_mode": TURN_SCHEDULER_MODE,
@@ -42510,7 +42915,7 @@ def _resolve_pending_indexes(args, default_all=False):
 
 
 def approve_pending_command(args, is_user):
-    return execute_pending_approval(args)
+    return execute_pending_approval(args, operator=is_user)
 
 
 
@@ -42520,6 +42925,8 @@ def clear_pending_commands_command(args, is_user):
         before = PENDING_COMMAND_LEDGER.snapshot(store)
         try:
             indexes = _resolve_pending_indexes(args, default_all=True)
+            if not is_user and any(store[index].get("pending_state") == "task_held" for index in indexes):
+                raise ValueError("Prior-task held proposals require operator approval or clearing.")
             if any(store[index].get("pending_state") == "reserved" for index in indexes):
                 raise ValueError("A selected pending item is being submitted; wait for its receipt or cancel active work before clearing.")
             selected = [store[index] for index in indexes]
@@ -43618,6 +44025,7 @@ command_dispatch = {
     'SET_REASONING_EFFORT': set_reasoning_effort_command,
     'SET_SESSION_REASONING_EFFORT': set_session_reasoning_effort_command,
     'SET_SERVICE_TIER': set_service_tier_command,
+    'SET_SUBSCRIPTION_POLICY': set_subscription_policy_command,
     'SET_BATTLE_REASONING_EFFORT': set_battle_reasoning_effort_command,
     'SET_REVIEW_REASONING_EFFORT': set_review_reasoning_effort_command,
     'SET_CRITIQUE_REASONING_EFFORT': set_critique_reasoning_effort_command,
@@ -43691,9 +44099,19 @@ command_dispatch = {
     'SET_TASK_CONTINUATION': set_task_continuation_command,
     'SET_TASK_MAX_MODEL_TURNS': set_task_max_model_turns_command,
     'SET_TASK_MAX_SECONDS': set_task_max_seconds_command,
+    'SET_TASK_OUTCOME_REPORTING': set_task_outcome_reporting_command,
+    'SET_TASK_MAX_COMMANDS': set_task_max_commands_command,
+    'SET_TASK_MAX_REPORTED_TOKENS': set_task_max_reported_tokens_command,
+    'SET_TASK_UNKNOWN_USAGE_POLICY': set_task_unknown_usage_policy_command,
+    'SET_TASK_PLAN_CARRY_POLICY': set_task_plan_carry_policy_command,
+    'SET_TASK_PENDING_CARRY_POLICY': set_task_pending_carry_policy_command,
+    'SHOW_TASK_STATUS': show_task_status_command,
+    'REPORT_TASK_OUTCOME': report_task_outcome_command,
     'SET_READBACK_WAKE': set_readback_wake_command,
     'SET_READBACK_SCOPE': set_readback_scope_command,
     'SET_GOAL_SAVE_FORMAT': set_goal_save_format_command,
+    'SET_HIERARCHY_DISPATCH': set_hierarchy_dispatch_command,
+    'SET_HORIZON_SYNC': set_horizon_sync_command,
     'SET_LIVE_INIT': set_live_init_command,
     'SET_SOUND_EFFECTS': set_sound_effects_command,
     'SET_TIME_LOGGING': set_time_logging_command,
@@ -44109,6 +44527,7 @@ def build_cli_parser():
 
 def build_startup_config_snapshot():
     return {
+        "subscription_policy": SUBSCRIPTION_POLICY,
         "capture_mode": CAPTURE_MODE,
         "capture_provenance_policy": CAPTURE_PROVENANCE_POLICY,
         "capture_geometry_policy": CAPTURE_GEOMETRY_POLICY,
@@ -44117,6 +44536,8 @@ def build_startup_config_snapshot():
         "capture_request_max_attempts": CAPTURE_REQUEST_MAX_ATTEMPTS,
         "gameplay_scene_policy": GAMEPLAY_SCENE_POLICY,
         "goal_save_format": GOAL_SAVE_FORMAT,
+        "hierarchy_dispatch": HIERARCHY_DISPATCH,
+        "horizon_sync": HORIZON_SYNC,
         "assistant_policy": ASSISTANT_POLICY,
         "auth_mode": AUTH_MODE,
         "live_mode": bool(SEND_TO_MODEL and ENABLE_MODEL_RESPONSES),
@@ -44269,7 +44690,9 @@ def apply_cli_args(parsed_args):
     if parsed_args.turn_scheduler_mode:
         TURN_SCHEDULER_MODE = normalize_turn_scheduler_mode(parsed_args.turn_scheduler_mode, fallback=TURN_SCHEDULER_MODE)
     if parsed_args.turn_heartbeat_seconds is not None:
-        TURN_SCHEDULER_HEARTBEAT_SECONDS = max(0.25, float(parsed_args.turn_heartbeat_seconds))
+        TURN_SCHEDULER_HEARTBEAT_SECONDS = coerce_setting_value(
+            "scheduler.heartbeat_seconds", parsed_args.turn_heartbeat_seconds
+        )
     if parsed_args.turn_min_gap_seconds is not None:
         TURN_SCHEDULER_MIN_GAP_SECONDS = max(0.0, float(parsed_args.turn_min_gap_seconds))
     if parsed_args.turn_capture_wake is not None:
@@ -44487,19 +44910,20 @@ def drain_runtime_processed_capture(context):
 
 def drain_runtime_command_results(context):
     processed = 0
-    needs_followup = False
+    observation_entries = []
     while processed < 128:
         try:
             action_entry = context.command_result_queue.get_nowait()
         except queue.Empty:
             break
         ingest_command_result(action_entry, shared_recent_executed_actions=list(context.shared_recent_executed_actions))
-        needs_followup |= should_request_turn_after_command_result(action_entry)
+        if should_request_turn_after_command_result(action_entry):
+            observation_entries.append(action_entry)
         processed += 1
     if processed:
         update_pinned_information(list(context.shared_recent_executed_actions))
-        if needs_followup:
-            mark_turn_scheduler_command_result_pending()
+        if observation_entries:
+            mark_turn_scheduler_command_result_pending(command_entries=observation_entries)
         write_control_panel_state_snapshot(force=True)
     return processed
 

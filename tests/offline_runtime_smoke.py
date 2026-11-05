@@ -130,7 +130,7 @@ def run_smoke(simulate_model=False, contracts_only=False) -> dict:
     with tempfile.TemporaryDirectory(dir=ROOT, prefix=".aurora-ingress-smoke-") as folder:
         work = Path(folder).resolve()
         assert ROOT.resolve() in work.parents
-        for name in ("aurora_task_continuation.py", "aurora_delivery_receipts.py", "aurora_gameplay_scene.py", "aurora_goal_store.py", "aurora_conversation_navigator.py", "aurora2.py", "aurora2_control_panel.py", "aurora_preflight.py",
+        for name in ("aurora_subscription_worker.py", "aurora_task_continuation.py", "aurora_delivery_receipts.py", "aurora_gameplay_scene.py", "aurora_goal_store.py", "aurora_conversation_navigator.py", "aurora2.py", "aurora2_control_panel.py", "aurora_preflight.py",
                      "aurora_runtime_work.py", "aurora_input_ownership.py", "aurora_responses_reasoning.py", "aurora_capture_store.py", "aurora_capture_provenance.py", "aurora_capture_geometry.py", "aurora_panel_layout.py",
                      "aurora_command_protocol.py", "aurora_command_contracts.py", "aurora_default_profiles.py", "aurora_pending_commands.py", "aurora_history_controls.py", "aurora_episodic_retrieval.py", "aurora_search_query.py", "aurora_retrieval_results.py", "aurora_retrieval_commands.py", "aurora_conversation.py", "aurora_control_plane.py", "aurora_codex_oauth.py",
                      "aurora_settings_registry.py", "aurora_settings_transactions.py", "launch_aurora2.cmd"):

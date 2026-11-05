@@ -21,6 +21,7 @@ from offline_runtime_smoke import CONTRACT_IMPORT_GUARD, CONTRACT_FIXTURE
 
 ROOT = Path(__file__).resolve().parents[1]
 COPY_FILES = (
+    "aurora_subscription_worker.py",
     "aurora_task_continuation.py",
     "aurora_delivery_receipts.py",
     "aurora_conversation_delivery.py",
@@ -711,6 +712,35 @@ def check_panel(work, interactive=False, hidden=False):
         app.reload_observed_settings()
         assert float(field.get()) == old_value
 
+        # Exercise the actual exported state contract, not a synthetic registry
+        # fixture: an omitted setting blocks all GUI transactions, even unrelated
+        # ones. Keep inference paused while testing auth-policy Preview/Apply/Undo.
+        _status, effective = app._get_control_panel_settings_snapshot(require_effective=True)
+        assert all(row["value_status"] == "effective" for row in effective["settings"])
+        old_policy = snapshot()["models"]["subscription_policy"]
+        new_policy = "bounded" if old_policy == "legacy" else "legacy"
+        subscription_transactions = []
+        for operation in ("preview", "apply", "rollback"):
+            if operation == "rollback":
+                request = app._submit_settings_transaction(operation,
+                    rollback_handle=app.settings_transaction_last_rollback_handle)
+            else:
+                request = app._submit_settings_transaction(operation,
+                    changes=[{"key": "auth.subscription_policy", "value": new_policy}])
+            assert request is not None, app.settings_transaction_status_var.get()
+            pending_id = app.settings_transaction_pending["request_id"]
+            until(lambda: app.settings_transaction_pending is None, "subscription " + operation)
+            result = app.settings_transaction_last_receipt
+            expected = {"preview": "previewed", "apply": "applied", "rollback": "rolled_back"}[operation]
+            assert result.get("status") == expected and receipt(pending_id), result
+            expected_policy = new_policy if operation == "apply" else old_policy
+            until(lambda: snapshot().get("models", {}).get("subscription_policy") == expected_policy,
+                  "subscription policy export " + operation)
+            assert not snapshot()["modes"]["live"]
+            app.refresh_now()
+            subscription_transactions.append({"operation": operation, "status": expected,
+                                              "observed_policy": expected_policy})
+
         print("Checking selected-message edit/pin and stale-editor receipt", flush=True)
         command('PIN("Message editor fixture")')
         until(lambda: any('Message editor fixture' in row['text'] for row in snapshot()['conversation']['retained']['rows']), 'message editor seed')
@@ -766,7 +796,7 @@ def check_panel(work, interactive=False, hidden=False):
         assert "game.scene_policy" in board.variables and "goals.save_format" in board.variables
         assert board.variables["game.scene_policy"].get() in {"evidence", "legacy"}
         assert board.variables["goals.save_format"].get() in {"versioned", "legacy"}
-        assert len(board.rows) == 376
+        assert len(board.rows) == 387
         assert board.level.get() == "Overview" and board.flow_section.expanded
         assert not board.controls.expanded and not board.commands_section.expanded
         for kind in ("init", "system", "memory", "current", "conversation", "screen"):
@@ -929,6 +959,12 @@ def check_panel(work, interactive=False, hidden=False):
         mini.variables["task.continuation_mode"].set("bounded")
         mini.variables["task.max_model_turns"].set("4")
         mini.variables["task.max_seconds"].set("60")
+        mini.variables["task.outcome_reporting"].set("true")
+        mini.variables["task.max_commands"].set("7")
+        mini.variables["task.max_reported_tokens"].set("500")
+        mini.variables["task.unknown_usage_policy"].set("stop")
+        mini.variables["task.plan_carry_policy"].set("discard_previous")
+        mini.variables["task.pending_carry_policy"].set("hold_previous")
         mini.variables["scheduler.readback_wake_enabled"].set("true")
         mini.variables["context.init_delivery"].set("system_once")
         mini.apply_keys(CONTINUATION_KEYS)
@@ -936,6 +972,12 @@ def check_panel(work, interactive=False, hidden=False):
         until(lambda: snapshot()["continuation"]["mode"] == "bounded", "bounded task settings observed")
         assert snapshot()["continuation"]["max_model_turns"] == 4
         assert snapshot()["continuation"]["max_seconds"] == 60
+        assert snapshot()["continuation"]["outcome_reporting"] is True
+        assert snapshot()["continuation"]["max_commands"] == 7
+        assert snapshot()["continuation"]["max_reported_tokens"] == 500
+        assert snapshot()["continuation"]["unknown_usage_policy"] == "stop"
+        assert snapshot()["continuation"]["plan_carry_policy"] == "discard_previous"
+        assert snapshot()["continuation"]["pending_carry_policy"] == "hold_previous"
         assert snapshot()["modes"]["init_delivery"] == "system_once"
         assert snapshot()["scheduler"]["readback_wake_enabled"]
         assert not snapshot()["modes"]["live"], "Task controls enabled model spending"
@@ -943,6 +985,25 @@ def check_panel(work, interactive=False, hidden=False):
         until(lambda: app.settings_transaction_pending is None, "compact task settings rollback")
         until(lambda: snapshot()["continuation"]["mode"] == before_task["mode"], "task settings restored")
         assert snapshot()["continuation"]["max_model_turns"] == before_task["max_model_turns"]
+        assert snapshot()["continuation"]["outcome_reporting"] == before_task["outcome_reporting"]
+        assert snapshot()["continuation"]["max_commands"] == before_task["max_commands"]
+        assert snapshot()["continuation"]["max_reported_tokens"] == before_task["max_reported_tokens"]
+        assert snapshot()["continuation"]["unknown_usage_policy"] == before_task["unknown_usage_policy"]
+        assert snapshot()["continuation"]["plan_carry_policy"] == before_task["plan_carry_policy"]
+        assert snapshot()["continuation"]["pending_carry_policy"] == before_task["pending_carry_policy"]
+        mini.reload()
+        observed_state = app.state_cache
+        app.state_cache = dict(observed_state, continuation=dict(observed_state.get("continuation") or {},
+            mode="bounded", outcome_reporting=True, active_task=dict(status="stopped", turns=1, max_turns=4,
+                stop_reason="reported_approval", outcome_reporting=True,
+                reported_outcome=dict(outcome="approval", actor="model:fixture", reason="Need operator decision"))))
+        mini.update_state()
+        board.update_state()
+        from aurora_conversation_delivery import conversation_activity
+        assert "Reported approval by model:fixture (unverified)" in mini.task_status.get()
+        assert "Reported approval by model:fixture (unverified)" in board.running_summary.get()
+        assert "Reported approval by model:fixture (unverified)" in conversation_activity(app.state_cache)
+        app.state_cache = observed_state
         mini.reload()
         mini.set_expanded(False)
         app.show_tab("Dashboard")
@@ -990,6 +1051,8 @@ def check_panel(work, interactive=False, hidden=False):
         result = {"status": "passed", "displayed_layout_checked": not hidden, "hidden_tk": hidden, "views": views, "window_sizes": sizes, "pane_widths": widths,
                   "work_areas": monitor_work_areas(), "raw_command": command_result,
                   "settings_transactions": transaction_results, "draft_preserved": True,
+                  "subscription_policy_transactions": subscription_transactions,
+                  "all_registered_settings_effective": True,
                   "switchboard_feedback": {"boolean_and_numeric_drafts_nonmutating": True,
                       "draft_badges_immediate_and_preserved_by_refresh": True,
                       "preview_apply_undo_badges_match_readback": True,

@@ -27,9 +27,14 @@ set_text_model set_vision_model set_reasoning_model set_model_transport set_defa
 set_model_temperature apply_turn_scheduler_profile set_turn_scheduler_mode set_turn_heartbeat_seconds
 set_turn_min_gap_seconds set_turn_capture_wake_enabled set_turn_capture_wake_debounce_seconds
 set_turn_post_action_settle_seconds set_screenshot_interval set_capture_mode set_capture_provenance_policy set_capture_geometry_policy set_capture_target set_capture_request_timeout set_capture_request_attempts set_demand_capture_enabled set_image_detail
-set_live_init_mode set_gameplay_scene_policy set_goal_save_format set_assistant_policy""".split()
+set_live_init_mode set_gameplay_scene_policy set_goal_save_format set_assistant_policy set_hierarchy_dispatch set_horizon_sync set_subscription_policy""".split()
 
 VALUES = {
+    "auth.subscription_policy": "bounded",
+    "goals.hierarchy_dispatch": "advisory", "goals.horizon_sync": "preserve",
+    "task.plan_carry_policy": "discard_previous", "task.pending_carry_policy": "hold_previous",
+    "task.max_commands": 5, "task.max_reported_tokens": 500, "task.unknown_usage_policy": "stop",
+    "task.outcome_reporting": True,
     "context.init_delivery": "system_once", "task.continuation_mode": "bounded",
     "task.max_model_turns": 4, "task.max_seconds": 60, "scheduler.readback_wake_enabled": True, "scheduler.readback_scope": "reviewed",
     "runtime.assistant_policy": "task_flow",
@@ -76,14 +81,17 @@ class SettingCommandTests(unittest.TestCase):
             "parse_setting_command_arguments": parse_setting_command_arguments,
             "resolve_setting_definition": resolve_setting_definition,
             "INIT_DELIVERY_MODE": "legacy", "TASK_CONTINUATION_MODE": "legacy", "TASK_MAX_MODEL_TURNS": 8,
-            "TASK_MAX_SECONDS": 120.0, "READBACK_WAKE_ENABLED": False, "READBACK_SCOPE": "discovery", "COMMAND_DISCOVERY_CONTEXT": True,
+            "TASK_MAX_SECONDS": 120.0, "TASK_OUTCOME_REPORTING": False, "READBACK_WAKE_ENABLED": False, "READBACK_SCOPE": "discovery", "COMMAND_DISCOVERY_CONTEXT": True,
+            "TASK_MAX_COMMANDS": 0, "TASK_MAX_REPORTED_TOKENS": 0, "TASK_UNKNOWN_USAGE_POLICY": "continue",
+            "TASK_PLAN_CARRY_POLICY": "carry", "TASK_PENDING_CARRY_POLICY": "carry",
             "TASK_CONTINUATION": TaskContinuation(),
             "setting_shortcut_definition": setting_shortcut_definition,
             "setting_command_result": setting_command_result, "build_setting_readback": build_setting_readback,
             "build_settings_version": build_settings_version, "build_setting_command_invocation": build_setting_command_invocation,
             "setting_values_equal": setting_values_equal, "SETTINGS_TRANSACTION_LOCK": threading.RLock(),
-            "AUTH_MODE": "api_key", "EXECUTION_MODE": "assist", "ACTIVE_ACTION_MODE": "none",
+            "AUTH_MODE": "api_key", "SUBSCRIPTION_POLICY": "legacy", "EXECUTION_MODE": "assist", "ACTIVE_ACTION_MODE": "none",
             "GAMEPLAY_SCENE_POLICY": "evidence", "GOAL_SAVE_FORMAT": "versioned", "ASSISTANT_POLICY": "legacy",
+            "HIERARCHY_DISPATCH": "legacy", "HORIZON_SYNC": "legacy", "HIERARCHY_DISPATCH_ARMED": True,
             "SEND_TO_MODEL": False, "ENABLE_MODEL_RESPONSES": False, "LOAD_LIVE_INIT_PROMPT": False,
             "ACTIVE_GAME_PROFILE": "firered", "GAME_PROFILE_SOURCE": "env", "time_interval": 0.12, "CAPTURE_MODE": "heartbeat", "CAPTURE_PROVENANCE_POLICY": "verified", "CAPTURE_GEOMETRY_POLICY": "verified", "CAPTURE_TARGET": "legacy_options", "CAPTURE_REQUEST_TIMEOUT_SECONDS": 0.0, "CAPTURE_REQUEST_MAX_ATTEMPTS": 0,
             "cancel_capture_requests": lambda reason, **kwargs: None,
@@ -124,7 +132,7 @@ class SettingCommandTests(unittest.TestCase):
         return build_settings_version(self.scope["build_registered_settings_runtime_state"]())
 
     def test_all_registered_commands_observe_the_requested_value(self):
-        self.assertEqual(len(REGISTERED_SETTING_COMMANDS), 40)
+        self.assertEqual(len(REGISTERED_SETTING_COMMANDS), 49)
         for name, definition in REGISTERED_SETTING_COMMANDS.items():
             with self.subTest(name=name):
                 value = VALUES[definition.key]

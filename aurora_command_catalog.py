@@ -17,7 +17,7 @@ from aurora_command_contracts import describe_command_contract, reviewed_command
 
 
 CATALOG_SCHEMA = "aurora_command_catalog_v1"
-CATALOG_SOURCE_FILES = ("aurora2.py", "aurora_command_contracts.py", "aurora_command_catalog.py", "aurora_settings_registry.py", "aurora_settings_transactions.py", "aurora_history_controls.py", "aurora_goal_store.py", "aurora_episodic_retrieval.py", "aurora_search_query.py", "aurora_retrieval_results.py", "aurora_retrieval_commands.py")
+CATALOG_SOURCE_FILES = ("aurora2.py", "aurora_command_contracts.py", "aurora_command_catalog.py", "aurora_settings_registry.py", "aurora_settings_transactions.py", "aurora_history_controls.py", "aurora_goal_store.py", "aurora_episodic_retrieval.py", "aurora_search_query.py", "aurora_retrieval_results.py", "aurora_retrieval_commands.py", "aurora_task_continuation.py")
 
 
 def parse_dispatch(tree: ast.Module, variable: str) -> dict[str, str]:

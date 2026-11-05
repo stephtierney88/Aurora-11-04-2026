@@ -94,6 +94,25 @@ class SceneTests(unittest.TestCase):
                 {"source": "assistant_observation", "text": 'At Pallet Town, Oak says “Hey! Wait!”', "observed_at": 1000, "turn": 7}]
         self.assertEqual(self.classify(records=rows)['scene'], 'dialog')
 
+    def test_battle_label_with_generic_tutorial_or_result_dialogue(self):
+        for text in ("Gary's defeat dialogue remains unchanged.",
+                     "The dialogue remains on RED with a continuation arrow. Bulbasaur is at 20/20 HP.",
+                     "Gary's defeat dialogue is unchanged. Confirm is held because the scene classifier conflicts with the visible battle screen."):
+            rows = [{"source": "assistant_scene", "text": "battle", "observed_at": 1000, "turn": 7},
+                    {"source": "assistant_observation", "text": text, "observed_at": 1000, "turn": 7}]
+            result = self.classify(records=rows)
+            self.assertEqual(result['scene'], 'battle')
+            self.assertIn('dialog_overlay_with_reported_battle', result['compatibility_notes'])
+            self.assertFalse(result['visually_verified'])
+
+    def test_battle_dialogue_compatibility_does_not_hide_real_conflicts(self):
+        for text in ("The dialogue is visible. No battle interface.",
+                     "Dialogue visible. Bedroom stairs are visible.",
+                     "Dialogue visible. No text box is visible."):
+            rows = [{"source": "assistant_scene", "text": "battle", "observed_at": 1000, "turn": 7},
+                    {"source": "assistant_observation", "text": text, "observed_at": 1000, "turn": 7}]
+            self.assertEqual(self.classify(records=rows)['scene'], 'unknown')
+
 
 if __name__ == "__main__":
     unittest.main()

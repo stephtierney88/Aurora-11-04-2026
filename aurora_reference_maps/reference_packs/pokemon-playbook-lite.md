@@ -1,5 +1,13 @@
 # Pokemon Playbook Lite
 
+## Native production-worker testing (Implementation 50)
+
+The user requested a scoped 25-minute Pokémon test without Codex CUA. The opt-in supervisor in `tests/live_pokemon_production.py` uses Aurora's actual capture/drawing/scheduler/command workers and saved subscription transport. Read the review (development reference omitted from this snapshot) for the timed result, earlier diagnostic attempts, interventions and limits; this does not grant blanket future native authorization or qualify all desktop input.
+
+Measure the **game client** before starting: on this host, VBA's high-DPI wrapped menu reduced a nominal 480×320 view to 480×263 and clipped the battle/dialogue bottom. Correcting measured client height, using high latest-image detail, focusing the client once and parking the pointer outside materially improved visibility. Existing `AURORA_GAME_CLICK_TO_FOCUS=false` disables repeated center clicks for that isolated profile; use it only after verifying focus/input. Turning off the cursor label does not hide its glyph. Preserve legacy focus/scaling paths for other environments.
+
+Use zero heartbeat explicitly for the command-driven test; the CLI now shares the setting coercion. A bounded task stops when inference is paused, so turning it back on alone is not durable same-task resume. A screenshot receipt is not visual success. Goal priority/significance are optional opaque labels; supply them when requested. Use the separate mid/long horizon commands and inspect their stored readback instead of treating prose in general context as those fields.
+
 ## Longer task-flow proof (private Implementation 33)
 
 The repaired ten-minute continuation won Gary's battle, healed and won a Route 1 wild battle using Sol 6.1 low, with no sampled pending proposals or fixture approvals. Scene evidence now ignores quoted NPC dialogue, recognizes closed dialogue and accepts dialogue over a location. Use explicit current `Scene:` labels, and quote full horizon prose, e.g. `UPDATE_PINNED_SHORT_TERM("Finish the battle, then leave Oak's lab.")`. Under task_flow the four horizon commands preserve comma prose; legacy keeps first-argument behavior. Check actual stored content, not only save/load success. Sol low → one Astra medium → Sol low was independently reverified with returned model IDs. See `docs/reviews/2026-11-04/implementation-33.md` for exact results and remaining production-worker limitations; these adapter tests are not full AT2 acceptance.

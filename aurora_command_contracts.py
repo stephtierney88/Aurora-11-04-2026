@@ -21,6 +21,7 @@ from aurora_default_profiles import (
     DEFAULT_PROFILE_COMMANDS, validate_default_profile_arguments, describe_default_profile_contract,
 )
 from aurora_pending_commands import PENDING_COMMANDS, validate_pending_arguments, describe_pending_contract
+from aurora_task_continuation import TASK_CONTROL_COMMANDS, parse_task_control_arguments, describe_task_control_contract
 from aurora_retrieval_commands import EPISODIC_COMMANDS, parse_episodic_command, describe_episodic_contract
 from aurora_retrieval_results import RETRIEVAL_RESULT_COMMANDS, parse_retrieval_result_arguments, describe_retrieval_result_contract
 from aurora_history_controls import HISTORY_COMMANDS, parse_history_arguments, describe_history_contract
@@ -362,7 +363,7 @@ def parse_lock_command_arguments(name, args):
 
 
 def command_failure_stops_batch(name):
-    if name.upper() in MEMORY_COMMANDS or name.upper() in SIMPLE_BOOLEAN_COMMANDS:
+    if name.upper() in TASK_CONTROL_COMMANDS or name.upper() in MEMORY_COMMANDS or name.upper() in SIMPLE_BOOLEAN_COMMANDS:
         return True
     return bool(name.upper() in GOAL_FILE_COMMANDS or setting_command_definition(name) or name.upper() in LOCK_COMMANDS or name.upper() in TRANSACTION_COMMANDS or name.upper() in INPUT_CONTROL_COMMANDS or name.upper() in INFERENCE_PLAN_COMMANDS or name.upper() in DEFAULT_PROFILE_COMMANDS or name.upper() in PENDING_COMMANDS or name.upper() in HISTORY_COMMANDS or name.upper() in RETRIEVAL_RESULT_COMMANDS or name.upper() in EPISODIC_COMMANDS or name.upper() == "RESET_RESPONSES_SESSION")
 
@@ -608,7 +609,9 @@ def validate_desktop_keys(name, values, *, keyboard_keys, game_key_validator):
 
 def validate_command_arguments(name: str, args) -> None:
     """Validate reviewed parameters before any member of a batch dispatches."""
-    if name.upper() in MEMORY_COMMANDS:
+    if name.upper() in TASK_CONTROL_COMMANDS:
+        parse_task_control_arguments(name, args)
+    elif name.upper() in MEMORY_COMMANDS:
         parse_memory_command_arguments(name, args)
     elif name.upper() in SIMPLE_BOOLEAN_COMMANDS:
         parse_boolean_command_arguments(name, args)
@@ -651,6 +654,9 @@ def desktop_result(name, *, success=True, effect_status="submitted", reason=""):
 
 
 def reviewed_command_description(name):
+    if name.upper() in TASK_CONTROL_COMMANDS:
+        return {"signature": f"{name.upper()}(" + ("task_id, done|wait|approval|error, reason" if name.upper() == "REPORT_TASK_OUTCOME" else "") + ")",
+                "summary": TASK_CONTROL_COMMANDS[name.upper()]}
     if name.upper() in SIMPLE_BOOLEAN_COMMANDS:
         return {"signature": f"{name.upper()}([on|off])", "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."}
     if name.upper() in MEMORY_COMMANDS:
@@ -729,6 +735,8 @@ def command_result_failed(result: Any) -> bool:
 
 
 def describe_command_contract(name: str) -> dict[str, Any]:
+    if name.upper() in TASK_CONTROL_COMMANDS:
+        return describe_task_control_contract(name)
     if name.upper() in SIMPLE_BOOLEAN_COMMANDS:
         return describe_boolean_command_contract(name)
     if name.upper() in MEMORY_COMMANDS:

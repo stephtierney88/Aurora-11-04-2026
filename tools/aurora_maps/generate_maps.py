@@ -15,7 +15,7 @@ CONTROL_PLANE_PATHS = (
     ROOT / "aurora_capture_geometry.py", ROOT / "aurora_capture_provenance.py", ROOT / "aurora_capture_store.py",
     ROOT / "aurora_conversation_delivery.py", ROOT / "aurora_delivery_receipts.py",
     ROOT / "aurora_agent_controls.py", ROOT / "aurora_chatgpt_auth.py",
-    ROOT / "aurora_chatgpt_transport.py", ROOT / "aurora_chatgpt_panel.py",
+    ROOT / "aurora_chatgpt_transport.py", ROOT / "aurora_chatgpt_panel.py", ROOT / "aurora_subscription_worker.py",
     ROOT / "aurora_conversation_navigator.py",
     ROOT / "aurora_gameplay_scene.py", ROOT / "aurora_goal_store.py",
     ROOT / "aurora_command_catalog.py",

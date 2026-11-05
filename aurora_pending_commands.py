@@ -169,12 +169,12 @@ class PendingCommandLedger:
                 requested.update(matches)
             return sorted(requested)
 
-    def reserve(self, store, indexes, *, prepare, check):
+    def reserve(self, store, indexes, *, prepare, check, allow_task_held=False):
         """Caller holds lock; validate the whole selection before reserving any row."""
         self.ensure_identities(store)
         selected = [store[index] for index in indexes]
         for entry in selected:
-            if not pending_entry_available(entry):
+            if not pending_entry_available(entry) and not (allow_task_held and entry.get("pending_state") == "task_held"):
                 raise ValueError(f"{entry['pending_id']} is {entry['pending_state']}; inspect its prior submission, then clear/requeue explicitly if appropriate.")
         prepared = [prepare(entry) for entry in selected]
         check()
@@ -196,7 +196,7 @@ class PendingCommandLedger:
             if status in {"queued", "completed", "failed", "cancelled"}:
                 store.remove(candidate)
             else:
-                candidate["pending_state"] = "held" if status == "not_started" else "uncertain"
+                candidate["pending_state"] = ("task_held" if candidate.get("task_hold") else "held") if status == "not_started" else "uncertain"
                 candidate["last_submission"] = copy.deepcopy(result)
                 if status != "not_started":
                     candidate["manual_approval_required"] = True
@@ -211,7 +211,7 @@ def describe_pending_contract(name):
     return {"parameter_validation": "pre_dispatch", "parameters": parameters,
             "min_arguments": 1 if operation == "queue" else 0,
             "max_arguments": 1 if operation == "queue" else 0 if operation == "show" else None,
-            "effects": "Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock.",
+            "effects": "Preserves normal/insert/replace and manual/auto policy. Nested commands share full admission; queue selection and reserve/acknowledge use one lock. Optional cross-task holds require explicit operator approval or clearing; models and auto approval cannot release them.",
             "selectors": "Index, all/*, risk, category, exact command, family or semantic label; additive id:pending-<id> and version:<queue hash>. No matches is a no-op. Validate every selector, even after all.",
             "defaults": "APPROVE_PENDING() selects first; CLEAR_PENDING() selects all. Positional selectors use execution-time order; use IDs plus version for stale-read protection.",
             "result": {"protocol": PENDING_RESULT_SCHEMA, "receipt_field": "pending_command_results",

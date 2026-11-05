@@ -11,6 +11,7 @@ from tkinter import ttk
 from aurora_control_plane import build_bridge_request, extract_request_identity, read_jsonl_batch
 from aurora_delivery_receipts import DELIVERY_SCHEMA, TURN_PHASES, TERMINAL_PHASES
 from aurora_panel_layout import FlowBar, ScrollablePane, fit_popout_window, ui_scale
+from aurora_task_continuation import task_outcome_summary
 
 PHASES = {"queued": "Queued locally", "received": "Received by runtime",
           "rejected": "Rejected by runtime", "uncertain": "Write unconfirmed",
@@ -152,7 +153,8 @@ def conversation_activity(state, *, fresh=True):
     continuation = state.get("continuation") or {}
     task = continuation.get("active_task") or {}
     if continuation.get("mode") == "bounded" and task.get("status") == "stopped":
-        return f"Task stopped: {task.get('stop_reason', 'unknown')} · new operator input starts another bounded task" + paused
+        report = task_outcome_summary(task)
+        return (report or f"Task stopped: {task.get('stop_reason', 'unknown')}") + " · new operator input starts another bounded task" + paused
     pending = len(state.get("pending_commands") or [])
     if pending:
         return f"{pending} visible command(s) awaiting review · open Pending" + paused

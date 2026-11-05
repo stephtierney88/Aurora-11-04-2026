@@ -1,21 +1,21 @@
 # Replace an older Aurora preview
 
-Recommended: keep the old folder as a backup, install this snapshot into a new folder, and move selected data only after the new copy works. Do not unzip over the old installation or run two copies against the same files.
+Recommended: keep the old folder as a backup, install this snapshot into a new folder, and move selected data only after the new copy works. Do not unzip over the old installation or run two copies against the same files. This is the November 5 **release 54** refresh; the public repository retains its original November 4 name. If you already downloaded an earlier November 5 build, use a distinct `r54` folder below.
 
 ## 1. Stop and preserve the old copy
 
 1. In the old Control Panel, choose **Pause inference**, then **Cancel work**, inspect pending work/held inputs, and choose **Stop runtime**. Close its panel/popouts and any local validation console you started. Closing only a window may leave a worker alive.
 2. If unsure, ask your setup AI to identify the old worker by its full executable/script path and process creation time. Do not kill every Python process; other apps may use Python.
 3. Preserve anything you want: goal exports, chat/history, custom Init, profiles and your own source changes. Keep those backups private. Do not copy their whole folder into the new installation.
-4. In File Explorer, rename the stopped old folder, for example `Aurora-11-04-2026` → `Aurora-backup-before-2026-11-05`. Also remove or retarget shortcuts that still open it. Renaming does not migrate the old virtual environment; leave it with the backup.
+4. In File Explorer, rename the stopped old folder, for example `Aurora-11-04-2026` → `Aurora-backup-before-r54`. Choose another backup name if that already exists. Also remove or retarget shortcuts that still open it. Renaming does not migrate the old virtual environment; leave it with the backup.
 
 ## 2. Get the new copy
 
-Use GitHub **Code → Download ZIP**, extract it and give it a distinct name such as `Aurora-preview-2026-11-05`. Or, from the parent folder where you want it:
+Use GitHub **Code → Download ZIP**, extract it and give it a distinct name such as `Aurora-preview-2026-11-05-r54`. Or, from the parent folder where you want it:
 
 ```powershell
-git clone https://github.com/stephtierney88/Aurora-11-04-2026.git Aurora-preview-2026-11-05
-cd Aurora-preview-2026-11-05
+git clone https://github.com/stephtierney88/Aurora-11-04-2026.git Aurora-preview-2026-11-05-r54
+cd Aurora-preview-2026-11-05-r54
 py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-preview.txt
 .\.venv\Scripts\python.exe aurora_preflight.py --json

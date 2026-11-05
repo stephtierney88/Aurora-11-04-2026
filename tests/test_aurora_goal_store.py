@@ -1,3 +1,4 @@
+import ast
 import json
 from pathlib import Path
 import tempfile
@@ -9,6 +10,22 @@ from aurora_command_contracts import validate_command_arguments, command_failure
 
 
 class GoalStoreTests(unittest.TestCase):
+    def test_panel_goals_show_real_ids_labels_and_status_without_object_repr(self):
+        source = Path(__file__).resolve().parents[1] / "aurora2.py"
+        tree = ast.parse(source.read_text(encoding="utf-8-sig"))
+        function = next(node for node in tree.body if isinstance(node, ast.FunctionDef)
+                        and node.name == "_trim_panel_goals")
+        scope = {"Goal": goals.Goal, "GOAL_LOCK": goals.GOAL_LOCK,
+                 "normalize_memory_item": lambda value: " ".join(str(value).split())}
+        exec(compile(ast.Module(body=[function], type_ignores=[]), str(source), "exec"), scope)
+        goal = goals.Goal("Reach\n town", "High", "Critical", sub_goals=[goals.Goal("Leave home")])
+        rows = scope["_trim_panel_goals"]([goal, "legacy text", goals.Goal("omitted")], limit=2)
+        self.assertEqual(rows, [f"ID {goal.id}: Reach town | priority=High | significance=Critical | status=Incomplete | subgoals=1",
+                                "legacy text"])
+        goal.status = "Complete"
+        self.assertIn("status=Complete", scope["_trim_panel_goals"]([goal])[0])
+        self.assertEqual(len(goal.sub_goals), 1)
+
     def test_memory_commands_validate_before_dispatch_and_stop_failed_batches(self):
         for name in goals.MEMORY_COMMANDS:
             self.assertTrue(command_failure_stops_batch(name))
