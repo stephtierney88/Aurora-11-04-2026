@@ -2,6 +2,7 @@
 
 Callable bindings only. See commands.json for aliases, provenance and contract coverage.
 
+- `ACK_INPUT_RECOVERY_DIAGNOSTIC(version)`
 - `ADD_APRIORITY_GOAL(text)`
 - `ADD_GOAL(goal_text[, priority, significance])`
 - `ADD_JOURNAL(text)`
@@ -26,6 +27,8 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `BUILD_RESPONSES_SHADOW_OFFLINE_POSTURE()`
 - `BUILD_RESPONSES_SHADOW_PAYLOAD_PREVIEW()`
 - `CANCEL_ACTIVE_WORK()`
+- `CANCEL_ACTIVE_WORK_IF_TASK(task_id)`
+- `CANCEL_QUEUED_INPUT(entry_id, version)`
 - `CHECK_PREVIOUS_HANDOFF()`
 - `CLEAR()`
 - `CLEAR%(percentage)`
@@ -44,6 +47,7 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `CLEAR_RESPONSES_SHADOW_PROBE()`
 - `CLEAR_ROUTE_STATE()`
 - `CLOSE_CHAT_HEAD()`
+- `COMPACT_INPUT_RECOVERY(keep_terminal, limit, version, discard_text)`
 - `COMPLETE_GOAL(goal_id)`
 - `DELETE_MSG(timestamp)`
 - `DHISTORY()`
@@ -63,6 +67,7 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `LAUNCH_CONTROL_PANEL()`
 - `LINK_AGENT_SUGGESTION_TASK(task_id|latest|agent_id, suggestion=latest|suggestion_id|agent_id, note=...)`
 - `LINK_AGENT_TASK_SUGGESTION(task_id|latest|agent_id, suggestion=latest|suggestion_id|agent_id, note=...)`
+- `LINK_HORIZON_GOAL(entry_id, entry_version, goal_uid|none)`
 - `LIST_COMMANDS(low|medium|high)`
 - `LIST_EPISODIC_SNAPSHOTS([limit])`
 - `LOAD_TASKS([path])`
@@ -79,9 +84,13 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `MEM(query, [k,] options...)`
 - `MOD_AGENT(agent_id, role=..., rank=..., urgency=..., allow=..., deny=..., history=..., status=active|paused|silenced|retired)`
 - `NO_ACTION_MODE()`
+- `OBSERVE_SCREEN_CHANGE(frame_id[, timeout_seconds=3, poll_seconds=0.25])`
 - `OPEN_CHAT_HEAD()`
 - `OVERRIDE_PENDING(command)`
 - `PIN(text...)`
+- `PREVIEW_INPUT_RECONCILIATION(entry_id, version)`
+- `PREVIEW_INPUT_RECOVERY_ARCHIVE([limit=1000])`
+- `PREVIEW_INPUT_RECOVERY_COMPACTION([keep_terminal, limit])`
 - `PREVIEW_SETTINGS_TRANSACTION(token)`
 - `PROMOTE_EPISODIC_MEMORY(index, target[, prefix, result_handle])`
 - `pyag:click(x=None, y=None, button='left')`
@@ -108,6 +117,7 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `QUEUE_PENDING(command)`
 - `RECALL(query, [k,] options...)`
 - `RECALL_PREVIOUS_SUMMARY(optional_character_name)`
+- `RECONCILE_INPUT_DELIVERY(entry_id, version, evidence_version)`
 - `RECORD_LIVE_VISUAL_HARNESS_PROBE_RESULT()`
 - `REF(query_or_pack, optional_pack_name|all)`
 - `REHEARSE_LIVE_VISUAL_HARNESS()`
@@ -123,6 +133,8 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `RESET_RESPONSES_SESSION()`
 - `RETRIEVAL_PULL(query_or_filters, options...)`
 - `RETRIEVE_HANDOFF(optional_filename)`
+- `RETRY_EXECUTION_RECORDING()`
+- `RETRY_INPUT(entry_id, version[, allow_uncertain])`
 - `ROLLBACK_SETTINGS_TRANSACTION(token)`
 - `RUN_AGENT_HELPER_CLOSURE_CHECK()`
 - `RUN_AGENT_PENDING_INSERT_DRY_RUN(optional_filter)`
@@ -154,6 +166,7 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SET_AUTO_PROMPT([on|off])`
 - `SET_BATTLE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`
 - `SET_BATTLE_VERBOSITY(low|medium|high)`
+- `SET_CAPTURE_COMMAND_POLICY([value])`
 - `SET_CAPTURE_GEOMETRY_POLICY([value])`
 - `SET_CAPTURE_MODE([value])`
 - `SET_CAPTURE_PROVENANCE_POLICY([value])`
@@ -171,6 +184,7 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SET_COMMAND_DRIP_RETENTION(turns)`
 - `SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED([on|off])`
 - `SET_COMMAND_DRIP_SHOW_VARIANTS([on|off])`
+- `SET_COMPLETED_GOAL_PROJECTION([value])`
 - `SET_CONTEXT_MARK_APPROVAL(mark_id|target, approval=draft|requested|approved|rejected, optional mark_type=...)`
 - `SET_CRITIQUE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`
 - `SET_CRITIQUE_TURN_INTERVAL(turns)`
@@ -187,6 +201,7 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SET_EPISODIC_PLANNING_ASSIST_COOLDOWN(turns)`
 - `SET_EPISODIC_PLANNING_ASSIST_K(k)`
 - `SET_EXECUTION_MODE([value])`
+- `SET_EXECUTION_RECORDING([value])`
 - `SET_GAMEPLAY_SCENE_POLICY([value])`
 - `SET_GAME_PROFILE([value])`
 - `SET_GOAL_SAVE_FORMAT([value])`
@@ -197,6 +212,8 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SET_IMPORTANT_MESSAGES([on|off])`
 - `SET_IMSGS_DECAY_CHECK([on|off])`
 - `SET_INIT_DELIVERY([value])`
+- `SET_INPUT_RECOVERY([value])`
+- `SET_JOURNAL_ORDER([value])`
 - `SET_KEYPOINT_GRID(on|off)`
 - `SET_LATEST_IMAGE_DETAIL(...)`
 - `SET_LIVE_INIT([value])`
@@ -235,6 +252,7 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SET_TASK_MAX_MODEL_TURNS([value])`
 - `SET_TASK_MAX_REPORTED_TOKENS([value])`
 - `SET_TASK_MAX_SECONDS([value])`
+- `SET_TASK_OBJECTIVE_MODE([value])`
 - `SET_TASK_OUTCOME_REPORTING([value])`
 - `SET_TASK_PENDING_CARRY_POLICY([value])`
 - `SET_TASK_PLAN_CARRY_POLICY([value])`
@@ -279,8 +297,11 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SHOW_GAME_PROFILE()`
 - `SHOW_HELD_INPUTS()`
 - `SHOW_HISTORY_CONTEXT_SERVICE()`
+- `SHOW_HORIZON_ENTRIES([all|goals|immediate|short|medium|long[, offset, limit]])`
 - `SHOW_IMAGE_CONTEXT_INDEX()`
 - `SHOW_IMAGE_COST_POSTURE()`
+- `SHOW_INPUT_RECOVERY([offset, limit])`
+- `SHOW_INPUT_RECOVERY_STATUS()`
 - `SHOW_LIVE_VISUAL_HARNESS()`
 - `SHOW_LIVE_VISUAL_HARNESS_PROBE()`
 - `SHOW_LIVE_VISUAL_HARNESS_REHEARSAL()`
@@ -340,6 +361,7 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SHOW_RUNTIME_HEALTH()`
 - `SHOW_SECURITY()`
 - `SHOW_STATEFUL_MODEL_PRESETS()`
+- `SHOW_TASK_CONTEXT(task_id)`
 - `SHOW_TASK_STATUS()`
 - `SHOW_TURN_SCHEDULER()`
 - `SHOW_TURN_SCHEDULER_PROFILES()`
@@ -348,6 +370,7 @@ Callable bindings only. See commands.json for aliases, provenance and contract c
 - `SILENCE_AGENT(agent_id, note=...)`
 - `STAGE_AGENT_SUGGESTION(suggestion_id|latest|agent_id, note=...)`
 - `STATUS()`
+- `STEER_TASK(task_id, context_version, text_json_base64url)`
 - `SUGGEST_AGENT_COMMAND(agent_id, command=..., reason=..., risk=low|medium|high, target=pending_commands)`
 - `SUMMON_AGENT(agent_id, role=..., rank=..., urgency=..., allow=..., deny=..., history=private|parent_visible)`
 - `TASKS()`

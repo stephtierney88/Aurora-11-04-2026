@@ -2,6 +2,23 @@
 
 Help signatures are documentation; only contracts marked pre_dispatch are validated before a batch executes.
 
+### ACK_INPUT_RECOVERY_DIAGNOSTIC
+
+- Signature: `ACK_INPUT_RECOVERY_DIAGNOSTIC(version)` (reviewed_contract)
+- Summary: Available in legacy and durable modes. Acknowledgement is operator-only and execution-unlocked; it never clears failures, changes records/settings, authorizes retries or proves disk health. Diagnostics are session-only; a new failure needs a new acknowledgement.
+- Handler: `acknowledge_input_recovery_diagnostic_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Mark one exact recovery diagnostic seen
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "version", "required": true, "type": "string"}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+
 ### ADD_APRIORITY_GOAL
 
 - Signature: `ADD_APRIORITY_GOAL(text)` (reviewed_contract)
@@ -333,6 +350,43 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Verification: Backend submission only; no proof of application behavior or ownership of physically held human inputs.
 - Failure policy: Stop the remaining batch on failure. Failed releases stay tracked for explicit retry; an in-flight native call may defer cleanup to its owner.
 
+### CANCEL_ACTIVE_WORK_IF_TASK
+
+- Signature: `CANCEL_ACTIVE_WORK_IF_TASK(task_id)` (reviewed_contract)
+- Summary: Operator-only: cancel active work only if the exact bounded task is still current. Same global work scope as Cancel work, including unscoped work; not task-isolated cancellation.
+- Handler: `cancel_active_work_if_task_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Operator-only: cancel active work only if the exact bounded task is still current. Same global work scope as Cancel work, including unscoped work; not task-isolated cancellation.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "task_id", "pattern": "^task-[0-9a-f]{32}$", "required": true, "type": "string"}`
+
+- Result protocol: `aurora_task_control_result_v1`
+- Receipt field: `task_control_results`
+- Verification: Local cancellation only; remote cancellation and rollback are unconfirmed. Captured generation cleanup cannot release newer holds. Live mode, settings, plans and goals are preserved.
+- Failure policy: Stale IDs, legacy mode and model actors have no cancellation effects. Already stopped is idempotent. Partial cleanup is uncertain; inspect owned inputs before explicit release.
+
+### CANCEL_QUEUED_INPUT
+
+- Signature: `CANCEL_QUEUED_INPUT(entry_id, version)` (reviewed_contract)
+- Summary: Durable mode only. Recovered input never auto-runs. Use fresh IDs/versions; active input requires Cancel work. Retry creates a fresh request; uncertain prior delivery needs allow_uncertain and idle model I/O.
+- Handler: `cancel_queued_input_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Operator-only explicit queued input recovery
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "entry_id", "required": true, "type": "string"}`
+- Parameter: `{"name": "version", "required": true, "type": "string"}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+
 ### CHECK_PREVIOUS_HANDOFF
 
 - Signature: `CHECK_PREVIOUS_HANDOFF()` (help_text)
@@ -598,6 +652,26 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
 
+### COMPACT_INPUT_RECOVERY
+
+- Signature: `COMPACT_INPUT_RECOVERY(keep_terminal, limit, version, discard_text)` (reviewed_contract)
+- Summary: Durable mode only. Keeps newest eligible records by admission order, not date. At most 100 removals. Operator-only apply requires a fresh whole-store preview version and discard_text. Pending/failed/uncertain records stay. No log erasure or undo; no automatic eviction of deduplication hashes.
+- Handler: `compact_input_recovery_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Discard selected terminal recovery text; preserve deduplication hashes
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "keep_terminal", "required": true, "type": "integer"}`
+- Parameter: `{"name": "limit", "required": true, "type": "integer"}`
+- Parameter: `{"name": "version", "required": true, "type": "string"}`
+- Parameter: `{"name": "discard_text", "required": true, "type": "string"}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+
 ### COMPLETE_GOAL
 
 - Signature: `COMPLETE_GOAL(goal_id)` (reviewed_contract)
@@ -854,6 +928,25 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
 
+### LINK_HORIZON_GOAL
+
+- Signature: `LINK_HORIZON_GOAL(entry_id, entry_version, goal_uid|none)` (reviewed_contract)
+- Summary: Use fresh entry/version and goal_uid readbacks. Reject stale tokens/missing targets. Bulk list replacement invalidates affected links; versioned saves retain links, legacy saves omit them.
+- Handler: `link_horizon_goal_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Link or unlink an existing horizon entry; never execute or complete a goal
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "entry_id", "required": true, "type": "string"}`
+- Parameter: `{"name": "entry_version", "required": true, "type": "string"}`
+- Parameter: `{"name": "goal_uid_or_none", "required": true, "type": "string"}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+
 ### LIST_COMMANDS
 
 - Signature: `LIST_COMMANDS(low|medium|high)` (help_text)
@@ -1057,6 +1150,27 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
 - Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
 
+### OBSERVE_SCREEN_CHANGE
+
+- Signature: `OBSERVE_SCREEN_CHANGE(frame_id[, timeout_seconds=3, poll_seconds=0.25])` (reviewed_contract)
+- Summary: Standalone, opt-in observation only; at most 12 fresh captures. Requires request-only capture, verified geometry/provenance and the exact latest frame. No input or permission changes.
+- Handler: `observe_screen_change_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Standalone, opt-in observation only; at most 12 fresh captures. Requires request-only capture, verified geometry/provenance and the exact latest frame. No input or permission changes.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "frame_id", "pattern": "[a-fA-F0-9]{32}", "required": true, "type": "string"}`
+- Parameter: `{"default": 3, "maximum": 8, "minimum": 0.25, "name": "timeout_seconds", "required": false, "type": "number"}`
+- Parameter: `{"default": 0.25, "maximum": 2, "minimum": 0.1, "name": "poll_seconds", "required": false, "type": "number"}`
+
+- Result protocol: `aurora_observation_result_v1`
+- Receipt field: `observation_results`
+- Verification: Sampled pre-overlay fingerprint change only; not transition completion, visual stability or successful action.
+- Failure policy: Cancellation remains effective. A no-change timeout with valid samples completes the observation; acquisition failure blocks continuation until explicit fresh capture or Cancel.
+
 ### OPEN_CHAT_HEAD
 
 - Signature: `OPEN_CHAT_HEAD()` (help_text)
@@ -1104,6 +1218,59 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Receipt field: `history_command_results`
 - Verification: Before/after versions and counts prove local state; saved path/hash proves the text export. Retention and prompt-inclusion settings remain separately controlled.
 - Failure policy: Validate before effects; failed controls stop the remaining raw batch. Explicit changed history cancels stale model work and invalidates any active Responses continuation. No automatic session reset/replay or remote deletion.
+
+### PREVIEW_INPUT_RECONCILIATION
+
+- Signature: `PREVIEW_INPUT_RECONCILIATION(entry_id, version)` (reviewed_contract)
+- Summary: Durable mode only. Exact current attempt and turn; complete local receipt chain within a bounded log window. Operator-only apply requires paused inference, idle model I/O, execution unlocked and unchanged entry/evidence. Never sends input, restores context, executes actions or confirms remote cancellation. Missing/conflicting evidence stays unresolved.
+- Handler: `preview_input_reconciliation_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Preview exact delivery receipt reconciliation without mutation
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "entry_id", "required": true, "type": "string"}`
+- Parameter: `{"name": "version", "required": true, "type": "string"}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+
+### PREVIEW_INPUT_RECOVERY_ARCHIVE
+
+- Signature: `PREVIEW_INPUT_RECOVERY_ARCHIVE([limit=1000])` (reviewed_contract)
+- Summary: Durable mode only. Default 1000, maximum 10000 compacted identities, sorted by identity hash. Reports exact candidate byte digest/size and source version; no full text, files, eviction, migration or replay. Savings are hypothetical. Archive activation and lookup remain unavailable.
+- Handler: `preview_input_recovery_archive_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Preview a bounded immutable duplicate-protection segment without writing or activating it
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "limit", "required": false, "type": "integer"}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+
+### PREVIEW_INPUT_RECOVERY_COMPACTION
+
+- Signature: `PREVIEW_INPUT_RECOVERY_COMPACTION([keep_terminal, limit])` (reviewed_contract)
+- Summary: Durable mode only. Keeps newest eligible records by admission order, not date. At most 100 removals. Operator-only apply requires a fresh whole-store preview version and discard_text. Pending/failed/uncertain records stay. No log erasure or undo; no automatic eviction of deduplication hashes.
+- Handler: `preview_input_recovery_compaction_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Preview bounded recovery compaction without mutation
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "keep_terminal", "required": false, "type": "integer"}`
+- Parameter: `{"name": "limit", "required": false, "type": "integer"}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
 
 ### PREVIEW_SETTINGS_TRANSACTION
 
@@ -1642,6 +1809,25 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
 
+### RECONCILE_INPUT_DELIVERY
+
+- Signature: `RECONCILE_INPUT_DELIVERY(entry_id, version, evidence_version)` (reviewed_contract)
+- Summary: Durable mode only. Exact current attempt and turn; complete local receipt chain within a bounded log window. Operator-only apply requires paused inference, idle model I/O, execution unlocked and unchanged entry/evidence. Never sends input, restores context, executes actions or confirms remote cancellation. Missing/conflicting evidence stays unresolved.
+- Handler: `reconcile_input_delivery_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Reconcile unresolved recovery bookkeeping from exact terminal delivery receipts
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "entry_id", "required": true, "type": "string"}`
+- Parameter: `{"name": "version", "required": true, "type": "string"}`
+- Parameter: `{"name": "evidence_version", "required": true, "type": "string"}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+
 ### RECORD_LIVE_VISUAL_HARNESS_PROBE_RESULT
 
 - Signature: `RECORD_LIVE_VISUAL_HARNESS_PROBE_RESULT()` (help_text)
@@ -1833,6 +2019,42 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Aliases: none
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
+
+### RETRY_EXECUTION_RECORDING
+
+- Signature: `RETRY_EXECUTION_RECORDING()` (reviewed_contract)
+- Summary: Operator-only retry of the exact unconfirmed recording batch. No action replay or automatic history deletion.
+- Handler: `retry_execution_recording_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Operator-only retry of the exact unconfirmed recording batch. No action replay or automatic history deletion.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+
+- Result protocol: `boolean_handler_result`
+- Verification: Inspect continuation.recording state, last_receipt and committed counters; true does not prove a disk commit.
+- Failure policy: Operator-only under execution lock; running writers reject retry. Failures keep the unacknowledged prefix.
+
+### RETRY_INPUT
+
+- Signature: `RETRY_INPUT(entry_id, version[, allow_uncertain])` (reviewed_contract)
+- Summary: Durable mode only. Recovered input never auto-runs. Use fresh IDs/versions; active input requires Cancel work. Retry creates a fresh request; uncertain prior delivery needs allow_uncertain and idle model I/O.
+- Handler: `retry_input_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Operator-only explicit queued input recovery
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "entry_id", "required": true, "type": "string"}`
+- Parameter: `{"name": "version", "required": true, "type": "string"}`
+- Parameter: `{"name": "allow_uncertain", "required": false, "type": "string"}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
 
 ### ROLLBACK_SETTINGS_TRANSACTION
 
@@ -2259,6 +2481,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
 
+### SET_CAPTURE_COMMAND_POLICY
+
+- Signature: `SET_CAPTURE_COMMAND_POLICY([value])` (reviewed_contract)
+- Summary: Set capture.command_policy, or omit value to read it. Legacy requests captures immediately; batch_end shares one post-batch observation. batch_end_explicit additionally uses only the requested delay for proven capture-only batches.
+- Handler: `set_capture_command_policy_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read capture.command_policy when omitted; otherwise set it in this runtime session. Legacy requests captures immediately; batch_end shares one post-batch observation. batch_end_explicit additionally uses only the requested delay for proven capture-only batches. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["legacy", "batch_end", "batch_end_explicit"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `capture.command_policy`
+- Runtime lock: screenshot_interval
+- Apply timing: next_command_batch
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
 ### SET_CAPTURE_GEOMETRY_POLICY
 
 - Signature: `SET_CAPTURE_GEOMETRY_POLICY([value])` (reviewed_contract)
@@ -2537,6 +2783,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Verification: Query or inspect runtime state; no versioned setting receipt is implied.
 - Failure policy: Validate the whole batch before effects; a handler failure stops its remaining commands.
 
+### SET_COMPLETED_GOAL_PROJECTION
+
+- Signature: `SET_COMPLETED_GOAL_PROJECTION([value])` (reviewed_contract)
+- Summary: Set goals.completed_projection, or omit value to read it. Legacy hides hints; annotate reviews exact text matches; linked shows explicit entry-to-goal status (including missing targets). Completion history is declared, not verified. No plans are deleted or executed.
+- Handler: `set_completed_goal_projection_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read goals.completed_projection when omitted; otherwise set it in this runtime session. Legacy hides hints; annotate reviews exact text matches; linked shows explicit entry-to-goal status (including missing targets). Completion history is declared, not verified. No plans are deleted or executed. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["legacy", "annotate", "linked"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `goals.completed_projection`
+- Runtime lock: execution
+- Apply timing: next_memory_projection
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
 ### SET_CONTEXT_MARK_APPROVAL
 
 - Signature: `SET_CONTEXT_MARK_APPROVAL(mark_id|target, approval=draft|requested|approved|rejected, optional mark_type=...)` (help_text)
@@ -2749,6 +3019,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
 - Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
 
+### SET_EXECUTION_RECORDING
+
+- Signature: `SET_EXECUTION_RECORDING([value])` (reviewed_contract)
+- Summary: Set execution.recording, or omit value to read it. Request bounded metadata recording at controller boundaries. Off closes and drains the current session; errors require explicit retry.
+- Handler: `set_execution_recording_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read execution.recording when omitted; otherwise set it in this runtime session. Request bounded metadata recording at controller boundaries. Off closes and drains the current session; errors require explicit retry. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["off", "boundaries"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `execution.recording`
+- Runtime lock: execution
+- Apply timing: next_runtime_tick
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
 ### SET_GAMEPLAY_SCENE_POLICY
 
 - Signature: `SET_GAMEPLAY_SCENE_POLICY([value])` (reviewed_contract)
@@ -2800,12 +3094,12 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 ### SET_GOAL_SAVE_FORMAT
 
 - Signature: `SET_GOAL_SAVE_FORMAT([value])` (reviewed_contract)
-- Summary: Set goals.save_format, or omit value to read it. Versioned saves add a schema envelope; legacy preserves the existing task document shape. Both use recursive IDs, validation and atomic replacement.
+- Summary: Set goals.save_format, or omit value to read it. Versioned saves retain optional horizon identities/links in v2, or use v1 without them. Legacy preserves the old task shape and explicitly omits identity metadata. Both use recursive IDs, validation and atomic replacement.
 - Handler: `set_goal_save_format_command`
 - Binding: runtime
 - Aliases: none
 - Parameter validation: pre_dispatch
-- Effects: Read goals.save_format when omitted; otherwise set it in this runtime session. Versioned saves add a schema envelope; legacy preserves the existing task document shape. Both use recursive IDs, validation and atomic replacement. Saved defaults are unchanged.
+- Effects: Read goals.save_format when omitted; otherwise set it in this runtime session. Versioned saves retain optional horizon identities/links in v2, or use v1 without them. Legacy preserves the old task shape and explicitly omits identity metadata. Both use recursive IDs, validation and atomic replacement. Saved defaults are unchanged.
 
 Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
 
@@ -2963,6 +3257,54 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
 - Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
 
+### SET_INPUT_RECOVERY
+
+- Signature: `SET_INPUT_RECOVERY([value])` (reviewed_contract)
+- Summary: Set conversation.input_recovery, or omit value to read it. Legacy keeps the in-memory input queue. Durable stores identified inbox input locally, holds it after restart, and requires explicit retry. Does not persist shell/audio input or automatically resend.
+- Handler: `set_input_recovery_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read conversation.input_recovery when omitted; otherwise set it in this runtime session. Legacy keeps the in-memory input queue. Durable stores identified inbox input locally, holds it after restart, and requires explicit retry. Does not persist shell/audio input or automatically resend. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["legacy", "durable"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `conversation.input_recovery`
+- Runtime lock: execution
+- Apply timing: paused_empty_queue
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_JOURNAL_ORDER
+
+- Signature: `SET_JOURNAL_ORDER([value])` (reviewed_contract)
+- Summary: Set memory.journal_order, or omit value to read it. Legacy shows the first retained entries; recent selects the newest retained tail in insertion order. Full PinnedInfo remains complete.
+- Handler: `set_journal_order_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read memory.journal_order when omitted; otherwise set it in this runtime session. Legacy shows the first retained entries; recent selects the newest retained tail in insertion order. Full PinnedInfo remains complete. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["legacy", "recent"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `memory.journal_order`
+- Runtime lock: execution
+- Apply timing: next_memory_projection
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
 ### SET_KEYPOINT_GRID
 
 - Signature: `SET_KEYPOINT_GRID(on|off)` (help_text)
@@ -3101,7 +3443,7 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 
 Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
 
-- Parameter: `{"accepted_aliases": {"detail": "image_detail", "latest_detail": "latest_image_detail", "reasoning": "reasoning_effort", "summary": "summary_mode", "verbosity_level": "verbosity"}, "assignment": ["=", ":"], "keys": ["service_tier", "reasoning_effort", "verbosity", "image_detail", "latest_image_detail", "temperature", "model", "text_model", "vision_model", "reasoning_model", "summary_mode", "note", "target_turn"], "name": "options", "omitted": "read_current_plan", "option_schema": {"additionalProperties": false, "properties": {"image_detail": {"enum": ["low", "high", "auto", "original"], "setting_contract": "vision.image_detail", "type": "string"}, "latest_image_detail": {"enum": ["low", "high", "auto", "original"], "setting_contract": "vision.image_detail", "type": "string"}, "model": {"setting_contract": "model.text", "type": "string"}, "note": {"type": "string"}, "reasoning_effort": {"enum": ["minimal", "none", "low", "medium", "high", "xhigh", "max"], "setting_contract": "inference.reasoning_effort", "type": "string"}, "reasoning_model": {"setting_contract": "model.reasoning", "type": "string"}, "service_tier": {"enum": ["regular", "priority", "ultrafast"], "setting_contract": "inference.service_tier", "type": "string"}, "summary_mode": {"enum": ["auto", "none", "brief", "detailed"], "type": "string"}, "target_turn": {"default": 0, "maximum": 9223372036854775807, "minimum": 0, "type": "integer", "zero": "next_turn"}, "temperature": {"finite": true, "maximum": 2.0, "minimum": 0.0, "setting_contract": "inference.temperature", "type": "number"}, "text_model": {"setting_contract": "model.text", "type": "string"}, "verbosity": {"enum": ["low", "medium", "high"], "setting_contract": "inference.verbosity", "type": "string"}, "vision_model": {"setting_contract": "model.vision", "type": "string"}}, "type": "object"}, "required": false, "separators": ["semicolon", "newline", "separate command arguments"], "type": "string", "variadic": true}`
+- Parameter: `{"accepted_aliases": {"detail": "image_detail", "latest_detail": "latest_image_detail", "reasoning": "reasoning_effort", "summary": "summary_mode", "verbosity_level": "verbosity"}, "assignment": ["=", ":"], "keys": ["service_tier", "reasoning_effort", "verbosity", "image_detail", "latest_image_detail", "temperature", "model", "text_model", "vision_model", "reasoning_model", "summary_mode", "note", "target_turn"], "name": "options", "omitted": "read_current_plan", "option_schema": {"additionalProperties": false, "properties": {"image_detail": {"enum": ["low", "high", "auto", "original"], "setting_contract": "vision.image_detail", "type": "string"}, "latest_image_detail": {"enum": ["low", "high", "auto", "original"], "setting_contract": "vision.image_detail", "type": "string"}, "model": {"setting_contract": "model.text", "type": "string"}, "note": {"type": "string"}, "reasoning_effort": {"enum": ["minimal", "none", "low", "medium", "high", "xhigh", "max"], "setting_contract": "inference.reasoning_effort", "type": "string"}, "reasoning_model": {"setting_contract": "model.reasoning", "type": "string"}, "service_tier": {"enum": ["regular", "priority", "ultrafast"], "setting_contract": "inference.service_tier", "type": "string"}, "summary_mode": {"enum": ["auto", "none", "brief", "detailed"], "type": "string"}, "target_turn": {"default": 0, "maximum": 9223372036854775807, "minimum": 0, "type": "integer", "zero": "next_turn"}, "temperature": {"finite": true, "maximum": 2.0, "minimum": 0.0, "setting_contract": "inference.temperature", "type": "number"}, "text_model": {"setting_contract": "model.text", "type": "string"}, "verbosity": {"enum": ["low", "medium", "high"], "setting_contract": "inference.verbosity", "type": "string"}, "vision_model": {"setting_contract": "model.vision", "type": "string"}}, "type": "object"}, "quoting": "Quote text values containing delimiters, e.g. note=\"inspect; then compare, with evidence\". Unquoted semicolons/newlines start another option.", "required": false, "separators": ["semicolon", "newline", "separate command arguments"], "type": "string", "variadic": true}`
 
 - Result protocol: `aurora_inference_plan_result_v1`
 - Receipt field: `inference_plan_results`
@@ -3623,6 +3965,30 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Parameter: `{"finite": true, "maximum": 86400, "minimum": 1, "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "number"}`
 
 - Registered setting: `task.max_seconds`
+- Runtime lock: execution
+- Apply timing: next_task
+- Related effects: See setting metadata for application timing.
+
+- Result protocol: `aurora_setting_command_result_v1`
+- Receipt field: `setting_results`
+- Verification: Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior.
+- Failure policy: Stop the remaining batch after failure; no automatic replay or rollback of raw setters.
+
+### SET_TASK_OBJECTIVE_MODE
+
+- Signature: `SET_TASK_OBJECTIVE_MODE([value])` (reviewed_contract)
+- Summary: Set task.objective_mode, or omit value to read it. Retain queued operator messages outside ordinary chat decay and the recent-text window for a bounded task.
+- Handler: `set_task_objective_mode_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Read task.objective_mode when omitted; otherwise set it in this runtime session. Retain queued operator messages outside ordinary chat decay and the recent-text window for a bounded task. Saved defaults are unchanged.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"enum": ["legacy", "operator"], "name": "value", "nullable": false, "omitted": "read_current_value", "required": false, "type": "string"}`
+
+- Registered setting: `task.objective_mode`
 - Runtime lock: execution
 - Apply timing: next_task
 - Related effects: See setting metadata for application timing.
@@ -4300,6 +4666,25 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
 
+### SHOW_HORIZON_ENTRIES
+
+- Signature: `SHOW_HORIZON_ENTRIES([all|goals|immediate|short|medium|long[, offset, limit]])` (reviewed_contract)
+- Summary: Inspect bounded entries or goals with stable IDs. Lazily creates metadata; does not change list text. Views: all, goals, immediate, short, medium, long; limit 1..200.
+- Handler: `show_horizon_entries_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Inspect memory identity
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"default": "all", "name": "view", "required": false, "type": "string"}`
+- Parameter: `{"default": 0, "name": "offset", "required": false, "type": "integer"}`
+- Parameter: `{"default": 50, "name": "limit", "required": false, "type": "integer"}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+
 ### SHOW_IMAGE_CONTEXT_INDEX
 
 - Signature: `SHOW_IMAGE_CONTEXT_INDEX()` (help_text)
@@ -4319,6 +4704,40 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Aliases: none
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
+
+### SHOW_INPUT_RECOVERY
+
+- Signature: `SHOW_INPUT_RECOVERY([offset, limit])` (reviewed_contract)
+- Summary: Durable mode only. Recovered input never auto-runs. Use fresh IDs/versions; active input requires Cancel work. Retry creates a fresh request; uncertain prior delivery needs allow_uncertain and idle model I/O.
+- Handler: `show_input_recovery_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Inspect durable input
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "offset", "required": false, "type": "integer"}`
+- Parameter: `{"name": "limit", "required": false, "type": "integer"}`
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
+
+### SHOW_INPUT_RECOVERY_STATUS
+
+- Signature: `SHOW_INPUT_RECOVERY_STATUS()` (reviewed_contract)
+- Summary: Available in legacy and durable modes. Acknowledgement is operator-only and execution-unlocked; it never clears failures, changes records/settings, authorizes retries or proves disk health. Diagnostics are session-only; a new failure needs a new acknowledgement.
+- Handler: `show_input_recovery_status_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Inspect recovery readiness without opening its store
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+
+- Result protocol: `aurora_memory_command_result_v1`
+- Receipt field: `memory_command_results`
 
 ### SHOW_LIVE_VISUAL_HARNESS
 
@@ -4943,6 +5362,25 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
 
+### SHOW_TASK_CONTEXT
+
+- Signature: `SHOW_TASK_CONTEXT(task_id)` (reviewed_contract)
+- Summary: Operator-only: inspect the exact current task's retained operator messages and context version. Not the exact last request or full chat history.
+- Handler: `show_task_context_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Operator-only: inspect the exact current task's retained operator messages and context version. Not the exact last request or full chat history.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "task_id", "pattern": "^task-[0-9a-f]{32}$", "required": true, "type": "string"}`
+
+- Result protocol: `aurora_task_control_result_v1`
+- Receipt field: `task_control_results`
+- Verification: Context readback is current retained text, not provider delivery. Steering requires execution unlocked and active latched operator objective mode; creates no inference wake. Full text is explicit operator readback only.
+- Failure policy: Reject stale task/version, stopped/expired task, model actor, disabled retention or capacity overflow without partial append. Never automatically retry.
+
 ### SHOW_TASK_STATUS
 
 - Signature: `SHOW_TASK_STATUS()` (reviewed_contract)
@@ -5038,6 +5476,27 @@ Arguments are positional; parameter metadata defines defaults and omitted-value 
 - Aliases: SHOW_RUNTIME
 - Parameter validation: legacy_handler
 - Effects: not_reviewed
+
+### STEER_TASK
+
+- Signature: `STEER_TASK(task_id, context_version, text_json_base64url)` (reviewed_contract)
+- Summary: Operator-only: append literal operator context to an exact running task using its current context version. Applies at next normal preparation; no wake, new task, budget reset or interruption of in-flight requests.
+- Handler: `steer_task_command`
+- Binding: runtime
+- Aliases: none
+- Parameter validation: pre_dispatch
+- Effects: Operator-only: append literal operator context to an exact running task using its current context version. Applies at next normal preparation; no wake, new task, budget reset or interruption of in-flight requests.
+
+Arguments are positional; parameter metadata defines defaults and omitted-value behavior.
+
+- Parameter: `{"name": "task_id", "pattern": "^task-[0-9a-f]{32}$", "required": true, "type": "string"}`
+- Parameter: `{"name": "context_version", "pattern": "^ctx1:[0-9a-f]{64}$", "required": true, "type": "string"}`
+- Parameter: `{"max_length": 270000, "name": "text_json_base64url", "required": true, "type": "string"}`
+
+- Result protocol: `aurora_task_control_result_v1`
+- Receipt field: `task_control_results`
+- Verification: Context readback is current retained text, not provider delivery. Steering requires execution unlocked and active latched operator objective mode; creates no inference wake. Full text is explicit operator readback only.
+- Failure policy: Reject stale task/version, stopped/expired task, model actor, disabled retention or capacity overflow without partial append. Never automatically retry.
 
 ### SUGGEST_AGENT_COMMAND
 

@@ -5,6 +5,7 @@ import threading
 from types import SimpleNamespace
 import unittest
 from aurora_settings_registry import coerce_setting_value
+from aurora_horizon_identity import HorizonIdentityLedger, HORIZON_FIELDS
 
 TREE = ast.parse((Path(__file__).resolve().parents[1] / "aurora2.py").read_text(encoding="utf-8-sig"))
 FUNCTIONS = {n.name: n for n in TREE.body if isinstance(n, ast.FunctionDef)}
@@ -18,6 +19,7 @@ class HorizonControlsTests(unittest.TestCase):
                                 mid_term_context=["manual mid"], long_term_context=["manual long"])
         noop = lambda *a, **k: None
         self.scope = s = dict(
+            HorizonIdentityLedger=HorizonIdentityLedger, HORIZON_FIELDS=HORIZON_FIELDS,
             split_response_sections=lambda text: ("", "fresh" if self.fresh else "", {}, text),
             write_chat_history_log=noop, summarize_runtime_text=lambda v, **k: v,
             normalize_action_command=str, normalize_memory_item=str, split_commands_preserving_parentheses=lambda text: [],
@@ -31,7 +33,7 @@ class HorizonControlsTests(unittest.TestCase):
             require_runtime_setting_unlocked=noop, coerce_setting_value=coerce_setting_value, display_message=noop)
         names = ("process_assistant_response", "execute_immediate_actions", "sync_action_horizons_from_hierarchical_tasks",
                  "summarize_hierarchical_action", "set_hierarchy_dispatch", "set_horizon_sync",
-                 "set_hierarchy_dispatch_command", "set_horizon_sync_command")
+                 "set_hierarchy_dispatch_command", "set_horizon_sync_command", "horizon_identity_state")
         exec(compile(ast.Module(body=[FUNCTIONS[n] for n in names], type_ignores=[]), "aurora2.py", "exec"), s)
 
     def response(self):

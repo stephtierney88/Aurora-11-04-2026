@@ -189,7 +189,7 @@ class HistoryRuntimeTests(unittest.TestCase):
         self.provider_state = {"previous_response_id": "", "status": "idle"}
         s.update({name: getattr(history, name) for name in ["HISTORY_RESULT_SCHEMA", "parse_history_arguments", "history_exemption",
                                                          "history_text", "history_summary", "plan_history_change", "save_history_export"]})
-        s.update(copy=copy, HISTORY_LOCK=threading.RLock(), enable_important_messages=True, ADD_IMSGS_TO_HISTORY=True,
+        s.update(copy=copy, GOAL_LOCK=threading.RLock(), HISTORY_LOCK=threading.RLock(), enable_important_messages=True, ADD_IMSGS_TO_HISTORY=True,
                  ensure_message_ids=ensure_message_ids, CONVERSATION_ARCHIVE=ConversationArchive(),
                  enable_unimportant_messages=True, ADD_UMSGS_TO_HISTORY=True,
                  CHECK_UMSGS_DECAY=True, CHECK_IMSGS_DECAY=True, UMSGS_DECAY=100000, IMGS_DECAY=100000,

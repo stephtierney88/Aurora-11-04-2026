@@ -487,7 +487,7 @@ class Switchboard(ttk.Frame):
         var = tk.StringVar(value="")
         self.variables[definition.key] = var
         ttk.Label(row, text=definition.title, foreground=PURPLE).pack(anchor="w")
-        if definition.key.startswith("task.") or definition.key in {"context.init_delivery", "scheduler.readback_wake_enabled"}:
+        if definition.key.startswith("task.") or definition.key in {"context.init_delivery", "scheduler.readback_wake_enabled", "conversation.input_recovery", "execution.recording"}:
             ttk.Label(row, text=definition.description + (" Operator only." if definition.operator_only else ""),
                       style="Muted.TLabel", wraplength=800).pack(fill="x")
         controls = FlowBar(row)
@@ -549,6 +549,20 @@ class Switchboard(ttk.Frame):
         self.app.show_tab("The Switchboard")
         self.app.page_views["The Switchboard"].canvas.yview_moveto(0)
         self.model_selectors["model.text"].focus_set()
+
+    def focus_setting(self, key):
+        """Reveal an existing registered switch without editing its draft."""
+        self.app.show_tab("The Switchboard")
+        row = self.readback_labels[key].master
+        parent = row.master
+        while parent is not self:
+            if isinstance(parent, CollapsibleSection):
+                parent.set_expanded(True)
+            parent = parent.master
+        self.update_idletasks()
+        page = self.app.page_views["The Switchboard"]
+        offset = row.winfo_rooty() - page.inner.winfo_rooty()
+        page.canvas.yview_moveto(max(0, offset / max(1, page.inner.winfo_height())))
 
     def open_defaults(self):
         self.app.show_tab("The Switchboard")
@@ -703,6 +717,12 @@ class Switchboard(ttk.Frame):
                     self.dirty.discard(key)
                 source = row.get("source") or {}
                 self._readback_details[key] = f"Observed: {shown or 'unknown'} · {row.get('value_status', 'unknown')} · {source.get('path', 'unknown source')} · session" + (" · LOCKED" if row.get("locked") else "")
+                if key == "execution.recording":
+                    recording = (self.app.state_cache.get("continuation") or {}).get("recording") or {}
+                    feed = recording.get("feed") or {}
+                    self._readback_details[key] += (f" · effective {recording.get('effective_mode', 'unknown')} / {recording.get('state', 'unknown')}"
+                        f" · committed {recording.get('committed_records', 0)} / queued {feed.get('queued', 0)} / dropped {feed.get('dropped', 0)}"
+                        + (f" · {recording['error']}" if recording.get('error') else ""))
                 self.refresh_setting_feedback(key)
             self.refresh_draft_hint()
         except (OSError, ValueError) as error:

@@ -38,6 +38,12 @@ class InferenceOptionTests(unittest.TestCase):
         self.assertEqual(pairs, before)
         self.assertEqual(result, {"reasoning_effort": "high", "target_turn": 0})
 
+    def test_delimiter_rejection_explains_quoting_without_repairing_input(self):
+        with self.assertRaisesRegex(ValueError, "Quote text values"):
+            parse_inference_plan_arguments("SET_NEXT_INFERENCE", ['note=inspect; then compare'])
+        parsed = parse_inference_plan_arguments("SET_NEXT_INFERENCE", ['note="inspect; then compare, with evidence"'])
+        self.assertEqual(parsed, {"note": "inspect; then compare, with evidence"})
+
     def test_invalid_values_are_rejected_instead_of_ignored_or_coerced(self):
         for value in ("temperature=nan", "temperature=inf", "temperature=-0.1", "temperature=2.1",
                       "verbosity=verbose", "summary=compact", "detail=ultra", "reasoning=ultra",
@@ -68,7 +74,7 @@ class InferenceOptionTests(unittest.TestCase):
 
     def test_descriptions_publish_contracts_without_removing_bindings(self):
         rows = {r["command"]: r for r in build_command_catalog(ingress.ROOT)["commands"]}
-        self.assertEqual(len(rows), 387)
+        self.assertEqual(len(rows), 410)
         for name in INFERENCE_PLAN_COMMANDS:
             self.assertEqual(rows[name]["contract"], describe_command_contract(name))
             self.assertEqual(rows[name]["contract"]["result"]["receipt_field"], "inference_plan_results")

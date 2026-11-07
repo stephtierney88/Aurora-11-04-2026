@@ -25,7 +25,7 @@ from aurora_settings_registry import (
 def sample_state():
     return {
         "timestamp": "2026-08-08 12:00:00",
-        "modes": {
+        "modes": {"input_recovery": "legacy",
             "auth": "api_key",
             "live": False,
             "execution": "assist", "assistant_policy": "legacy",
@@ -33,7 +33,7 @@ def sample_state():
             "game_profile": "firered",
             "game_profile_source": "env",
             "screenshot_interval": 0.12,
-            "capture_mode": "heartbeat", "capture_provenance_policy": "verified",
+            "capture_command_policy": "legacy", "capture_mode": "heartbeat", "capture_provenance_policy": "verified",
             "capture_geometry_policy": "verified", "capture_target": "legacy_options",
             "capture_request_timeout_seconds": 0.0, "capture_request_max_attempts": 0,
             "load_live_init_prompt": False,
@@ -90,7 +90,7 @@ def sample_state():
                 "turn_capture_wake_debounce_seconds": 0.9,
                 "turn_post_action_settle_seconds": 0.55,
                 "screenshot_interval": 0.12,
-            "capture_mode": "heartbeat", "capture_provenance_policy": "verified",
+            "capture_command_policy": "legacy", "capture_mode": "heartbeat", "capture_provenance_policy": "verified",
             "capture_geometry_policy": "verified", "capture_target": "legacy_options",
             "capture_request_timeout_seconds": 0.0, "capture_request_max_attempts": 0,
                 "demand_capture_enabled": True,
@@ -107,11 +107,11 @@ class AuroraSettingsRegistryTests(unittest.TestCase):
         definitions = list_setting_definitions()
 
         self.assertEqual(summary["schema_version"], "aurora_settings_registry_v1")
-        self.assertEqual(summary["setting_count"], 48)
-        self.assertEqual(len(definitions), 48)
+        self.assertEqual(summary["setting_count"], 54)
+        self.assertEqual(len(definitions), 54)
         self.assertTrue(summary["write_enabled"])
         self.assertEqual(summary["mutation_status"], "atomic_runtime_transactions")
-        self.assertEqual(len({definition.key for definition in definitions}), 48)
+        self.assertEqual(len({definition.key for definition in definitions}), 54)
 
     def test_alias_resolution_and_strict_key_errors(self):
         self.assertEqual(resolve_setting_definition("live").key, "runtime.live")
@@ -205,10 +205,10 @@ class AuroraSettingsRegistryTests(unittest.TestCase):
             state_age_seconds=0.1,
             category="capture",
         )
-        self.assertEqual(snapshot["count"], 8)
+        self.assertEqual(snapshot["count"], 9)
         self.assertEqual(
             {row["key"] for row in snapshot["settings"]},
-            {"capture.screenshot_interval", "capture.demand_enabled", "capture.mode", "capture.provenance_policy", "capture.geometry_policy", "capture.target", "capture.request_timeout_seconds", "capture.request_max_attempts"},
+            {"capture.command_policy", "capture.screenshot_interval", "capture.demand_enabled", "capture.mode", "capture.provenance_policy", "capture.geometry_policy", "capture.target", "capture.request_timeout_seconds", "capture.request_max_attempts"},
         )
         self.assertTrue(snapshot["version"].startswith("sv1:"))
 

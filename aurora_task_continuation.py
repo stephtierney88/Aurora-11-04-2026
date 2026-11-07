@@ -18,11 +18,15 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import datetime, timezone
 from collections import OrderedDict
+from aurora_task_objective import TaskObjective, TaskObjectiveCapacity, decode_steering_text
 
 
 TASK_CONTROL_RESULT_SCHEMA = "aurora_task_control_result_v1"
 TASK_CONTROL_COMMANDS = {
     "SHOW_TASK_STATUS": "Inspect the controller's current bounded task, limits and declared outcome.",
+    "SHOW_TASK_CONTEXT": "Operator-only: inspect the exact current task's retained operator messages and context version. Not the exact last request or full chat history.",
+    "STEER_TASK": "Operator-only: append literal operator context to an exact running task using its current context version. Applies at next normal preparation; no wake, new task, budget reset or interruption of in-flight requests.",
+    "CANCEL_ACTIVE_WORK_IF_TASK": "Operator-only: cancel active work only if the exact bounded task is still current. Same global work scope as Cancel work, including unscoped work; not task-isolated cancellation.",
     "REPORT_TASK_OUTCOME": "Declare done, wait, approval or error for the current opted-in task and stop automatic continuation. This is not verified success, approval, cancellation or rollback.",
 }
 TASK_OUTCOMES = ("done", "wait", "approval", "error")
@@ -124,15 +128,35 @@ def parse_task_control_arguments(name, args):
         if values:
             raise ValueError("SHOW_TASK_STATUS takes no arguments.")
         return {}
+    if name == "CANCEL_ACTIVE_WORK_IF_TASK":
+        if len(values) != 1:
+            raise ValueError("CANCEL_ACTIVE_WORK_IF_TASK(task_id) requires one exact task ID.")
+        return dict(task_id=validate_task_id(values[0]))
+    if name == "SHOW_TASK_CONTEXT":
+        if len(values) != 1:
+            raise ValueError('SHOW_TASK_CONTEXT(task_id) requires one exact task ID.')
+        return dict(task_id=validate_task_id(values[0]))
+    if name == "STEER_TASK":
+        if len(values) != 3:
+            raise ValueError('STEER_TASK(task_id, context_version, text_json_base64url) requires three arguments.')
+        validate_task_id(values[0])
+        if not re.fullmatch(r'ctx1:[0-9a-f]{64}', values[1]):
+            raise ValueError('Use the exact context version from SHOW_TASK_CONTEXT.')
+        return dict(task_id=values[0], context_version=values[1], text=decode_steering_text(values[2]))
     if name != "REPORT_TASK_OUTCOME" or len(values) != 3:
         raise ValueError("REPORT_TASK_OUTCOME(task_id, done|wait|approval|error, reason) requires three arguments; quote a reason containing commas.")
     return validate_task_outcome(*values)
 
 
+def validate_task_id(task_id):
+    if not isinstance(task_id, str) or not re.fullmatch(r"task-[0-9a-f]{32}", task_id):
+        raise ValueError("Use the exact current task ID from SHOW_TASK_STATUS or the bounded-task prompt.")
+    return task_id
+
+
 def validate_task_outcome(task_id, outcome, reason):
     """Validate decoded values without stripping literal quotes from evidence."""
-    if not re.fullmatch(r"task-[0-9a-f]{32}", task_id):
-        raise ValueError("Use the exact current task ID from SHOW_TASK_STATUS or the bounded-task prompt.")
+    validate_task_id(task_id)
     if outcome not in TASK_OUTCOMES:
         raise ValueError("Outcome must be done, wait, approval or error.")
     if not reason.strip() or len(reason) > 2000:
@@ -152,6 +176,26 @@ def task_outcome_summary(task):
 
 
 def describe_task_control_contract(name):
+    if name.upper() in {"SHOW_TASK_CONTEXT", "STEER_TASK"}:
+        steer = name.upper() == "STEER_TASK"
+        parameters = [dict(name='task_id', type='string', required=True, pattern=r'^task-[0-9a-f]{32}$')]
+        if steer:
+            parameters += [dict(name='context_version', type='string', required=True, pattern=r'^ctx1:[0-9a-f]{64}$'),
+                           dict(name='text_json_base64url', type='string', required=True, max_length=270000)]
+        return dict(parameter_validation='pre_dispatch', min_arguments=len(parameters), max_arguments=len(parameters),
+            parameters=parameters, effects=TASK_CONTROL_COMMANDS[name.upper()], actor='operator_only', mode='bounded',
+            batch_policy='Standalone controller command only; no pending wrappers or mixed batches.',
+            result=dict(protocol=TASK_CONTROL_RESULT_SCHEMA, receipt_field='task_control_results',
+                failure_policy='Reject stale task/version, stopped/expired task, model actor, disabled retention or capacity overflow without partial append. Never automatically retry.',
+                verification='Context readback is current retained text, not provider delivery. Steering requires execution unlocked and active latched operator objective mode; creates no inference wake. Full text is explicit operator readback only.'))
+    if name.upper() == "CANCEL_ACTIVE_WORK_IF_TASK":
+        return dict(parameter_validation="pre_dispatch", min_arguments=1, max_arguments=1,
+            parameters=[dict(name="task_id", type="string", required=True, pattern=r"^task-[0-9a-f]{32}$")],
+            effects=TASK_CONTROL_COMMANDS[name.upper()], actor="operator_only", mode="bounded",
+            batch_policy="Standalone controller command only; no pending wrappers or mixed batches.",
+            result=dict(protocol=TASK_CONTROL_RESULT_SCHEMA, receipt_field="task_control_results",
+                failure_policy="Stale IDs, legacy mode and model actors have no cancellation effects. Already stopped is idempotent. Partial cleanup is uncertain; inspect owned inputs before explicit release.",
+                verification="Local cancellation only; remote cancellation and rollback are unconfirmed. Captured generation cleanup cannot release newer holds. Live mode, settings, plans and goals are preserved."))
     report = name.upper() == "REPORT_TASK_OUTCOME"
     return dict(parameter_validation="pre_dispatch", min_arguments=3 if report else 0,
                 max_arguments=3 if report else 0, parameters=[
@@ -182,9 +226,7 @@ class CommandReadbacks:
     Selection is task-scoped and request-specific. Submitted/uncertain records
     are never automatically replayed; this store cannot execute commands.
     """
-    FAMILIES = ("setting_results", "lock_results", "settings_transaction_receipts", "inference_plan_results",
-                "default_profile_results", "pending_command_results", "history_command_results",
-                "retrieval_results", "goal_file_results", "memory_command_results", "task_control_results", "task_budget_results")
+    from aurora_execution_evidence import RECEIPT_FAMILIES as FAMILIES
 
     def __init__(self, *, max_records=64, record_chars=6000, request_chars=24000):
         if max_records < 1 or record_chars < 1 or request_chars < record_chars + 2048:
@@ -318,10 +360,16 @@ class TaskProgress:
             return False
         row.update(command_batch_id=identity, origin_request_id=entry.get("inference_request_id", ""),
                    admitted_at=self.now(), status="admitted", binding_count=len(entry.get("prepared_commands") or []))
+        # Keep reviewed binding names, never command arguments or input text.
+        names = [item[1] for item in (entry.get("prepared_commands") or [])
+                 if isinstance(item, (tuple, list)) and len(item) >= 2
+                 and isinstance(item[1], str) and re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]{0,79}", item[1])]
+        row.update(binding_names=names[:64], binding_names_omitted=max(0, row["binding_count"] - min(64, len(names))))
         self.event("command_admitted", identity)
         return True
 
     def receipt(self, receipt):
+        from aurora_execution_evidence import receipt_summary
         identity = receipt.get("command_batch_id")
         row = self.row(self.batches, identity)
         if "receipt_at" in row:
@@ -330,7 +378,10 @@ class TaskProgress:
                    origin_request_id=receipt.get("inference_request_id", ""), receipt_at=self.now(),
                    status=str(receipt.get("status", "unknown"))[:80],
                    executed_count=len(receipt.get("executed_commands") or []),
-                   failed_count=len(receipt.get("failed_commands") or []))
+                   failed_count=len(receipt.get("failed_commands") or []),
+                   blocked_count=len(receipt.get("blocked_commands") or []),
+                   cancelled_count=len(receipt.get("cancelled_commands") or []))
+        row['receipt_evidence'] = receipt_summary(receipt)
         self.event("command_receipt", identity, status=row["status"])
         return True
 
@@ -386,8 +437,18 @@ class TaskProgress:
             return False
         times[phase] = self.now()
         row.update(inference_request_id=identity, phase=phase, model=str(delivery.model)[:160])
+        if hasattr(delivery, 'transport_evidence'):
+            from aurora_execution_evidence import transport_snapshot
+            row['transport_evidence'] = transport_snapshot(delivery.transport_evidence)
         if phase == "prepared":
             row["frame_id"] = getattr(delivery, "frame_id", "")
+            row["prepared_settings"] = self.safe_fields(getattr(delivery, "prepared_settings", {}),
+                ("reasoning_effort", "service_tier", "configured_transport", "configured_auth", "review_turn", "critique_turn"))
+            row["frame_provenance"] = self.safe_fields(getattr(delivery, "frame_provenance", {}),
+                ("status", "frame_id", "session_id", "sequence", "lifecycle", "request_generation",
+                 "acquired_start_epoch", "acquired_end_epoch", "acquired_start_monotonic", "acquired_end_monotonic"))
+            from aurora_capture_artifacts import safe_reference
+            row["frame_artifact"] = safe_reference(getattr(delivery, "frame_artifact", {}))
             manifest = getattr(delivery, "command_readbacks", {}) or {}
             included = {item.get("command_batch_id") for item in manifest.get("records", [])}
             readback_links, frame_links = [], []
@@ -403,6 +464,23 @@ class TaskProgress:
             row.update(readback_batch_ids=readback_links, frame_batch_ids=frame_links)
         self.event("model_" + phase, identity, frame_id=row.get("frame_id", ""))
         return True
+
+    @staticmethod
+    def safe_fields(value, keys):
+        """Small typed metadata only; prompts, paths and credential fields stay out."""
+        value = value if isinstance(value, dict) else {}
+        return {key: item[:160] if isinstance(item, str) else item
+                for key in keys if key in value
+                for item in (value[key],)
+                if item is None or isinstance(item, (str, bool, int))
+                or (isinstance(item, float) and math.isfinite(item))}
+
+    def request_result(self, request_id, *, started, phase, provider_model, counts):
+        # Do not recreate evicted request records or invent missing phase times.
+        row = self.requests.get(request_id)
+        if row is not None:
+            row.update(request_started=bool(started), result_phase=phase,
+                       provider_model=str(provider_model or "")[:160], reported_usage=copy.deepcopy(counts))
 
     @staticmethod
     def batch_view(row):
@@ -436,6 +514,12 @@ class TaskProgress:
         if include_records:
             result.update(events=copy.deepcopy(self.events), commands=[self.batch_view(r) for r in self.batches.values()],
                           requests=[self.request_view(r) for r in self.requests.values()])
+        else:
+            # Detailed inspection is operator-only data, not extra per-turn prompt overhead.
+            result['latest_command'].pop('binding_names', None)
+            result['latest_command'].pop('receipt_evidence', None)
+            for key in ('prepared_settings', 'frame_provenance', 'frame_artifact', 'transport_evidence'):
+                result['latest_request'].pop(key, None)
         return result
 
 
@@ -447,15 +531,52 @@ class TaskContinuation:
     Readback generations are acknowledged before inference, never after it.
     """
 
-    def __init__(self, clock=time.monotonic):
+    def __init__(self, clock=time.monotonic, *, recording_capacity=0):
         self._clock = clock
         self.controller_pid = os.getpid()
         self._lock = threading.RLock()
         self._task = {}
+        self._objective = TaskObjective()
         self._readback_generation = 0
         self._readback_ack = 0
         self._readback_reason = ""
+        if type(recording_capacity) is not int or not 0 <= recording_capacity <= 16:
+            raise ValueError('Recording capacity must be 0..16; zero preserves legacy behavior.')
+        self._recording = None
+        if recording_capacity:
+            from aurora_execution_recording import BoundaryBuffer
+            self._recording = BoundaryBuffer(recording_capacity)
         self._reset_accounting()
+
+    def _record_boundary(self, kind, identity=None):
+        if self._recording is not None and self._task.get('task_id'):
+            self._recording.offer(kind, lambda: self._snapshot_locked(include_progress=True),
+                                  identity=self._task['task_id'] if identity is None else identity)
+
+    def recording_status(self):
+        with self._lock:
+            return self._recording.status() if self._recording else dict(enabled=False, durable=False, state='off')
+
+    def start_recording(self, capacity=16):
+        """Attach a new epoch without changing task state; never discard queued data."""
+        with self._lock:
+            if self._recording and (not self._recording.closed or self._recording.records):
+                raise ValueError('Previous recording must be closed and drained.')
+            from aurora_execution_recording import BoundaryBuffer
+            self._recording = BoundaryBuffer(capacity)
+            return self._recording.status()
+
+    def peek_recording(self, limit=8):
+        with self._lock:
+            return self._recording.peek(limit) if self._recording else dict(status=self.recording_status(), records=[])
+
+    def acknowledge_recording(self, session_id, sequences):
+        with self._lock:
+            return self._recording.acknowledge(session_id, sequences) if self._recording else dict(status='off', acknowledged=[])
+
+    def close_recording(self):
+        with self._lock:
+            return self._recording.close() if self._recording else self.recording_status()
 
     def _reset_accounting(self):
         self._artifact_transition = {}
@@ -489,6 +610,7 @@ class TaskContinuation:
                 self._accounting[name] += len(receipt.get(name) or [])
             self._accounting["last_command"] = {key: receipt.get(key) for key in
                 ("command_batch_id", "receipt_id", "inference_request_id", "status", "command_generation")}
+            self._record_boundary('command_receipt', key)
             return True
 
     def record_request(self, task_id, request_id, *, started, phase, model="", provider_model="", usage=None,
@@ -503,6 +625,8 @@ class TaskContinuation:
                 return False
             self._seen_requests.add(request_id)
             counts = reported_token_usage(usage)
+            self._progress.request_result(request_id, started=started, phase=phase,
+                                          provider_model=provider_model, counts=counts)
             if started:
                 self._accounting["requests_started"] += 1
                 self._accounting["responses_received" if phase == "responded" else "request_failures"] += 1
@@ -514,6 +638,7 @@ class TaskContinuation:
             self._accounting["last_request"] = dict(inference_request_id=request_id, phase=phase,
                 request_started=bool(started), requested_model=model, provider_model=provider_model,
                 reported_usage=counts, frame_id=frame_id, readback_ids=list(readback_ids), progress_errors=progress_errors)
+            self._record_boundary('request_finalized', request_id)
             self._expire()
             limit = self._task.get("max_reported_tokens", 0)
             if limit:
@@ -537,12 +662,18 @@ class TaskContinuation:
 
     def record_frame_observed(self, frame):
         with self._lock:
-            return self._progress.frame(frame)
+            changed = self._progress.frame(frame)
+            if changed:
+                self._record_boundary('frame_observed', frame['provenance']['frame_id'])
+            return changed
 
     def record_request_progress(self, delivery, phase):
         with self._lock:
-            return bool(getattr(delivery, "task_id", "") and delivery.task_id == self._task.get("task_id")
-                        and self._progress.request_phase(delivery, phase))
+            changed = bool(getattr(delivery, "task_id", "") and delivery.task_id == self._task.get("task_id")
+                           and self._progress.request_phase(delivery, phase))
+            if changed and phase == 'prepared':
+                self._record_boundary('request_prepared', delivery.inference_request_id)
+            return changed
 
     def budget_snapshot(self):
         with self._lock:
@@ -594,6 +725,7 @@ class TaskContinuation:
             self._stop("time_limit")
 
     def _stop(self, reason):
+        self._objective.clear()
         if not self._task:
             now = self._clock()
             self._task = dict(task_id="", status="stopped", stop_reason=reason, turns=0,
@@ -601,10 +733,40 @@ class TaskContinuation:
                               trigger="stopped_before_start")
         if self._task and self._task.get("status") == "running":
             self._task.update(status="stopped", stop_reason=reason, stopped=self._clock())
+            self._record_boundary('task_stopped')
 
     def stop(self, reason):
         with self._lock:
             self._stop(reason)
+
+    def stop_if_current(self, task_id, reason, *, on_stop=None):
+        """Compare and stop atomically; rejection never expires an unrelated task.
+
+        on_stop(effects) is trusted short controller bookkeeping under this lock,
+        never native I/O. It may retain partial effects before raising. Callers
+        must acquire any outer service locks first and release inputs afterward.
+        """
+        validate_task_id(task_id)
+        with self._lock:
+            before = self._snapshot_locked()
+            result = dict(task_id=task_id, success=False, changed=False,
+                          effect_status="not_started", before=before, effects={})
+            if self._task.get("task_id") != task_id:
+                result.update(code="stale_task", reason="Expected task is no longer current.")
+            elif self._task.get("status") != "running":
+                result.update(success=True, code="already_stopped", effect_status="unchanged",
+                              reason="Task already stopped; no cancellation generations changed.")
+            else:
+                self._stop(reason)
+                result.update(success=True, changed=True, code="stopped", effect_status="applied", reason="")
+                if on_stop is not None:
+                    try:
+                        on_stop(result["effects"])
+                    except Exception:
+                        result.update(success=False, code="cancellation_uncertain", effect_status="failed_uncertain",
+                                      reason="Task stopped; cancellation bookkeeping partly failed. Inspect current work before retrying.")
+            result["after"] = self._snapshot_locked()
+            return copy.deepcopy(result)
 
     def can_dispatch(self, *, operator_input=False):
         with self._lock:
@@ -618,11 +780,15 @@ class TaskContinuation:
 
     def reserve(self, *, max_turns, max_seconds, operator_input=False, trigger="manual", outcome_reporting=False,
                 max_commands=0, max_reported_tokens=0, unknown_usage_policy="continue",
-                plan_carry_policy="carry", pending_carry_policy="carry"):
+                plan_carry_policy="carry", pending_carry_policy="carry", objective_mode="legacy", operator_messages=()):
         with self._lock:
             if not self.can_dispatch(operator_input=operator_input):
                 return False
+            new_task = not self._task or self._task.get('status') != 'running'
             if not self._task or self._task.get("status") != "running":
+                if objective_mode not in {"legacy", "operator"}:
+                    raise ValueError("Unknown task objective mode")
+                self._objective.clear()
                 now = self._clock()
                 self._task = dict(task_id="task-" + uuid.uuid4().hex, status="running", stop_reason="",
                                   turns=0, max_turns=int(max_turns), max_seconds=float(max_seconds),
@@ -630,10 +796,82 @@ class TaskContinuation:
                                   max_commands=int(max_commands), max_reported_tokens=int(max_reported_tokens),
                                   unknown_usage_policy=unknown_usage_policy,
                                   plan_carry_policy=plan_carry_policy, pending_carry_policy=pending_carry_policy,
+                                  objective_mode=objective_mode,
                                   started=now, deadline=now + float(max_seconds), trigger=trigger)
                 self._reset_accounting()
+            if self._task.get("objective_mode") == "operator" and operator_input and operator_messages:
+                try:
+                    self._objective.append(operator_messages)
+                except TaskObjectiveCapacity:
+                    self._stop("objective_capacity")
+                    raise
             self._task["turns"] += 1
+            self._record_boundary('task_started' if new_task else 'turn_reserved')
             return True
+
+    def objective_projection(self, task_id):
+        return self.prepare_objective(task_id)['messages']
+
+    def _context_metadata_locked(self):
+        summary = self._objective.snapshot()
+        identity = dict(task_id=self._task.get('task_id', ''), objective_mode=self._task.get('objective_mode', 'legacy'),
+                        digest=summary['digest'], messages=summary['messages'])
+        version = 'ctx1:' + hashlib.sha256(json.dumps(identity, sort_keys=True).encode('utf-8')).hexdigest()
+        return dict(summary, task_id=identity['task_id'], objective_mode=identity['objective_mode'], context_version=version,
+                    status=self._task.get('status', 'idle'),
+                    expired=bool(self._task.get('status') == 'running' and self._clock() >= self._task['deadline']))
+
+    def inspect_context(self, task_id):
+        """Explicit readback; stale inspection neither expires nor reveals another task."""
+        validate_task_id(task_id)
+        with self._lock:
+            if self._task.get('task_id') != task_id:
+                return dict(success=False, code='stale_task', effect_status='not_started', task_id=task_id,
+                            reason='Expected task is no longer current.')
+            return dict(success=True, code='observed', effect_status='observed', task_id=task_id,
+                        context=self._context_metadata_locked(),
+                        messages=self._objective.records(),
+                        scope='Current retained operator context only; not full chat, historical context or provider delivery.')
+
+    def steer(self, task_id, context_version, text):
+        """Atomic compare-and-append; no queue insertion, wake, budget change or replay."""
+        validate_task_id(task_id)
+        if not isinstance(context_version, str) or not re.fullmatch(r'ctx1:[0-9a-f]{64}', context_version):
+            raise ValueError('Use the exact context version from SHOW_TASK_CONTEXT.')
+        if not isinstance(text, str) or not text.strip() or len(text) > TaskObjective.MAX_CHARACTERS:
+            raise ValueError('Steering requires nonempty text of at most 32768 characters.')
+        text.encode('utf-8')
+        with self._lock:
+            result = dict(success=False, changed=False, effect_status='not_started', task_id=task_id,
+                          provider_delivery_confirmed=False, wake_requested=False,
+                          scope='Next normal request preparation only; no inference wake, task restart, budget reset or in-flight interruption.')
+            if self._task.get('task_id') != task_id:
+                return dict(result, code='stale_task', reason='Expected task is no longer current.')
+            before = self._context_metadata_locked()
+            result.update(before=before)
+            if before['status'] != 'running' or before['expired']:
+                result.update(code='task_stopped', reason='Task is stopped or expired; steering cannot restart it.')
+            elif before['objective_mode'] != 'operator':
+                result.update(code='retention_disabled', reason='This task did not start with operator context retention enabled.')
+            elif context_version != before['context_version']:
+                result.update(code='context_conflict', reason='Context version changed. Inspect the current context before deciding on another edit; no automatic retry.')
+            else:
+                try:
+                    self._objective.append([text], source='operator_steering')
+                except TaskObjectiveCapacity:
+                    result.update(code='context_capacity', reason='Retained context is full (32 messages / 32768 characters); no text appended and the current task was preserved.')
+                else:
+                    result.update(success=True, changed=True, code='applied', effect_status='applied', reason='')
+            result['after'] = self._context_metadata_locked()
+            return result
+
+    def prepare_objective(self, task_id):
+        """Freeze text and metadata together; future steering cannot rewrite this view."""
+        with self._lock:
+            self._expire()
+            if self._task.get("task_id") != task_id or self._task.get("status") != "running":
+                return dict(messages=[], metadata={})
+            return dict(messages=self._objective.projection(task_id), metadata=self._context_metadata_locked())
 
     def record_artifact_transition(self, receipt):
         with self._lock:
@@ -695,21 +933,26 @@ class TaskContinuation:
     def snapshot(self, *, include_progress=False):
         with self._lock:
             self._expire()
-            result = copy.deepcopy({key: value for key, value in self._task.items() if key not in {"started", "deadline", "stopped"}})
-            result.setdefault("status", "idle")
-            if self._task:
-                elapsed = max(0, self._task.get("stopped", self._clock()) - self._task["started"])
-                result.update(elapsed_seconds=round(elapsed, 3),
-                              remaining_seconds=round(max(0, self._task["max_seconds"] - elapsed), 3))
-            result["readback"] = self.readback()
-            result["accounting"] = copy.deepcopy(self._accounting)
-            result["budgets"] = self.budget_snapshot()
-            result["progress"] = self._progress.snapshot(include_records=include_progress)
-            result["artifact_transition"] = copy.deepcopy(self._artifact_transition)
-            if not include_progress:
-                result["artifact_transition"].pop("pending_items", None)
-            result["limits_scope"] = "model-turn admission; late responses cannot launch commands"
-            return result
+            return self._snapshot_locked(include_progress=include_progress)
+
+    def _snapshot_locked(self, *, include_progress=False):
+        """Observation only under owner lock; boundary recording must not expire a task."""
+        result = copy.deepcopy({key: value for key, value in self._task.items() if key not in {"started", "deadline", "stopped"}})
+        result.setdefault("status", "idle")
+        if self._task:
+            elapsed = max(0, self._task.get("stopped", self._clock()) - self._task["started"])
+            result.update(elapsed_seconds=round(elapsed, 3),
+                          remaining_seconds=round(max(0, self._task["max_seconds"] - elapsed), 3))
+        result["objective"] = self._objective.snapshot()
+        result["readback"] = self.readback()
+        result["accounting"] = copy.deepcopy(self._accounting)
+        result["budgets"] = self.budget_snapshot()
+        result["progress"] = self._progress.snapshot(include_records=include_progress)
+        result["artifact_transition"] = copy.deepcopy(self._artifact_transition)
+        if not include_progress:
+            result["artifact_transition"].pop("pending_items", None)
+        result["limits_scope"] = "model-turn admission; late responses cannot launch commands"
+        return result
 
 
 def prepare_init_delivery(history, init_text, system_text, *, mode="legacy", current_prompt="", exemption=""):

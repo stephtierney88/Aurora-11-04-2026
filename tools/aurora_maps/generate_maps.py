@@ -12,12 +12,15 @@ ROOT = Path(__file__).resolve().parents[2]
 RUNTIME_PATH = ROOT / "aurora2.py"
 UI_PATH = ROOT / "aurora2_control_panel.py"
 CONTROL_PLANE_PATHS = (
-    ROOT / "aurora_capture_geometry.py", ROOT / "aurora_capture_provenance.py", ROOT / "aurora_capture_store.py",
-    ROOT / "aurora_conversation_delivery.py", ROOT / "aurora_delivery_receipts.py",
+    ROOT / "aurora_capture_geometry.py", ROOT / "aurora_capture_provenance.py", ROOT / "aurora_observation_wait.py", ROOT / "aurora_capture_store.py",
+    ROOT / "aurora_conversation_delivery.py", ROOT / "aurora_delivery_receipts.py", ROOT / "aurora_recovery_panel.py",
+    ROOT / "aurora_execution_inspector.py", ROOT / "aurora_capture_artifacts.py", ROOT / "aurora_execution_evidence.py",
+    ROOT / "aurora_execution_projection.py", ROOT / "aurora_execution_history.py", ROOT / "aurora_execution_history_job.py",
+    ROOT / "aurora_execution_recording.py", ROOT / "aurora_recording_store.py", ROOT / "aurora_recording_gate.py", ROOT / "aurora_recording_retention.py", ROOT / "aurora_recording_service.py", ROOT / "aurora_recording_browser.py",
     ROOT / "aurora_agent_controls.py", ROOT / "aurora_chatgpt_auth.py",
     ROOT / "aurora_chatgpt_transport.py", ROOT / "aurora_chatgpt_panel.py", ROOT / "aurora_subscription_worker.py",
     ROOT / "aurora_conversation_navigator.py",
-    ROOT / "aurora_gameplay_scene.py", ROOT / "aurora_goal_store.py",
+    ROOT / "aurora_gameplay_scene.py", ROOT / "aurora_goal_store.py", ROOT / "aurora_horizon_identity.py", ROOT / "aurora_input_recovery.py", ROOT / "aurora_recovery_reconciliation.py",
     ROOT / "aurora_command_catalog.py",
     ROOT / "aurora_validation_console.py",
     ROOT / "aurora_validation_worker.py",
@@ -31,7 +34,7 @@ CONTROL_PLANE_PATHS = (
     ROOT / "obs_readonly_mcp_server.py",
     ROOT / "obs_readonly_client.py",
     ROOT / "aurora_capture_store.py",
-    ROOT / "aurora_runtime_work.py", ROOT / "aurora_input_ownership.py", ROOT / "aurora_task_continuation.py",
+    ROOT / "aurora_runtime_work.py", ROOT / "aurora_input_ownership.py", ROOT / "aurora_task_continuation.py", ROOT / "aurora_task_objective.py",
     ROOT / "aurora_responses_reasoning.py",
     ROOT / "aurora_control_plane.py",
     ROOT / "aurora_command_protocol.py",
@@ -253,6 +256,8 @@ def infer_side_effect_hints(name: str, calls: list[str], domain: str) -> list[st
         ("gameplay_input", ("game", "gb", "pyag", "keyboard", "mouse", "input", "emulator")),
     )
     for label, tokens in checks:
+        if label == "gameplay_input" and any(token in name.lower() for token in ("input_recovery", "recoverable_input", "guard_input_delivery")):
+            continue  # Inbox payload recovery is not keyboard/mouse execution.
         if any(token in haystack for token in tokens):
             hints.append(label)
     return hints or ["pure_or_unknown"]
@@ -262,7 +267,7 @@ def classify_runtime(name: str) -> str:
     upper = name.upper()
     if any(token in upper for token in ("CONTROL_PANEL", "STATE_SNAPSHOT")):
         return "UI Export Boundary"
-    if any(token in upper for token in ("EXTERNAL", "INBOX", "REPLY_BRIDGE", "OPERATOR", "OAUTH")):
+    if any(token in upper for token in ("EXTERNAL", "INBOX", "REPLY_BRIDGE", "OPERATOR", "OAUTH", "INPUT_RECOVERY", "RECOVERABLE_INPUT", "GUARD_INPUT_DELIVERY")):
         return "External Operator Bridge"
     if any(token in upper for token in ("SCREENSHOT", "VISION", "GAME", "GB", "IMAGE", "SCENE", "EMULATOR", "DRAWING", "INPUT")):
         return "Screenshot / Vision / Gameplay"

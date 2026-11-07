@@ -42,7 +42,7 @@ class PortableReferenceTests(unittest.TestCase):
             self.assertEqual(generated.returncode, 0, generated.stdout + generated.stderr)
             manifest = json.loads((output / "manifest.json").read_text())
             self.assertEqual(manifest["root"], ".")
-            self.assertEqual(manifest["runtime_binding_count"], 368)
+            self.assertEqual(manifest["runtime_binding_count"], 391)
             self.assertEqual(manifest["desktop_binding_count"], 19)
             first = json.loads((output / "runtime/runtime-function-skeleton.jsonl").read_text().splitlines()[0])
             self.assertEqual(first["file"], "aurora2.py")

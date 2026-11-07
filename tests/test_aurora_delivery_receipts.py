@@ -3,6 +3,7 @@ import pickle
 from pathlib import Path
 import queue
 from types import SimpleNamespace
+import threading
 import unittest
 
 from aurora_delivery_receipts import (
@@ -67,7 +68,8 @@ class DeliveryReceiptTests(unittest.TestCase):
         tree = ast.parse((Path(__file__).resolve().parents[1] / "aurora2.py").read_text(encoding="utf-8-sig"))
         node = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "handle_queued_input")
         inputs, calls = queue.Queue(), []
-        scope = {"SEND_TO_MODEL": True, "ENABLE_MODEL_RESPONSES": True, "queue": queue,
+        scope = {"SEND_TO_MODEL": True,
+            "INPUT_RECOVERY_LOCK": threading.RLock(), "get_input_recovery": lambda: None, "ENABLE_MODEL_RESPONSES": True, "queue": queue,
                  "get_input_queue_store": lambda: inputs, "queued_input_identities": queued_input_identities,
                  "send_prompt_to_chatgpt": lambda *a, **kw: calls.append((a, kw))}
         exec(compile(ast.Module(body=[node], type_ignores=[]), "runtime-queue", "exec"), scope)
@@ -83,12 +85,15 @@ class DeliveryReceiptTests(unittest.TestCase):
         node = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == "post_openai_model_request")
         token = SimpleNamespace(check=lambda: None)
         response = SimpleNamespace(status_code=200)
-        readback_calls = []
+        readback_calls, packets = [], []
+        def call(transport, packet, token, **kwargs):
+            packets.append(packet)
+            return response, "api_key", "fixture"
         scope = dict(AUTH_MODE="api_key", SUBSCRIPTION_POLICY="legacy", API_KEY="", CODEX_OAUTH_CACHE_FILE="", CODEX_OAUTH_AUTH_FILE="",
                      codex_oauth_cache_path="fixture", MODEL_WORK=SimpleNamespace(current=lambda: token),
                      current_delivery=current_delivery, service_runtime_control_during_model_wait=lambda: None,
                      COMMAND_READBACKS=SimpleNamespace(mark_request=lambda *args: readback_calls.append(args)),
-                     MODEL_IO=SimpleNamespace(call=lambda *a, **kw: (response, "api_key", "fixture")),
+                     MODEL_IO=SimpleNamespace(call=call),
                      update_auth_runtime_state=lambda *args: None)
         exec(compile(ast.Module(body=[node], type_ignores=[]), "runtime-transport", "exec"), scope)
         rows = []
@@ -97,6 +102,7 @@ class DeliveryReceiptTests(unittest.TestCase):
             scope["post_openai_model_request"]({"model": "embeddings"}, "embeddings")
             self.assertFalse(turn.request_started)
             turn.emit("prepared", model="chat-model")
+            turn.task_id, turn.frame_id = "task-fixture", "frame-fixture"
             scope["post_openai_model_request"]({"model": "embeddings"}, "embeddings")
             self.assertFalse(turn.request_started)
             scope["post_openai_model_request"]({"model": "chat-model"}, "chat/completions")
@@ -104,6 +110,10 @@ class DeliveryReceiptTests(unittest.TestCase):
         self.assertEqual([r["phase"] for r in rows], ["preparing", "prepared", "submitted", "failed"])
         self.assertEqual(rows[-1]["requested_model"], "chat-model")
         self.assertEqual(readback_calls, [(turn.inference_request_id, "submitted")])
+        self.assertTrue(all('correlation' not in packet for packet in packets[:3]))
+        self.assertEqual(packets[-1]['correlation'], dict(inference_request_id=turn.inference_request_id,
+                         task_id='task-fixture', frame_id='frame-fixture'))
+        self.assertNotIn('correlation', packets[-1]['payload'])
 
 
 if __name__ == "__main__":

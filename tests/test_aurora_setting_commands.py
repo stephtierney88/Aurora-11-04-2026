@@ -26,12 +26,16 @@ SETTERS = """set_auth_mode set_live_mode set_execution_mode set_action_mode set_
 set_text_model set_vision_model set_reasoning_model set_model_transport set_default_reasoning_effort set_model_verbosity
 set_model_temperature apply_turn_scheduler_profile set_turn_scheduler_mode set_turn_heartbeat_seconds
 set_turn_min_gap_seconds set_turn_capture_wake_enabled set_turn_capture_wake_debounce_seconds
-set_turn_post_action_settle_seconds set_screenshot_interval set_capture_mode set_capture_provenance_policy set_capture_geometry_policy set_capture_target set_capture_request_timeout set_capture_request_attempts set_demand_capture_enabled set_image_detail
-set_live_init_mode set_gameplay_scene_policy set_goal_save_format set_assistant_policy set_hierarchy_dispatch set_horizon_sync set_subscription_policy""".split()
+set_turn_post_action_settle_seconds set_screenshot_interval set_capture_mode set_capture_command_policy set_capture_provenance_policy set_capture_geometry_policy set_capture_target set_capture_request_timeout set_capture_request_attempts set_demand_capture_enabled set_image_detail
+set_live_init_mode set_gameplay_scene_policy set_goal_save_format set_assistant_policy set_hierarchy_dispatch set_horizon_sync set_subscription_policy set_journal_order set_completed_goal_projection set_input_recovery""".split()
 
 VALUES = {
+    "execution.recording": "boundaries",
+    "task.objective_mode": "operator", "capture.command_policy": "batch_end_explicit",
+    "conversation.input_recovery": "durable",
     "auth.subscription_policy": "bounded",
     "goals.hierarchy_dispatch": "advisory", "goals.horizon_sync": "preserve",
+    "memory.journal_order": "recent", "goals.completed_projection": "annotate",
     "task.plan_carry_policy": "discard_previous", "task.pending_carry_policy": "hold_previous",
     "task.max_commands": 5, "task.max_reported_tokens": 500, "task.unknown_usage_policy": "stop",
     "task.outcome_reporting": True,
@@ -70,7 +74,7 @@ class SettingCommandTests(unittest.TestCase):
             "normalize_model_verbosity", "_parse_boolean_command_arg", "infer_turn_scheduler_profile_name",
             "refresh_turn_scheduler_profile_state", "initialize_turn_scheduler_runtime_state",
             "execute_settings_transaction_request", "_invoke_registered_setting_change",
-            "build_task_continuation_snapshot", "invalidate_responses_history",
+            "build_task_continuation_snapshot", "build_execution_recording_snapshot", "invalidate_responses_history",
         }
         exec(compile(ast.Module(body=[ingress.FUNCTIONS[name] for name in sorted(names)], type_ignores=[]),
                      str(ingress.ROOT / "aurora2.py"), "exec"), scope)
@@ -80,10 +84,13 @@ class SettingCommandTests(unittest.TestCase):
             "parse_boolean_command_arguments": parse_boolean_command_arguments,
             "parse_setting_command_arguments": parse_setting_command_arguments,
             "resolve_setting_definition": resolve_setting_definition,
+            "INPUT_RECOVERY_MODE": "legacy", "INPUT_RECOVERY": None,
+            "EXECUTION_RECORDING_MODE": "off", "EXECUTION_RECORDING_SERVICE": None,
             "INIT_DELIVERY_MODE": "legacy", "TASK_CONTINUATION_MODE": "legacy", "TASK_MAX_MODEL_TURNS": 8,
             "TASK_MAX_SECONDS": 120.0, "TASK_OUTCOME_REPORTING": False, "READBACK_WAKE_ENABLED": False, "READBACK_SCOPE": "discovery", "COMMAND_DISCOVERY_CONTEXT": True,
             "TASK_MAX_COMMANDS": 0, "TASK_MAX_REPORTED_TOKENS": 0, "TASK_UNKNOWN_USAGE_POLICY": "continue",
             "TASK_PLAN_CARRY_POLICY": "carry", "TASK_PENDING_CARRY_POLICY": "carry",
+            "TASK_OBJECTIVE_MODE": "legacy", "CAPTURE_COMMAND_POLICY": "legacy",
             "TASK_CONTINUATION": TaskContinuation(),
             "setting_shortcut_definition": setting_shortcut_definition,
             "setting_command_result": setting_command_result, "build_setting_readback": build_setting_readback,
@@ -92,6 +99,7 @@ class SettingCommandTests(unittest.TestCase):
             "AUTH_MODE": "api_key", "SUBSCRIPTION_POLICY": "legacy", "EXECUTION_MODE": "assist", "ACTIVE_ACTION_MODE": "none",
             "GAMEPLAY_SCENE_POLICY": "evidence", "GOAL_SAVE_FORMAT": "versioned", "ASSISTANT_POLICY": "legacy",
             "HIERARCHY_DISPATCH": "legacy", "HORIZON_SYNC": "legacy", "HIERARCHY_DISPATCH_ARMED": True,
+            "JOURNAL_ORDER": "legacy", "COMPLETED_GOAL_PROJECTION": "legacy",
             "SEND_TO_MODEL": False, "ENABLE_MODEL_RESPONSES": False, "LOAD_LIVE_INIT_PROMPT": False,
             "ACTIVE_GAME_PROFILE": "firered", "GAME_PROFILE_SOURCE": "env", "time_interval": 0.12, "CAPTURE_MODE": "heartbeat", "CAPTURE_PROVENANCE_POLICY": "verified", "CAPTURE_GEOMETRY_POLICY": "verified", "CAPTURE_TARGET": "legacy_options", "CAPTURE_REQUEST_TIMEOUT_SECONDS": 0.0, "CAPTURE_REQUEST_MAX_ATTEMPTS": 0,
             "cancel_capture_requests": lambda reason, **kwargs: None,
@@ -132,10 +140,12 @@ class SettingCommandTests(unittest.TestCase):
         return build_settings_version(self.scope["build_registered_settings_runtime_state"]())
 
     def test_all_registered_commands_observe_the_requested_value(self):
-        self.assertEqual(len(REGISTERED_SETTING_COMMANDS), 49)
+        self.assertEqual(len(REGISTERED_SETTING_COMMANDS), 55)
         for name, definition in REGISTERED_SETTING_COMMANDS.items():
             with self.subTest(name=name):
                 value = VALUES[definition.key]
+                if name == "SET_INPUT_RECOVERY":
+                    self.scope["SEND_TO_MODEL"] = False
                 result = self.run_batch(command(name, value))
                 self.assertTrue(result["success"], result)
                 outcome = result["setting_results"][0]

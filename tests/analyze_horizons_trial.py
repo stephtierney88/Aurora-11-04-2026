@@ -11,6 +11,7 @@ import hashlib
 import json
 from pathlib import Path
 import statistics
+import math
 
 
 HORIZON_FIELDS = ("pinned_immediate_actions", "pinned_short_term_actions", "mid_term_context", "long_term_context", "notes", "journal_entries")
@@ -62,6 +63,61 @@ def distribution(values):
                 p95=ordered[max(0, (95 * len(ordered) + 99) // 100 - 1)], maximum=max(values))
 
 
+def dynamic_flow_summary(events, chat_records, frame_records):
+    """Measure local continuation gaps and exact-frame age, never infer progress.
+
+    Same-host wall timestamps are diagnostic only. Negative/missing times and
+    duplicate identities stay unknown; no nearest-time or filename substitution.
+    """
+    def unique(rows, key):
+        found = {}
+        for row in rows:
+            identity = row.get(key)
+            if isinstance(identity, str) and identity:
+                found[identity] = None if identity in found else row
+        return found
+
+    def seconds(first, last):
+        valid = lambda n: type(n) in (int, float) and math.isfinite(n)
+        return round(last-first, 4) if valid(first) and valid(last) and last >= first else None
+
+    starts = [row for row in events if row.get('event') == 'request_started']
+    finishes = unique([row for row in events if row.get('event') == 'request_finished'], 'request_id')
+    requests = unique([row for row in chat_records if row.get('event') == 'model_request'], 'inference_request_id')
+    frames = unique([row.get('capture', {}).get('provenance', {}) for row in frame_records], 'frame_id')
+    ages, gaps, reasons = [], [], Counter()
+    unknown_age = unknown_gap = missing_request = 0
+    frame_use = Counter()
+    for index, start in enumerate(starts):
+        request = requests.get(start.get('request_id'))
+        if request is None:
+            missing_request += 1
+        else:
+            reasons[str(request.get('wake_reason') or 'unknown')] += 1
+        frame_id = start.get('frame_id')
+        if frame_id:
+            frame_use[frame_id] += 1
+            frame = frames.get(frame_id) or {}
+            age = seconds(frame.get('acquired_end_epoch'), start.get('at')) if frame.get('status') == 'acquired' else None
+            if age is None: unknown_age += 1
+            else: ages.append(age)
+        if index:
+            prior = finishes.get(starts[index-1].get('request_id')) or {}
+            gap = seconds(prior.get('at'), start.get('at'))
+            if gap is None: unknown_gap += 1
+            else: gaps.append(gap)
+    prepared_reasons = Counter(str(row.get('wake_reason') or 'unknown') for row in chat_records if row.get('event') == 'model_request')
+    return dict(scope='same-host observed wall times; gaps include command execution, settle, capture and preparation; not verified gameplay',
+        request_count=len(starts), wake_reasons=dict(reasons), missing_or_ambiguous_request_metadata=missing_request,
+        prepared_wake_reasons=dict(prepared_reasons), prepared_wake_scope='prepared request logs, independently counted; not a substitute for missing transport correlation',
+        request_complete_to_next_start_seconds=distribution(gaps), unknown_continuation_gaps=unknown_gap,
+        selected_frame_end_to_request_start_seconds=distribution(ages), unknown_selected_frame_ages=unknown_age,
+        requests_without_recorded_frame_id=sum(not row.get('frame_id') for row in starts),
+        selected_distinct_frames=len(frame_use), repeated_selected_frame_uses=sum(n-1 for n in frame_use.values()),
+        retained_frame_records=len(frame_records), ambiguous_frame_identities=sum(row is None for row in frames.values()),
+        interpretation='Missing frame IDs do not imply image-free requests. More captured than selected frames may include setup, intermediate observations or freshness replacement; repetition is not automatically stale or erroneous.')
+
+
 def analyze(work):
     runtime = work / "runtime"
     owner = read_json(work / "owner.json")
@@ -71,6 +127,8 @@ def analyze(work):
     state = read_json(runtime / "aurora_control_panel_state.json")
     events = rows(runtime / "acceptance-events.jsonl")
     logs = rows(runtime / "aurora_command_execution_log.jsonl")
+    flow = dynamic_flow_summary(events, rows(runtime / 'aurora_chat_history_log.jsonl'),
+        [read_json(path) for path in (runtime / 'aurora_image_context_index').glob('*.json')])
     starts = [row for row in events if row.get("event") == "request_started"]
     finished = [row for row in events if row.get("event") == "request_finished"]
     batches = [row for row in logs if row.get("event") == "command_result" and row.get("source") == "assistant_response"]
@@ -95,6 +153,9 @@ def analyze(work):
               for name in ("aurora2.py", "aurora2_init.txt", "aurora_chatgpt_transport.py", "aurora_gameplay_scene.py", "acceptance.py")}
     if (runtime / "aurora_subscription_worker.py").exists():
         hashes["aurora_subscription_worker.py"] = hashlib.sha256((runtime / "aurora_subscription_worker.py").read_bytes()).hexdigest()
+    for name in ("aurora_task_continuation.py", "aurora_task_objective.py", "aurora_settings_registry.py", "aurora_capture_provenance.py"):
+        if (runtime / name).exists():
+            hashes[name] = hashlib.sha256((runtime / name).read_bytes()).hexdigest()
     usages = [row.get("usage") or {} for row in finished]
     effort_sequence = []
     for row in starts:
@@ -121,7 +182,9 @@ def analyze(work):
         "returned_models": dict(Counter(str(row.get("returned_model")) for row in finished)),
         "authentication_modes": dict(Counter(str(row.get("auth_mode")) for row in finished)),
         "policy": {"hierarchy_dispatch": owner["hierarchy_dispatch"], "horizon_sync": owner["horizon_sync"],
-                   "subscription_policy": owner.get("subscription_policy", "legacy")},
+                   "subscription_policy": owner.get("subscription_policy", "legacy"),
+                   "task_objective_mode": owner.get("objective_mode", "not_instrumented"),
+                   "capture_command_policy": owner.get("capture_command_policy", "not_instrumented")},
         "subscription_stream": {
             "response_policies": dict(Counter(str(row.get("subscription_policy", "unrecorded")) for row in finished)),
             "closed_completion_workers": sum(row.get("transport_diagnostics", {}).get("active") is False
@@ -133,6 +196,7 @@ def analyze(work):
         },
         "source_sha256": hashes,
         "production_workers": True, "codex_computer_use": False,
+        "dynamic_flow": flow,
         "requests_started": len(starts), "responses_received": len(finished),
         "seconds_from_last_response_to_run_end": round(max(0, result["started"] + result["elapsed_seconds"] - finished[-1]["at"]), 3) if finished else None,
         "request_latency_seconds": distribution([row["latency_seconds"] for row in finished]),
@@ -140,6 +204,11 @@ def analyze(work):
         "memory_source_counts": dict(Counter(str(row.get("memory_sources")) for row in starts)),
         "init_copy_counts": dict(Counter(str(row.get("init_count")) for row in starts)),
         "images_per_request": dict(Counter(str(row.get("images")) for row in starts)),
+        "acceptance_objective_marker": dict(Counter(
+            "present" if row.get("acceptance_objective_present") is True else
+            "absent" if row.get("acceptance_objective_present") is False else "not_instrumented"
+            for row in starts)),
+        "retained_operator_context_counts": dict(Counter(str(row.get('retained_operator_context_count', 'not_instrumented')) for row in starts)),
         "reported_usage": {key: sum(row[key] for row in usages if isinstance(row.get(key), (int, float)))
                            for key in ("prompt_tokens", "completion_tokens", "total_tokens")},
         "usage_missing_responses": sum(any(row.get(key) is None for key in ("prompt_tokens", "completion_tokens", "total_tokens")) for row in usages),

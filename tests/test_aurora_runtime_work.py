@@ -24,7 +24,8 @@ class ModelWorkTests(unittest.TestCase):
         domain, io = CancellationDomain(), BoundedModelIO()
         entered, release = threading.Event(), threading.Event()
         seen, returned, errors = [], [], []
-        packet = {"messages": [{"text": "original"}], "auth": {"mode": "original"}, "payload": {"model": "model-A"}}
+        packet = {"messages": [{"text": "original"}], "auth": {"mode": "original"}, "payload": {"model": "model-A"},
+                  "correlation": {"task_id": "task-original", "inference_request_id": "request-original", "frame_id": "frame-original"}}
 
         def transport(frozen):
             seen.append(frozen)
@@ -46,6 +47,7 @@ class ModelWorkTests(unittest.TestCase):
         packet["payload"]["model"] = "model-B"
         packet["messages"][0]["text"] = "changed"
         packet["auth"]["mode"] = "changed"
+        packet['correlation']['task_id'] = 'task-next'
         started = time.perf_counter()
         domain.cancel("stop")
         worker.join(0.5)
@@ -55,6 +57,7 @@ class ModelWorkTests(unittest.TestCase):
         self.assertEqual(returned, [])
         self.assertEqual(seen[0]["messages"][0]["text"], "original")
         self.assertEqual(seen[0]["auth"]["mode"], "original")
+        self.assertEqual(seen[0]['correlation']['task_id'], 'task-original')
         self.assertEqual(io.snapshot()["state"], "draining")
         self.assertEqual(io.snapshot()["requested_model"], "model-A")
 

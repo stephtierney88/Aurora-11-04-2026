@@ -15,6 +15,7 @@ import subprocess
 import sys
 import threading
 import time
+import aurora_execution_evidence as evidence
 
 MAX_INPUT_BYTES = 32 * 1024 * 1024
 MAX_OUTPUT_LINE_BYTES = 9 * 1024 * 1024
@@ -109,6 +110,7 @@ def run_bounded_stream(payload, bearer, cancellation_token, *, idle_seconds=BOUN
     writer = threading.Thread(target=write_request, name="aurora-subscription-write", daemon=True)
     reader = threading.Thread(target=read_results, name="aurora-subscription-read", daemon=True)
     terminal = "failed"
+    attempt_observed = False
     try:
         writer.start()
         reader.start()
@@ -128,12 +130,20 @@ def run_bounded_stream(payload, bearer, cancellation_token, *, idle_seconds=BOUN
                 phase = message.get("phase")
                 if phase not in {"waiting_headers", "headers_received", "first_line"}:
                     raise ChatGPTAuthError("Invalid subscription worker phase.")
+                if phase == "waiting_headers" and not attempt_observed:
+                    evidence.attempt(payload, "chatgpt_subscription_responses", "openai_chatgpt")
+                    attempt_observed = True
+                if phase == "headers_received":
+                    evidence.response()
                 publish(phase=phase, phase_elapsed_seconds=round(elapsed, 3))
                 continue
             if message.get("kind") != "terminal":
                 raise ChatGPTAuthError("Invalid subscription worker result.")
             child_diagnostics = message.get("diagnostics") or {}
             if isinstance(child_diagnostics, dict):
+                if type(child_diagnostics.get("http_status")) is int:
+                    evidence.response(status=child_diagnostics["http_status"],
+                        headers={"x-request-id": child_diagnostics.get("provider_request_id")})
                 allowed = {key: value for key, value in child_diagnostics.items()
                            if key in {"headers_seconds", "first_line_seconds", "line_count", "max_line_gap_seconds", "elapsed_seconds"}
                            and isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value >= 0}
@@ -143,6 +153,7 @@ def run_bounded_stream(payload, bearer, cancellation_token, *, idle_seconds=BOUN
                 raise ChatGPTAuthError(error[:500] if isinstance(error, str) else "Subscription stream failed; no commands accepted.")
             result = message.get("result")
             answer = completed_response_text(result)
+            evidence.response(body=result)
             cancellation_token.check()
             process.wait(timeout=2)
             if process.returncode != 0:

@@ -12,6 +12,7 @@ from aurora_control_plane import build_bridge_request, extract_request_identity,
 from aurora_delivery_receipts import DELIVERY_SCHEMA, TURN_PHASES, TERMINAL_PHASES
 from aurora_panel_layout import FlowBar, ScrollablePane, fit_popout_window, ui_scale
 from aurora_task_continuation import task_outcome_summary
+from aurora_recovery_panel import RecoveryPane
 
 PHASES = {"queued": "Queued locally", "received": "Received by runtime",
           "rejected": "Rejected by runtime", "uncertain": "Write unconfirmed",
@@ -248,9 +249,13 @@ class OutboxWindow(tk.Toplevel):
     def __init__(self, app):
         super().__init__(app)
         self.app, self.revision = app, None
-        self.title("Aurora · Messages sent this session")
+        self.title("Aurora · Outbox and recovery")
         scale = ui_scale(app)
-        body = ttk.Frame(self, padding=14)
+        self.tabs = ttk.Notebook(self)
+        self.tabs.pack(fill="both", expand=True)
+        session = ttk.Frame(self.tabs)
+        self.tabs.add(session, text="This panel session")
+        body = ttk.Frame(session, padding=14)
         body.pack(fill="both", expand=True)
         body.columnconfigure(0, weight=1)
         body.rowconfigure(2, weight=1)
@@ -287,12 +292,22 @@ class OutboxWindow(tk.Toplevel):
         notice = ttk.Label(body, textvariable=self.notice, wraplength=round(640*scale))
         notice.grid(row=4, column=0, sticky="ew", pady=(8, 0))
         notice.bind("<Configure>", lambda event: notice.configure(wraplength=max(100, event.width)))
+        self.recovery = RecoveryPane(self.tabs, app, app.conversation_outbox.path.parent)
+        self.tabs.add(self.recovery, text="Recoverable input")
+        self.tabs.bind("<<NotebookTabChanged>>", self._tab_changed)
         self.protocol("WM_DELETE_WINDOW", self.withdraw)
         self.minsize(round(500*scale), round(360*scale))
         fit_popout_window(self, round(720*scale), round(510*scale), parent=app)
         self.refresh()
 
+    def _tab_changed(self, _event=None):
+        if self.tabs.select() == str(self.recovery):
+            self.recovery.update_controls()
+            if self.recovery.page is None and not self.recovery.client.pending:
+                self.recovery.load()
+
     def refresh(self):
+        self.recovery.update_controls()
         box = self.app.conversation_outbox
         self.info.set(f"This panel session: {len(box.rows)} shown; {box.omitted} earlier entries omitted. Stages track each input's initial turn, not later history reuse. Request started is not proof of a reply.\n" + box.error)
         if self.revision == box.revision:

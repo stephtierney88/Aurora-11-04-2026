@@ -18,20 +18,26 @@ import time
 from pathlib import Path
 
 from offline_runtime_smoke import CONTRACT_IMPORT_GUARD, CONTRACT_FIXTURE
+from smoke_watchdog import SmokeWatchdog
 
 ROOT = Path(__file__).resolve().parents[1]
 COPY_FILES = (
     "aurora_subscription_worker.py",
     "aurora_task_continuation.py",
+    "aurora_task_objective.py",
     "aurora_delivery_receipts.py",
     "aurora_conversation_delivery.py",
+    "aurora_recovery_panel.py",
+    "aurora_execution_inspector.py", "aurora_capture_artifacts.py", "aurora_execution_evidence.py",
+    "aurora_execution_projection.py", "aurora_execution_history.py", "aurora_execution_history_job.py",
+    "aurora_execution_recording.py", "aurora_recording_store.py", "aurora_recording_gate.py", "aurora_recording_retention.py", "aurora_recording_service.py", "aurora_recording_browser.py",
     "aurora_openai_signin_reference.png",
     "aurora_agent_controls.py", "aurora_chatgpt_auth.py", "aurora_chatgpt_transport.py", "aurora_chatgpt_panel.py",
     "aurora_conversation_navigator.py",
-    "aurora_gameplay_scene.py", "aurora_goal_store.py",
+    "aurora_gameplay_scene.py", "aurora_goal_store.py", "aurora_horizon_identity.py", "aurora_input_recovery.py", "aurora_recovery_reconciliation.py",
     "aurora_switchboard.py", "aurora_command_catalog.py", "aurora_portal_spinner.png", "aurora_flow_emblem.png",
     "aurora2.py", "aurora2_control_panel.py", "aurora_panel_layout.py", "aurora_preflight.py",
-    "aurora_runtime_work.py", "aurora_input_ownership.py", "aurora_responses_reasoning.py", "aurora_capture_store.py", "aurora_capture_provenance.py", "aurora_capture_geometry.py", "aurora_command_protocol.py", "aurora_command_contracts.py", "aurora_default_profiles.py",
+    "aurora_runtime_work.py", "aurora_input_ownership.py", "aurora_responses_reasoning.py", "aurora_capture_store.py", "aurora_capture_provenance.py", "aurora_observation_wait.py", "aurora_capture_geometry.py", "aurora_command_protocol.py", "aurora_command_contracts.py", "aurora_default_profiles.py",
     "aurora_pending_commands.py", "aurora_history_controls.py", "aurora_episodic_retrieval.py", "aurora_search_query.py", "aurora_retrieval_results.py", "aurora_retrieval_commands.py", "aurora_conversation.py", "aurora_control_plane.py", "aurora_codex_oauth.py", "aurora_settings_registry.py",
     "aurora_settings_transactions.py", "launch_aurora2.cmd", "launch_aurora2_ui.cmd",
 )
@@ -274,9 +280,82 @@ def check_dashboard_refresh_stability(app, pump, hidden=False):
 
 
 
+def check_execution_inspector(app):
+    """Hidden Tk interaction against synthetic controller evidence; no display claim."""
+    import copy
+    from unittest.mock import patch
+    from test_aurora_execution_inspector import fixture_state
+    from aurora_execution_inspector import ExecutionInspector
+    original = app.state_cache
+    checks = []
+    def check(label, condition):
+        assert condition, label
+        checks.append(label)
+    with patch.object(ExecutionInspector, 'deiconify', lambda self: None), patch.object(ExecutionInspector, 'lift', lambda self: None):
+        try:
+            app.state_cache = fixture_state()
+            window = app.open_execution_inspector()
+            check('dashboard entry opens frozen inspector', window.snapshot['available'] and len(window.tree.get_children()) == 5)
+            check('same window reused without replacing snapshot', app.open_execution_inspector() is window)
+            check('stale source explicitly labeled', 'stale' in window.summary.get().lower())
+            frozen = copy.deepcopy(window.snapshot)
+            for collection in ('commands', 'requests', 'events'):
+                window.collection.set(collection); window.render()
+                check(collection + ' selection shows read-only details', window.tree.selection() and str(window.details['state']) == 'disabled' and '"task_id"' in window.details.get('1.0', 'end'))
+            window.collection.set('commands'); window.render()
+            iid = window.tree.get_children()[0]
+            window.tree.selection_set(iid); window.select()
+            check('receipt and requested versus returned models visible', all(text in window.details.get('1.0', 'end') for text in ('receipt1', 'fixture-requested', 'fixture-returned')))
+            app.state_cache = fixture_state()
+            check('new task does not change frozen selection', window.snapshot == frozen and window.tree.selection() == (iid,))
+            window.refresh_button.invoke()
+            check('explicit load replaces whole task', window.snapshot['task']['task_id'] != frozen['task']['task_id'])
+            # Event sequence numbers repeat across tasks; old selections must not become new events implicitly.
+            check('new task select remains within new snapshot', window.snapshot['task']['task_id'] in window.details.get('1.0', 'end'))
+            class PendingCheck:
+                def __init__(self, *args): self.cancelled = False
+                def poll(self): return None
+                def cancel(self):
+                    self.cancelled = True
+                    return {'status': 'cancelled'}
+            with patch('aurora_execution_inspector.ArtifactCheck', PendingCheck):
+                window.collection.set('requests'); window.render()
+                window.artifact_button.invoke()
+                owned_check = window.artifact_check
+                check('file check starts only by explicit request selection', owned_check is not None and window.artifact_job is not None)
+                window.collection.set('events'); window.render()
+                check('selection change does not retarget in-flight check', window.artifact_check is owned_check)
+                window.artifact_button.invoke()
+                check('cancel check clears owned callback and checker', owned_check.cancelled and window.artifact_job is None and window.artifact_check is None)
+                window.collection.set('requests'); window.render()
+                window.artifact_button.invoke()
+                owned_check = window.artifact_check
+                window.refresh_button.invoke()
+                check('load latest cancels old check and clears results', owned_check.cancelled and not window.artifact_results and window.artifact_job is None)
+            app.state_cache = {}
+            window.refresh_button.invoke()
+            check('legacy empty state clears previous evidence', not window.tree.get_children() and 'Legacy' in window.details.get('1.0', 'end'))
+            window.destroy()
+            window = app.open_execution_inspector()
+            check('destroy and reopen works', window.winfo_exists())
+            window.destroy()
+        finally:
+            app.state_cache = original
+            retained = getattr(app, 'execution_inspector', None)
+            if retained is not None and retained.winfo_exists(): retained.destroy()
+    return dict(checks=checks, check_count=len(checks), displayed_layout_qualified=False, owned_checker_cleaned=True)
+
+
 def check_panel(work, interactive=False, hidden=False):
-    import faulthandler
-    faulthandler.dump_traceback_later(25, repeat=True)
+    with SmokeWatchdog(float(os.getenv('AURORA_SMOKE_DIAGNOSTIC_SECONDS', '25'))) as watchdog:
+        result = _check_panel(work, interactive, hidden, watchdog)
+    result['diagnostics'] = watchdog.snapshot()
+    assert not result['diagnostics']['error'], result['diagnostics']
+    (work / 'panel-proof.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
+    return result
+
+
+def _check_panel(work, interactive, hidden, watchdog):
     os.chdir(work)
     sys.path.insert(0, str(work))
     import aurora2_control_panel as panel
@@ -287,6 +366,7 @@ def check_panel(work, interactive=False, hidden=False):
         panel.save_layout_preferences(panel.LAYOUT_PATH, {"maximized": False})
     panel.write_pid_file(panel.CONTROL_PANEL_PID_PATH, os.getpid())
     app = panel.AuroraControlPanel()
+    assert app.title() == 'Aurora 2 Control Panel · Preview 84 (2026-11-06)'
     import aurora_chatgpt_panel as connection_panel
     # Both native and programmatic QA can click sign-in without opening a real
     # authentication page, reading credentials or changing a saved account.
@@ -796,7 +876,8 @@ def check_panel(work, interactive=False, hidden=False):
         assert "game.scene_policy" in board.variables and "goals.save_format" in board.variables
         assert board.variables["game.scene_policy"].get() in {"evidence", "legacy"}
         assert board.variables["goals.save_format"].get() in {"versioned", "legacy"}
-        assert len(board.rows) == 387
+        assert len(board.rows) == 410
+        assert "execution.recording" in board.variables
         assert board.level.get() == "Overview" and board.flow_section.expanded
         assert not board.controls.expanded and not board.commands_section.expanded
         for kind in ("init", "system", "memory", "current", "conversation", "screen"):
@@ -861,6 +942,7 @@ def check_panel(work, interactive=False, hidden=False):
         board.variables["capture.request_timeout_seconds"].set("15")
         board.variables["capture.request_max_attempts"].set("3")
         board.variables["scheduler.readback_scope"].set("reviewed")
+        board.variables["execution.recording"].set("boundaries")
         for operation in ("preview", "apply", "rollback"):
             request = board.rollback() if operation == "rollback" else board.submit_settings(operation)
             assert request is not None, app.settings_transaction_status_var.get()
@@ -872,6 +954,12 @@ def check_panel(work, interactive=False, hidden=False):
             until(lambda: snapshot()["modes"]["capture_request_timeout_seconds"] == (15.0 if operation == "apply" else 0.0), "capture timeout " + operation)
             until(lambda: snapshot()["modes"]["capture_request_max_attempts"] == (3 if operation == "apply" else 0), "capture attempts " + operation)
             until(lambda: snapshot()["scheduler"]["readback_scope"] == ("reviewed" if operation == "apply" else "discovery"), "readback scope " + operation)
+            until(lambda: snapshot()["continuation"]["recording"]["mode"] == ("boundaries" if operation == "apply" else "off"), "recording mode " + operation)
+            if operation == "apply":
+                until(lambda: snapshot()["continuation"]["recording"]["state"] == "recording", "recording writer attached")
+                assert "effective boundaries" in board.readbacks["execution.recording"].get()
+            elif operation == "rollback":
+                until(lambda: snapshot()["continuation"]["recording"]["state"] == "closed", "recording writer drained")
             assert app.settings_transaction_last_receipt["status"] == {"preview": "previewed", "apply": "applied", "rollback": "rolled_back"}[operation]
             app.refresh_now()
             assert ("not applied" in board.readbacks["capture.mode"].get()) is (operation == "preview")
@@ -965,6 +1053,7 @@ def check_panel(work, interactive=False, hidden=False):
         mini.variables["task.unknown_usage_policy"].set("stop")
         mini.variables["task.plan_carry_policy"].set("discard_previous")
         mini.variables["task.pending_carry_policy"].set("hold_previous")
+        mini.variables["task.objective_mode"].set("operator")
         mini.variables["scheduler.readback_wake_enabled"].set("true")
         mini.variables["context.init_delivery"].set("system_once")
         mini.apply_keys(CONTINUATION_KEYS)
@@ -973,6 +1062,8 @@ def check_panel(work, interactive=False, hidden=False):
         assert snapshot()["continuation"]["max_model_turns"] == 4
         assert snapshot()["continuation"]["max_seconds"] == 60
         assert snapshot()["continuation"]["outcome_reporting"] is True
+        assert snapshot()["continuation"]["objective_mode"] == "operator"
+        assert "Operator context:" in mini.task_status.get()
         assert snapshot()["continuation"]["max_commands"] == 7
         assert snapshot()["continuation"]["max_reported_tokens"] == 500
         assert snapshot()["continuation"]["unknown_usage_policy"] == "stop"
@@ -1026,6 +1117,7 @@ def check_panel(work, interactive=False, hidden=False):
         app.dashboard_wrap_var.set(True)
         app._update_dashboard_wrap()
         dashboard_refresh = check_dashboard_refresh_stability(app, pump, hidden)
+        execution_inspector = check_execution_inspector(app)
         app.close_dashboard_popout()
 
         # Force a paint failure while a periodic refresh is due; the same file
@@ -1049,6 +1141,7 @@ def check_panel(work, interactive=False, hidden=False):
             timings.append(app._last_refresh_perf["last_refresh_ms"])
             pump(0.03)
         result = {"status": "passed", "displayed_layout_checked": not hidden, "hidden_tk": hidden, "views": views, "window_sizes": sizes, "pane_widths": widths,
+                  "execution_inspector": execution_inspector,
                   "work_areas": monitor_work_areas(), "raw_command": command_result,
                   "settings_transactions": transaction_results, "draft_preserved": True,
                   "subscription_policy_transactions": subscription_transactions,
@@ -1113,7 +1206,7 @@ def check_panel(work, interactive=False, hidden=False):
             ImageGrab.grab(bbox=(rect.left, rect.top, rect.right, rect.bottom)).save(os.environ["AURORA_PANEL_EVIDENCE_PATH"])
             app.show_tab("Dashboard")
         if interactive:
-            faulthandler.cancel_dump_traceback_later()
+            watchdog.close()
             # A persistent synthetic transcript lets native QA exercise archive,
             # viewport and metadata controls without reading personal history.
             interactive_render = app.render_conversation
@@ -1145,7 +1238,6 @@ def check_panel(work, interactive=False, hidden=False):
         (work / "panel-proof.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
         return result
     finally:
-        faulthandler.cancel_dump_traceback_later()
         if not app._closing:
             app.on_close()
 
@@ -1182,7 +1274,7 @@ def run_smoke(interactive=False, hidden=False):
                         worker.wait(timeout=1000 if interactive else 160)
                     except subprocess.TimeoutExpired as error:
                         raise AssertionError((work / "panel.log").read_text(errors="replace")[-6000:]) from error
-                assert worker.returncode == 0, (work / "panel.log").read_text(errors="replace")[-6000:]
+                assert worker.returncode == 0, f"Panel worker exit {worker.returncode}: " + (work / "panel.log").read_text(errors="replace")[-6000:]
                 result = json.loads((work / "panel-proof.json").read_text())
                 sys.path.insert(0, str(ROOT))
                 from aurora_control_plane import append_bridge_request

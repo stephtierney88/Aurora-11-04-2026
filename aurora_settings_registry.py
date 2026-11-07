@@ -150,6 +150,13 @@ def _setting(
 
 SETTING_DEFINITIONS = (
     _setting(
+        "execution.recording", "Execution recording", "execution",
+        "Request bounded metadata recording at controller boundaries. Off closes and drains the current session; errors require explicit retry.",
+        "enum", ("continuation", "recording", "mode"), (), "SET_EXECUTION_RECORDING({value})",
+        allowed_values=("off", "boundaries"), compatibility_default="off", lock_key="execution", operator_only=True,
+        apply_timing="next_runtime_tick", notes="Session-only; default off. Read effective_mode/state for actual writer status. Setting rollback restores the requested mode only; committed records are immutable. No screenshots, automatic deletion or replay.",
+    ),
+    _setting(
         "context.init_delivery", "Init delivery", "context",
         "System once omits exact Init history copies only when the full text is already in the system prompt. Stored history is preserved.",
         "enum", ("modes", "init_delivery"), (), "SET_INIT_DELIVERY({value})",
@@ -183,6 +190,13 @@ SETTING_DEFINITIONS = (
         "boolean", ("continuation", "outcome_reporting"), (), "SET_TASK_OUTCOME_REPORTING({value})",
         compatibility_default=False, lock_key="execution", operator_only=True, apply_timing="next_task",
         notes="Session-only. A declaration is not verified success or approval. Pending plans and already admitted actions are preserved. New operator input starts a new task after a stop.",
+    ),
+    _setting(
+        "task.objective_mode", "Next-task operator context", "scheduler",
+        "Retain queued operator messages outside ordinary chat decay and the recent-text window for a bounded task.",
+        "enum", ("continuation", "objective_mode"), (), "SET_TASK_OBJECTIVE_MODE({value})",
+        allowed_values=("legacy", "operator"), compatibility_default="legacy", lock_key="execution", operator_only=True,
+        apply_timing="next_task", notes="Session-only, original user role. Clarifications append in order; stop clears retained text. Capacity 32 messages/32768 characters; overflow stops before inference, never silently truncates. Does not start work or preserve text across restart.",
     ),
     _setting(
         "task.plan_carry_policy", "Next-task inference plan", "scheduler",
@@ -283,8 +297,32 @@ SETTING_DEFINITIONS = (
         apply_timing="next_hierarchy", notes="Preserve does not merge or rank entries. Existing explicit memory commands still update their own lists.",
     ),
     _setting(
+        "conversation.input_recovery", "Durable input recovery", "memory",
+        "Legacy keeps the in-memory input queue. Durable stores identified inbox input locally, holds it after restart, and requires explicit retry. Does not persist shell/audio input or automatically resend.",
+        "enum", ("modes", "input_recovery"), (),
+        "SET_INPUT_RECOVERY({value})", allowed_values=("legacy", "durable"),
+        compatibility_default="legacy", lock_key="execution", operator_only=True,
+        apply_timing="paused_empty_queue", notes="Session-only; AURORA_INPUT_RECOVERY selects startup mode. Local full message text is stored; no automatic replay.",
+    ),
+    _setting(
+        "memory.journal_order", "Journal snapshot selection", "memory",
+        "Legacy shows the first retained entries; recent selects the newest retained tail in insertion order. Full PinnedInfo remains complete.",
+        "enum", ("modes", "journal_order"), (),
+        "SET_JOURNAL_ORDER({value})", allowed_values=("legacy", "recent"),
+        compatibility_default="legacy", lock_key="execution", operator_only=True,
+        apply_timing="next_memory_projection", notes="Session-only. Legacy default; no stored memory mutation.",
+    ),
+    _setting(
+        "goals.completed_projection", "Completed-goal horizon hints", "memory",
+        "Legacy hides hints; annotate reviews exact text matches; linked shows explicit entry-to-goal status (including missing targets). Completion history is declared, not verified. No plans are deleted or executed.",
+        "enum", ("modes", "completed_projection"), (),
+        "SET_COMPLETED_GOAL_PROJECTION({value})", allowed_values=("legacy", "annotate", "linked"),
+        compatibility_default="legacy", lock_key="execution", operator_only=True,
+        apply_timing="next_memory_projection", notes="Session-only, legacy default. Linked view lazily creates identity metadata; text lists remain unchanged. Versioned task saves preserve links.",
+    ),
+    _setting(
         "goals.save_format", "Goal save format", "memory",
-        "Versioned saves add a schema envelope; legacy preserves the existing task document shape. Both use recursive IDs, validation and atomic replacement.",
+        "Versioned saves retain optional horizon identities/links in v2, or use v1 without them. Legacy preserves the old task shape and explicitly omits identity metadata. Both use recursive IDs, validation and atomic replacement.",
         "enum", ("modes", "goal_save_format"), ("defaults", "system_profile", "goal_save_format"),
         "SET_GOAL_SAVE_FORMAT({value})", allowed_values=("versioned", "legacy"),
         compatibility_default="legacy", lock_key="execution", gui_tier="advanced", risk_class="advanced",
@@ -651,6 +689,14 @@ SETTING_DEFINITIONS = (
         risk_class="advanced",
         apply_timing="next_capture_cycle",
         notes="Independent of inference scheduling. In-flight capture may finish. Request-only with demand disabled produces no new captures.",
+    ),
+    _setting(
+        "capture.command_policy", "Command-batch capture", "capture",
+        "Legacy requests captures immediately; batch_end shares one post-batch observation. batch_end_explicit additionally uses only the requested delay for proven capture-only batches.",
+        "enum", ("modes", "capture_command_policy"), (), "SET_CAPTURE_COMMAND_POLICY({value})",
+        allowed_values=("legacy", "batch_end", "batch_end_explicit"), compatibility_default="legacy", lock_key="screenshot_interval",
+        operator_only=True, gui_tier="advanced", apply_timing="next_command_batch",
+        notes="Session-only, latched at batch start. batch_end keeps the longest explicit/default delay for every batch. batch_end_explicit skips the default floor only for a successful batch containing exclusively capture requests; input, mixed, failed or incomplete receipts retain it. Longer pending requests are preserved. Cancellation discards deferred requests. No frame reuse, automatic retry, visual-stability guarantee or periodic-capture change. Direct capture calls retain immediate behavior.",
     ),
     _setting(
         "capture.provenance_policy",

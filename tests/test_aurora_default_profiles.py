@@ -104,9 +104,9 @@ class ProfileContractTests(unittest.TestCase):
         node = ingress.FUNCTIONS["_build_runtime_preferences_snapshot"]
         raw = next(n.value for n in node.body if isinstance(n, ast.Return))
         self.assertEqual(set(fields(raw)), set(profiles.PROFILE_FIELDS))
-        self.assertEqual(len(fields(raw)), 71)
+        self.assertEqual(len(fields(raw)), 72)
         rows = {row["command"]: row for row in build_command_catalog(ingress.ROOT)["commands"]}
-        self.assertEqual(len(rows), 387)
+        self.assertEqual(len(rows), 410)
         for name in profiles.DEFAULT_PROFILE_COMMANDS:
             self.assertEqual(rows[name]["contract"], describe_command_contract(name))
             self.assertEqual(rows[name]["contract"]["result"]["receipt_field"], "default_profile_results")
@@ -184,7 +184,8 @@ class ProfileRuntimeTests(unittest.TestCase):
         target.update(turn_scheduler_profile="custom", turn_heartbeat_seconds=3.75, turn_capture_wake_enabled=False,
                       demand_capture_enabled=False, unchanged_screenshot_persist_interval=7.5, review_turn_interval=0,
                       critique_turn_interval=0, auto_dynamic_inference=False, command_drip_show_variants=False,
-                      command_drip_show_likely_dropped=False, temperature=0, pending_queue_mode="insert")
+                      command_drip_show_likely_dropped=False, temperature=0, pending_queue_mode="insert",
+                      capture_command_policy="batch_end")
         for section in ("advanced", "overlay"):
             for key, value in target[section].items():
                 if isinstance(value, bool): target[section][key] = False
@@ -194,8 +195,18 @@ class ProfileRuntimeTests(unittest.TestCase):
         self.assertEqual(result["profile"], target)
         self.assertEqual(self.scope["MODEL_TRANSPORT"], "chat_completions")
         self.assertEqual(self.scope["save_personal_defaults_profile"](), target)
-        self.assertTrue(self.apply({"turn_heartbeat_seconds":1, "unchanged_screenshot_persist_interval":1})["success"])
+        self.assertTrue(self.apply({"turn_heartbeat_seconds":1, "unchanged_screenshot_persist_interval":1,
+                                    "capture_command_policy":"legacy"})["success"])
         self.assertEqual(self.scope["apply_personal_defaults_profile"](), target)
+
+    def test_legacy_partial_profile_preserves_capture_policy_and_invalid_policy_rejects(self):
+        self.assertTrue(self.apply({"capture_command_policy":"batch_end"})["success"])
+        self.assertTrue(self.apply({"time_logging":True})["success"])
+        self.assertEqual(self.snapshot()["capture_command_policy"], "batch_end")
+        before = self.snapshot()
+        result = self.apply({"capture_command_policy":"typo", "time_logging":False})
+        self.assertFalse(result["success"])
+        self.assertEqual(self.snapshot(), before)
 
     def test_partial_profile_changes_only_present_fields_and_keeps_system_baseline(self):
         before = self.snapshot()

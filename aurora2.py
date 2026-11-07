@@ -55,11 +55,13 @@ from aurora_conversation import (build_conversation_snapshot, build_init_context
     ensure_message_ids, CONVERSATION_ARCHIVE)
 from aurora_history_controls import current_history_actor, history_actor_scope
 from aurora_delivery_receipts import TrackedInput, queued_input_identities, delivery_turn, current_delivery
+from aurora_input_recovery import InputRecovery, RecoveryDiagnostics, recovery_readiness, identity_key as recovery_identity_key, parse_arguments as parse_input_recovery_arguments
 from aurora_task_continuation import (TaskContinuation, CommandReadbacks, prepare_init_delivery,
                                       TASK_CONTROL_COMMANDS, TASK_CONTROL_RESULT_SCHEMA, parse_task_control_arguments,
                                       TASK_BUDGET_RESULT_SCHEMA, USAGE_BUDGET_STOP_REASONS,
                                       command_task_scope, current_command_task, TASK_ORIGIN_SCHEMA, TASK_TRANSITION_SCHEMA,
                                       scoped_task_id, reconcile_task_artifacts)
+from aurora_task_objective import TaskObjectiveCapacity
 from aurora_command_protocol import CommandSyntaxError, split_command_batch
 from aurora_command_contracts import (
     DesktopCommandError, command_result_failed, desktop_result, parse_desktop_arguments,
@@ -80,6 +82,7 @@ from aurora_runtime_work import BoundedModelIO, CancellationDomain, WorkCancelle
 from aurora_gameplay_scene import classify_scene
 from aurora_goal_store import Goal, GOAL_LOCK, LIST_FIELDS as GOAL_LIST_FIELDS, encode_goals, decode_goals, read_document as read_goal_document, write_document as write_goal_document, validate_document as validate_goal_document, parse_task_file_arguments
 from aurora_goal_store import MEMORY_COMMANDS, MEMORY_RESULT_SCHEMA, parse_memory_command_arguments
+from aurora_horizon_identity import HorizonIdentityLedger, HORIZON_FIELDS, parse_identity_arguments
 from aurora_command_contracts import parse_boolean_command_arguments
 from aurora_episodic_retrieval import (
     RETRIEVAL_OPTION_DEFAULTS, finite_number, normalize_retrieval_options,
@@ -107,11 +110,13 @@ from aurora_pending_commands import (
 from aurora_input_ownership import HeldInputLedger, InputOwnershipError, cooperative_move
 from aurora_responses_reasoning import ASTRA_MODEL, ASTRA_EFFORTS, MODEL_TRANSPORTS, ResponsesReasoningError, ResponsesReasoningSession
 from aurora_capture_store import save_capture
+import aurora_capture_artifacts as capture_artifacts
 from aurora_capture_provenance import CaptureService, CapturedFrame, FrameStamp
 import aurora_capture_geometry as capture_geometry
 
 CAPTURE_SERVICE = CaptureService()
 from aurora_control_plane import (
+    release_info,
     COMMAND_RECEIPT_SCHEMA_VERSION,
     MUTATION_ADMISSION_SCHEMA_VERSION,
     MutationAdmissionJournal,
@@ -529,7 +534,14 @@ READONLY_OPERATOR_COMMANDS = {
     "SHOW_SECURITY",
 }
 READONLY_OPERATOR_COMMANDS.update({
+    "SHOW_INPUT_RECOVERY",
+    "SHOW_INPUT_RECOVERY_STATUS",
+    "PREVIEW_INPUT_RECOVERY_COMPACTION",
+    "PREVIEW_INPUT_RECOVERY_ARCHIVE",
+    "PREVIEW_INPUT_RECONCILIATION",
+    "SHOW_HORIZON_ENTRIES",
     "SHOW_TASK_STATUS",
+    "SHOW_TASK_CONTEXT",
     "SHOW_REFERENCE_TOPICS",
     "SHOW_REFERENCE_PACK",
     "SEARCH_REFERENCE_PACK",
@@ -923,6 +935,7 @@ class AgentState:
         self.stale_assumptions = []
         self.known_failures = []
         self.candidate_alternatives = []
+        self.horizon_identity = None
         self.pinned_immediate_actions = []
         self.pinned_short_term_actions = []
         self.mid_term_context = []
@@ -1671,6 +1684,7 @@ def build_registered_settings_runtime_state():
             "screenshot_interval": float(time_interval),
             "capture_mode": CAPTURE_MODE,
             "capture_provenance_policy": CAPTURE_PROVENANCE_POLICY,
+            "capture_command_policy": CAPTURE_COMMAND_POLICY,
             "capture_geometry_policy": CAPTURE_GEOMETRY_POLICY,
             "capture_target": CAPTURE_TARGET,
             "capture_request_timeout_seconds": CAPTURE_REQUEST_TIMEOUT_SECONDS,
@@ -1679,6 +1693,9 @@ def build_registered_settings_runtime_state():
             "goal_save_format": GOAL_SAVE_FORMAT,
             "hierarchy_dispatch": HIERARCHY_DISPATCH,
             "horizon_sync": HORIZON_SYNC,
+            "journal_order": JOURNAL_ORDER,
+            "completed_projection": COMPLETED_GOAL_PROJECTION,
+            "input_recovery": INPUT_RECOVERY_MODE,
             "assistant_policy": ASSISTANT_POLICY,
             "init_delivery": INIT_DELIVERY_MODE,
             "load_live_init_prompt": bool(LOAD_LIVE_INIT_PROMPT),
@@ -2527,6 +2544,8 @@ def build_openai_headers(force_refresh=False):
 
 def perform_model_http_request(packet, cancellation_token):
     """Network-only worker: frozen inputs; no runtime/history/command writes."""
+    import aurora_execution_evidence as evidence
+    evidence.instrumented()
     config = packet["auth"]
     if config["mode"] == "openai_chatgpt":
         if not packet["url"].endswith("/chat/completions"):
@@ -2558,18 +2577,22 @@ def perform_model_http_request(packet, cancellation_token):
     cancellation_token.check()
     request_headers, resolved_mode, source = headers()
     cancellation_token.check()
+    evidence.attempt(packet["payload"], "responses" if packet["url"].endswith("/responses") else "chat_completions", resolved_mode)
     response = requests.post(
         packet["url"], headers=request_headers,
         json=packet["payload"], timeout=packet["timeout"],
     )
+    evidence.http_response(response)
     if response.status_code in {401, 403} and resolved_mode == "codex_oauth":
         cancellation_token.check()
         request_headers, resolved_mode, source = headers(force_refresh=True)
         cancellation_token.check()
+        evidence.attempt(packet["payload"], "responses" if packet["url"].endswith("/responses") else "chat_completions", resolved_mode)
         response = requests.post(
             packet["url"], headers=request_headers,
             json=packet["payload"], timeout=packet["timeout"],
         )
+        evidence.http_response(response)
     return response, resolved_mode, source
 
 
@@ -2584,7 +2607,7 @@ def service_runtime_control_during_model_wait():
     write_control_panel_state_snapshot()
 
 
-def post_openai_model_request(payload, endpoint, timeout=None):
+def post_openai_model_request(payload, endpoint, timeout=None, *, selection=None):
     global _last_auth_resolution
     packet = {
         "payload": payload, "timeout": timeout if timeout is not None else 60,
@@ -2596,14 +2619,32 @@ def post_openai_model_request(payload, endpoint, timeout=None):
     token = MODEL_WORK.current()
     token.check()
     delivery = current_delivery()
-    if delivery is not None and delivery.phase == "prepared" and endpoint in {"chat/completions", "responses"}:
+    tracked = delivery is not None and delivery.phase == "prepared" and endpoint in {"chat/completions", "responses"}
+    from aurora_execution_evidence import TransportEvidence, observe_transport
+    evidence = TransportEvidence(payload, selection)
+    if tracked:
+        # ContextVars do not cross the network-thread boundary. Carry only frozen
+        # local identities in the internal envelope, never in the provider body.
+        packet["correlation"] = {
+            "inference_request_id": delivery.inference_request_id,
+            "task_id": getattr(delivery, "task_id", ""),
+            "frame_id": getattr(delivery, "frame_id", ""),
+        }
+        delivery.transport_evidence = evidence.snapshot()
         delivery.emit("submitted", model=payload.get("model", ""),
                       reason="Request path started; provider receipt is not yet confirmed.")
         COMMAND_READBACKS.mark_request(delivery.inference_request_id, "submitted")
-    response, resolved_mode, source = MODEL_IO.call(
-        lambda frozen: perform_model_http_request(frozen, token), packet, token,
-        service_control=service_runtime_control_during_model_wait,
-    )
+    def transport(frozen):
+        with observe_transport(evidence):
+            return perform_model_http_request(frozen, token)
+    try:
+        response, resolved_mode, source = MODEL_IO.call(
+            transport, packet, token, service_control=service_runtime_control_during_model_wait,
+        )
+    finally:
+        snapshot = evidence.snapshot(close=True)
+        if tracked:
+            delivery.transport_evidence = snapshot
     token.check()
     _last_auth_resolution = {"mode": resolved_mode, "source": source, "error": ""}
     update_auth_runtime_state(resolved_mode, source, "")
@@ -2634,7 +2675,8 @@ def post_openai_turn_request(payload, *, current_messages, prompt_inclusion_effe
     base_effort = normalize_reasoning_effort_for_model(DEFAULT_REASONING_EFFORT, ASTRA_MODEL, fallback="low")
     request = RESPONSES_REASONING.prepare(payload, base_effort=base_effort, current_messages=current_messages)
     try:
-        response, mode = post_openai_model_request(request.payload, "responses", timeout=180)
+        response, mode = post_openai_model_request(request.payload, "responses", timeout=180,
+            selection={"effective_effort": request.effective_effort, "configuration_update_sent": request.configuration_update_sent})
         token.check()
         if response.status_code != 200:
             raise ResponsesReasoningError(f"Responses HTTP {response.status_code}; inspect status before an explicit reset.")
@@ -2861,6 +2903,104 @@ def _limit_lines(items, limit=MAX_STATE_ITEMS_PER_SECTION):
     if not items:
         return []
     return [str(item) for item in items[:limit]]
+
+
+def build_journal_projection(items, limit=None, order="legacy"):
+    """Render retained journal order without disguising a partial view as complete."""
+    retained = tuple(items)
+    if order not in ("legacy", "recent"):
+        raise ValueError("Journal order must be legacy or recent")
+    if limit is None:
+        selected = retained
+    elif order == "recent":
+        selected = retained[-limit:] if limit > 0 else ()
+    else:
+        selected = retained[:max(0, limit)]
+    lines = [f"- {item}" for item in selected]
+    omitted = len(retained) - len(selected)
+    if omitted:
+        lines.append(
+            f"[Journal projection: {'first' if order == 'legacy' else 'last'} {len(selected)} of {len(retained)} retained entries; "
+            f"{omitted} {'later' if order == 'legacy' else 'earlier'} retained entries omitted from this view.]"
+        )
+    return "\n".join(lines)
+
+
+def horizon_identity_state(create=False):
+    """Synchronize optional metadata under the shared goal lock; never infer links."""
+    with GOAL_LOCK:
+        stores = {field: getattr(agent_state, field) for field in HORIZON_FIELDS.values()}
+        ledger = getattr(agent_state, 'horizon_identity', None)
+        if ledger is None and create:
+            ledger = agent_state.horizon_identity = HorizonIdentityLedger(stores)
+        if ledger is not None:
+            ledger.sync(stores)
+        return ledger
+
+
+def horizon_goal_rows():
+    """Flatten the validated recursive goal tree with durable identity."""
+    rows = []
+    def visit(goals):
+        for goal in goals:
+            rows.append({key: value for key, value in goal.items() if key != 'sub_goals'})
+            visit(goal['sub_goals'])
+    visit(encode_goals(agent_state.tasks_list, include_identity=True))
+    return rows
+
+
+def project_horizon_entries(items, field=None):
+    """Add review hints for exact completed-goal text; preserve all stored plans."""
+    entries = list(items)
+    if COMPLETED_GOAL_PROJECTION == "legacy":
+        return entries
+    if COMPLETED_GOAL_PROJECTION == "linked":
+        with GOAL_LOCK:
+            # Do not attach current identities to an older copied snapshot.
+            if field not in HORIZON_FIELDS.values() or entries != getattr(agent_state, field):
+                return [f"{item} [Identity unavailable for this copied view.]" for item in entries]
+            return horizon_identity_state(create=True).project(field, horizon_goal_rows())
+    completed, active = {}, set()
+    pending = list(agent_state.tasks_list)
+    seen = set()
+    while pending:
+        goal = pending.pop()
+        if id(goal) in seen:
+            continue
+        seen.add(id(goal))
+        pending.extend(list(getattr(goal, "sub_goals", ()) or ()))
+        text = str(getattr(goal, "text", ""))
+        if getattr(goal, "status", "") == "Complete":
+            completed.setdefault(text, []).append(str(goal.id))
+        else:
+            active.add(text)
+    return [
+        f"{item} [Matches completed goal ID {', '.join(sorted(completed[str(item)]))}; review this retained plan.]"
+        if str(item) in completed and str(item) not in active else item
+        for item in entries
+    ]
+
+
+def build_completed_goal_projection(items, limit=None):
+    """Project retained completion records, not current status or verified effects."""
+    if COMPLETED_GOAL_PROJECTION == "legacy":
+        return ""
+    retained = tuple(items)
+    selected = retained if limit is None else retained[-limit:] if limit > 0 else ()
+    lines = []
+    for entry in selected:
+        if not isinstance(entry, dict):
+            lines.append("- [unknown time] Unreadable retained completion record")
+            continue
+        timestamp = str(entry.get("timestamp") or "unknown time")
+        goal = str(entry.get("goal") or "unknown goal")
+        lines.append(f"- [{timestamp}] {goal}")
+    omitted = len(retained) - len(selected)
+    if omitted:
+        lines.append(f"[Completion history: {omitted} earlier retained records omitted from this view.]")
+    if not lines:
+        return ""
+    return "Recorded goal completions (historical; not outcome verification):\n" + "\n".join(lines)
 
 
 def get_history_entry_text(entry):
@@ -3280,6 +3420,7 @@ def write_image_context_sidecar(screenshot_path, *, image_timestamp="", capture_
             "persist_reason": normalize_text_content(persist_reason).strip(),
             "scheduler_capture_counter": (capture_frame or {}).get("counter", int(runtime_state.get("turn_scheduler_capture_counter", 0) or 0)),
             "provenance": (capture_frame or {}).get("provenance", {"status": "unknown"}),
+            "artifact": (capture_frame or {}).get("artifact", {}),
             "geometry": (capture_frame or {}).get("geometry", {"status": "unknown"}),
             "last_wake_reason": normalize_text_content(runtime_state.get("last_turn_wake_reason", "")).strip(),
             "demand_capture_reason": normalize_text_content(runtime_state.get("demand_capture_reason", "")).strip(),
@@ -5951,6 +6092,8 @@ def prepare_command_batch(command_text, *, _pending_depth=0, _action_mode=""):
             elif cmd_name.upper() not in command_dispatch:
                 raise CommandSyntaxError(f"Unknown command: {cmd_name}")
             validate_command_arguments(cmd_name, args)
+            if cmd_name.upper() == "OBSERVE_SCREEN_CHANGE" and _pending_depth:
+                raise CommandSyntaxError("Observation waits cannot be stored in pending wrappers; their frame identity is current-only.")
             if cmd_name.upper() in TASK_CONTROL_COMMANDS and _pending_depth:
                 raise CommandSyntaxError("Task controls must run directly in the controller, not inside a pending wrapper.")
             if cmd_name.upper() in PENDING_WRAPPER_MODES:
@@ -5959,6 +6102,8 @@ def prepare_command_batch(command_text, *, _pending_depth=0, _action_mode=""):
             action_mode = projected_action_mode(cmd_name, args, action_mode)
     if not prepared:
         raise CommandSyntaxError("The request contains no commands.")
+    if len(prepared) != 1 and any(item[1].upper() == "OBSERVE_SCREEN_CHANGE" for item in prepared):
+        raise CommandSyntaxError("OBSERVE_SCREEN_CHANGE requires a standalone batch; inspect its result before issuing input.")
     if len(prepared) != 1 and any(item[1].upper() in TASK_CONTROL_COMMANDS for item in prepared):
         raise CommandSyntaxError("Task controls require a standalone batch. Inspect earlier receipts before reporting an outcome.")
     return tuple(prepared)
@@ -7087,7 +7232,7 @@ def acquire_runtime_frame(source="capture_worker", replaces_frame_id="", parent_
         raise
 
 
-def request_demand_capture(reason="manual", settle_seconds=None):
+def request_demand_capture(reason="manual", settle_seconds=None, *, timeout_seconds=None, max_attempts=None):
     now = time.time()
     normalized_reason = normalize_text_content(reason).strip() or "manual"
     if not bool(runtime_state.get("demand_capture_enabled", DEMAND_CAPTURE_ENABLED)):
@@ -7098,7 +7243,8 @@ def request_demand_capture(reason="manual", settle_seconds=None):
     settle_seconds = get_demand_capture_settle_seconds(settle_seconds)
     with CAPTURE_SERVICE.lock:
         generation = CAPTURE_SERVICE.request(normalized_reason, settle_seconds,
-            timeout_seconds=CAPTURE_REQUEST_TIMEOUT_SECONDS, max_attempts=CAPTURE_REQUEST_MAX_ATTEMPTS)
+            timeout_seconds=CAPTURE_REQUEST_TIMEOUT_SECONDS if timeout_seconds is None else timeout_seconds,
+            max_attempts=CAPTURE_REQUEST_MAX_ATTEMPTS if max_attempts is None else max_attempts)
         if runtime_state.get("turn_scheduler_pending_command_result"):
             set_runtime_value("turn_scheduler_capture_request_generation", generation)
         mirror_capture_service_state()
@@ -7155,6 +7301,27 @@ def mark_turn_scheduler_command_result_pending(settle_seconds=None, demand_reaso
                 runtime_state["turn_scheduler_post_action_boundary"], generation, request.get("generation", 0))
 
 
+def publish_batch_observation(entries):
+    """Coalesce opted-in explicit captures with automatic terminal readbacks."""
+    from aurora_capture_provenance import plan_batch_observation
+    with CAPTURE_SERVICE.lock:
+        selected, evidence = plan_batch_observation(entries, session_id=CAPTURE_SERVICE.session_id,
+            lifecycle=CAPTURE_SERVICE.lifecycle, command_generation=COMMAND_WORK.snapshot()["generation"],
+            default_settle=get_demand_capture_settle_seconds(TURN_SCHEDULER_POST_ACTION_SETTLE_SECONDS))
+        if selected:
+            # Never shorten another explicit request's remaining settle boundary.
+            pending = CAPTURE_SERVICE.snapshot()["pending"]
+            if any((row.get("capture_batch") or {}).get("policy") in {"batch_end", "batch_end_explicit"}
+                   for row in selected) and pending:
+                evidence["settle_seconds"] = max(evidence["settle_seconds"],
+                    pending["due_at_monotonic"] - CAPTURE_SERVICE.monotonic())
+            mark_turn_scheduler_command_result_pending(settle_seconds=evidence["settle_seconds"], command_entries=selected)
+        evidence.update(request_generation=runtime_state.get("turn_scheduler_capture_request_generation", 0),
+                        observed_at_epoch=time.time(), requested=bool(selected))
+        set_runtime_value("last_batch_capture", evidence)
+    return evidence
+
+
 def clear_turn_scheduler_command_result_pending(expected_generation=None):
     with CAPTURE_SERVICE.lock:
         if expected_generation is not None and expected_generation != runtime_state.get("turn_scheduler_observation_generation", 0):
@@ -7195,6 +7362,8 @@ def register_turn_scheduler_capture(screenshot_file_path, image_timestamp="", ca
 def should_request_turn_after_command_result(action_entry):
     if not isinstance(action_entry, dict):
         return False
+    if (action_entry.get("capture_batch") or {}).get("requests", 0):
+        return True  # Controller validates generation/cancellation before requesting pixels.
     # A partially completed/cancelled first input may need observation even when
     # no command reached the successful list. Never automatically replay it.
     if any(row.get("effect_status") in {"submitted", "observed", "uncertain"}
@@ -7229,13 +7398,13 @@ def should_request_turn_after_command_result(action_entry):
 def evaluate_turn_scheduler(input_pending=False):
     if not (SEND_TO_MODEL and ENABLE_MODEL_RESPONSES):
         set_runtime_value("turn_scheduler_pending_reasons", [])
-        return {"should_run": False, "reasons": [], "detail": "live responses disabled"}
+        return {"should_run": False, "reasons": [], "state": "paused", "detail": "live responses disabled"}
 
     if TASK_CONTINUATION_MODE == "bounded" and not TASK_CONTINUATION.can_dispatch(operator_input=input_pending):
         task = TASK_CONTINUATION.snapshot()
         set_runtime_value("turn_scheduler_pending_reasons", [])
         return {"should_run": False, "reasons": [],
-                "detail": f"task stopped: {task.get('stop_reason', 'unknown')}; new operator input starts another task"}
+                "state": "task_stopped", "detail": f"task stopped: {task.get('stop_reason', 'unknown')}; new operator input starts another task"}
 
     # The thread queue's unfinished count covers the gap between dequeue and
     # COMMAND_WORK.scope(), and remains set until the receipt is published.
@@ -7246,7 +7415,7 @@ def evaluate_turn_scheduler(input_pending=False):
     result_queue_busy = active_runtime_context is not None and not active_runtime_context.command_result_queue.empty()
     if command_queue_busy or COMMAND_WORK.snapshot()["active_scopes"] or result_queue_busy:
         set_runtime_value("turn_scheduler_pending_reasons", [])
-        return {"should_run": False, "reasons": [], "detail": "waiting for command batch completion and receipts"}
+        return {"should_run": False, "reasons": [], "state": "commands_running", "detail": "waiting for command batch completion and receipts"}
 
     with CAPTURE_SERVICE.lock:
         capture_status = CAPTURE_SERVICE.snapshot()
@@ -7289,7 +7458,7 @@ def evaluate_turn_scheduler(input_pending=False):
         if failed_observation:
             if not input_pending:
                 set_runtime_value("turn_scheduler_pending_reasons", [])
-                return {"should_run": False, "reasons": [], "capture_failure": capture_failure,
+                return {"should_run": False, "reasons": [], "state": "capture_failed", "capture_failure": capture_failure,
                         "detail": f"capture request failed: {capture_failure['code']}; request a fresh capture or Cancel work"}
             omit_capture = True
         elif latest_capture_path and capture_counter >= required_capture and settled:
@@ -7300,7 +7469,7 @@ def evaluate_turn_scheduler(input_pending=False):
             # urgent Pause/Cancel/Shutdown are serviced independently of inference.
             set_runtime_value("turn_scheduler_pending_reasons", [])
             return {"should_run": False, "reasons": [],
-                    "detail": "waiting for requested post-action capture and settle time"}
+                    "state": "waiting_capture", "detail": "waiting for requested post-action capture and settle time"}
         elif CAPTURE_PROVENANCE_POLICY == "verified":
             # Operator text may interrupt, without presenting stale pixels as a
             # new post-action observation. The observation boundary stays pending.
@@ -7331,13 +7500,17 @@ def evaluate_turn_scheduler(input_pending=False):
     set_runtime_value("turn_scheduler_pending_reasons", ordered)
 
     if not ordered:
-        return {"should_run": False, "reasons": [], "detail": "no wake condition met"}
+        waiting = "waiting_capture" if capture_status["pending"] or CAPTURE_MODE == "heartbeat" else "waiting_timer" if TURN_SCHEDULER_HEARTBEAT_SECONDS > 0 else "quiescent"
+        detail = ("no scheduled wake; inspect pending work, request a fresh capture or send operator input" if waiting == "quiescent"
+                  else "no wake condition met; waiting for the configured capture/timer event")
+        return {"should_run": False, "reasons": [], "state": waiting, "detail": detail}
 
     if last_turn_completed_at and (now - last_turn_completed_at) < TURN_SCHEDULER_MIN_GAP_SECONDS:
         return {
             "should_run": False,
             "reasons": ordered,
             "detail": f"waiting for min gap {TURN_SCHEDULER_MIN_GAP_SECONDS:.2f}s",
+            "state": "minimum_gap",
         }
 
     detail_parts = [
@@ -7348,6 +7521,7 @@ def evaluate_turn_scheduler(input_pending=False):
     ]
     return {
         "should_run": True,
+        "state": "ready",
         "reasons": ordered,
         "detail": " | ".join(detail_parts),
         "readback_generation": readback["generation"],
@@ -9614,6 +9788,9 @@ AGENT_DEFAULT_COMMAND_DENY = [
     "APPROVE_PENDING",
     "SHUTDOWN_RUNTIME",
     "CANCEL_ACTIVE_WORK",
+    "CANCEL_ACTIVE_WORK_IF_TASK",
+    "SHOW_TASK_CONTEXT",
+    "STEER_TASK",
     "RELEASE_HELD_INPUTS",
 ]
 
@@ -24721,6 +24898,7 @@ def _build_control_panel_state_snapshot_unlocked():
             "screenshot_interval": time_interval,
             "capture_mode": CAPTURE_MODE,
             "capture_provenance_policy": CAPTURE_PROVENANCE_POLICY,
+            "capture_command_policy": CAPTURE_COMMAND_POLICY,
             "capture_geometry_policy": CAPTURE_GEOMETRY_POLICY,
             "capture_target": CAPTURE_TARGET,
             "capture_request_timeout_seconds": CAPTURE_REQUEST_TIMEOUT_SECONDS,
@@ -24729,6 +24907,9 @@ def _build_control_panel_state_snapshot_unlocked():
             "goal_save_format": GOAL_SAVE_FORMAT,
             "hierarchy_dispatch": HIERARCHY_DISPATCH,
             "horizon_sync": HORIZON_SYNC,
+            "journal_order": JOURNAL_ORDER,
+            "completed_projection": COMPLETED_GOAL_PROJECTION,
+            "input_recovery": INPUT_RECOVERY_MODE,
             "assistant_policy": ASSISTANT_POLICY,
             "effective_screenshot_interval": get_effective_screenshot_interval(),
             "idle_screenshot_interval_floor": idle_screenshot_interval,
@@ -24750,6 +24931,9 @@ def _build_control_panel_state_snapshot_unlocked():
             "last_wake_reason": normalize_text_content(runtime_state.get("last_turn_wake_reason", "")).strip(),
             "last_wake_details": normalize_text_content(runtime_state.get("last_turn_wake_details", "")).strip(),
             "pending_reasons": list(runtime_state.get("turn_scheduler_pending_reasons", []) or []),
+            "decision": copy.deepcopy(runtime_state.get("turn_scheduler_decision", {})),
+            "batch_capture": copy.deepcopy(runtime_state.get("last_batch_capture", {})),
+            "observation_wait": copy.deepcopy(runtime_state.get("last_observation_wait", {})),
             "capture_counter": int(runtime_state.get("turn_scheduler_capture_counter", 0) or 0),
             "last_capture_hash": normalize_text_content(runtime_state.get("turn_scheduler_last_capture_hash", "")).strip(),
             "last_submitted_capture_counter": int(runtime_state.get("turn_scheduler_last_submitted_capture_counter", 0) or 0),
@@ -25013,7 +25197,12 @@ def build_control_panel_state_snapshot():
         snapshot = _build_control_panel_state_snapshot_unlocked()
     snapshot["work"] = {"model_io": MODEL_IO.snapshot(), "model_turns": MODEL_WORK.snapshot(),
                         "commands": COMMAND_WORK.snapshot(), "held_inputs": HELD_INPUTS.snapshot()}
+    snapshot["build"] = release_info()
     snapshot["conversation_io"] = {
+        "input_recovery_mode": INPUT_RECOVERY_MODE,
+        "input_recovery": INPUT_RECOVERY.summary() if INPUT_RECOVERY is not None else {},
+        "input_recovery_last_error": runtime_state.get('input_recovery_error', ''),
+        "input_recovery_readiness": get_input_recovery_readiness(),
         "last_model_turn_status": runtime_state.get("last_model_turn_status", ""),
         "queued_input_count": get_input_queue_store().qsize(),
     }
@@ -25322,7 +25511,7 @@ def poll_external_inbox_messages():
         client_id = identity["client_id"]
         metadata = record.get("metadata") or {}
         ingest_mode = normalize_text_content(metadata.get("ingest_mode", "")).strip().lower()
-        if (ingest_mode != "raw" and message_id
+        if (INPUT_RECOVERY_MODE != 'durable' and ingest_mode != "raw" and message_id
                 and message_id == external_bridge_state.get("last_ingested_message_id", "")):
             continue
 
@@ -25494,9 +25683,19 @@ def poll_external_inbox_messages():
                 queued_text = text
             else:
                 queued_text = f"External reply via {source}: {text}"
-            get_input_queue_store().put(TrackedInput(queued_text, {
-                "request_id": request_id, "message_id": message_id, "client_id": client_id,
-            }))
+            try:
+                newly_queued = queue_recoverable_input(queued_text, {
+                    "request_id": request_id, "message_id": message_id, "client_id": client_id,
+                })
+                if not newly_queued:
+                    duplicate_suppressed = True
+                    command_delivery_status = 'recovery_retained'
+            except ValueError as error:
+                # Reject an invalid/full admission explicitly; don't poison later
+                # input/control records. I/O failures still retain the unread cursor.
+                command_delivery_status = 'rejected'
+                write_external_bridge_log('message_rejected', source=source, **identity,
+                    delivery_status='rejected', reason=str(error), replay_attempted=False)
         touch_last_interaction()
         external_bridge_state["last_ingested_message_id"] = message_id
         external_bridge_state["last_ingested_request_id"] = request_id
@@ -26628,6 +26827,57 @@ def get_input_queue_store():
     return agent_state.queued_user_input
 
 
+def get_input_recovery():
+    """Lazy optional store; startup loads evidence, never re-enqueues old input."""
+    global INPUT_RECOVERY
+    with INPUT_RECOVERY_LOCK:
+        if INPUT_RECOVERY_MODE != 'durable':
+            return None
+        if INPUT_RECOVERY is None:
+            import atexit
+            try:
+                INPUT_RECOVERY = InputRecovery(Path(__file__).with_name('aurora_input_recovery.json'),
+                                               diagnostics=INPUT_RECOVERY_DIAGNOSTICS)
+            except Exception as error:
+                INPUT_RECOVERY_DIAGNOSTICS.failure('open', error)
+                raise
+            atexit.register(INPUT_RECOVERY.close)
+        return INPUT_RECOVERY
+
+
+def get_input_recovery_readiness():
+    """Non-mutating shared status; inspection never initializes/retries the store."""
+    with INPUT_RECOVERY_LOCK:
+        return recovery_readiness(INPUT_RECOVERY_MODE, INPUT_RECOVERY, INPUT_RECOVERY_DIAGNOSTICS,
+            startup_mode=INPUT_RECOVERY_STARTUP_MODE, startup_source=INPUT_RECOVERY_STARTUP_SOURCE)
+
+
+def queue_recoverable_input(text, identity):
+    with INPUT_RECOVERY_LOCK:
+        recovery = get_input_recovery()
+        if recovery is not None and not recovery.admit(text, identity):
+            return False  # Previously admitted identity: never silently re-enqueue.
+        value = TrackedInput(text, identity)
+        value.recovery_managed = recovery is not None
+        get_input_queue_store().put(value)
+        return True
+
+
+def guard_input_delivery(delivery, phase):
+    """Durable request-start evidence is required before network submission."""
+    recovery = get_input_recovery()
+    if recovery is None or not delivery.references:
+        return
+    try:
+        recovery.delivery(delivery.references, phase, delivery.inference_request_id, delivery.sequence+1,
+                          delivery.request_started or phase == 'submitted')
+    except Exception as error:
+        INPUT_RECOVERY_DIAGNOSTICS.failure('delivery', error)
+        set_runtime_value('input_recovery_error', f'{type(error).__name__}: durable delivery record failed; inspect before retrying.')
+        if phase not in {'responded', 'failed', 'cancelled', 'not_sent'}:
+            raise  # Fail closed before preparation/submission; never replay.
+
+
 def is_agent_running():
     return agent_state.running
 
@@ -26970,6 +27220,12 @@ def build_agent_state_snapshot():
         ]
         sections.append("Goals:\n" + "\n".join(goal_lines))
 
+    completion_history = build_completed_goal_projection(
+        agent_state.significant_past_tasks, MAX_STATE_ITEMS_PER_SECTION
+    )
+    if completion_history:
+        sections.append(completion_history)
+
     if apriority_store:
         sections.append("Open-ended goals:\n" + "\n".join(f"- {item}" for item in _limit_lines(apriority_store)))
 
@@ -26980,16 +27236,16 @@ def build_agent_state_snapshot():
         sections.append("Unknown-priority candidates:\n" + "\n".join(f"- {item}" for item in _limit_lines(unknown_priority_store)))
 
     if pinned_immediate_store:
-        sections.append("Pinned immediate actions:\n" + "\n".join(f"- {item}" for item in _limit_lines(pinned_immediate_store)))
+        sections.append("Pinned immediate actions:\n" + "\n".join(f"- {item}" for item in _limit_lines(project_horizon_entries(pinned_immediate_store, "pinned_immediate_actions"))))
 
     if pinned_short_term_store:
-        sections.append("Pinned short-term actions:\n" + "\n".join(f"- {item}" for item in _limit_lines(pinned_short_term_store)))
+        sections.append("Pinned short-term actions:\n" + "\n".join(f"- {item}" for item in _limit_lines(project_horizon_entries(pinned_short_term_store, "pinned_short_term_actions"))))
 
     if mid_term_store:
-        sections.append("Mid-term context:\n" + "\n".join(f"- {item}" for item in _limit_lines(mid_term_store)))
+        sections.append("Mid-term context:\n" + "\n".join(f"- {item}" for item in _limit_lines(project_horizon_entries(mid_term_store, "mid_term_context"))))
 
     if long_term_store:
-        sections.append("Long-term context:\n" + "\n".join(f"- {item}" for item in _limit_lines(long_term_store)))
+        sections.append("Long-term context:\n" + "\n".join(f"- {item}" for item in _limit_lines(project_horizon_entries(long_term_store, "long_term_context"))))
 
     if active_questions_store:
         sections.append("Active questions:\n" + "\n".join(f"- {format_planning_memory_entry(item)}" for item in active_questions_store[-MAX_STATE_ITEMS_PER_SECTION:]))
@@ -27055,7 +27311,7 @@ def build_agent_state_snapshot():
         sections.append("Notes:\n" + "\n".join(f"- {item}" for item in _limit_lines(notes_store)))
 
     if journal_store:
-        sections.append("Journal:\n" + "\n".join(f"- {item}" for item in _limit_lines(journal_store)))
+        sections.append("Journal:\n" + build_journal_projection(journal_store, MAX_STATE_ITEMS_PER_SECTION, JOURNAL_ORDER))
 
     action_source = get_recent_executed_actions_store()
     if action_source:
@@ -28786,7 +29042,7 @@ def build_base_system_prompt():
             "In a fresh battle scene, Task flow also permits a single GB menu/confirm press or a hold up to 0.25 seconds; observe after each battle action. "
             "Auto is still required for automatic non-memory actions; Assist/Safe and locks remain in force. Legacy retains prior review behavior. "
             "On a clear calibrated path, make useful progress with a short sequence (often 2-4 actions) rather than an arbitrary single tiny tap. "
-            "End the sequence before an uncertain doorway, menu, dialog or battle and request a fresh screenshot. "
+            "End the sequence before an uncertain doorway, menu, dialog or battle and observe a fresh screenshot before continuing. "
             "Keep one action for menus/uncertain states. Record memory when something changes, not every field every turn. "
             "Use a bare Scene label on its own line (for example Scene: dialog); put location and explanation in Observation. "
             "After two unchanged or failed attempts, inspect receipts and the new image, change the hypothesis or request a configured review-model turn; do not loop identical moves."
@@ -28835,6 +29091,9 @@ def build_base_system_prompt():
             f"Shell power-word gate: {'on' if REQUIRE_POWER_WORD else 'off'}; GB:/PYAG: select input routing and are not the power-word gate. "
             "These are configuration values, not proof a worker is running or that an image was delivered."
         )
+        if ASSISTANT_POLICY == "task_flow" and TASK_CONTINUATION_MODE == "bounded" and DEMAND_CAPTURE_ENABLED:
+            from aurora_capture_provenance import dynamic_observation_guidance
+            prompt_sections.append(dynamic_observation_guidance(CAPTURE_COMMAND_POLICY))
     if init_context:
         prompt_sections.append("Persistent init context:\n" + init_context)
     if TASK_CONTINUATION_MODE == "bounded":
@@ -28949,17 +29208,26 @@ SCREENSHOT_FAULT_MARKER_PATH = (os.getenv("AURORA_FAULT_SCREENSHOT_FAIL_MARKER",
 screenshot_capture_wake_event = threading.Event()
 CAPTURE_MODE = coerce_setting_value("capture.mode", os.getenv("AURORA_CAPTURE_MODE", "heartbeat"))
 CAPTURE_PROVENANCE_POLICY = coerce_setting_value("capture.provenance_policy", os.getenv("AURORA_CAPTURE_PROVENANCE_POLICY", "verified"))
+CAPTURE_COMMAND_POLICY = coerce_setting_value("capture.command_policy", os.getenv("AURORA_CAPTURE_COMMAND_POLICY", "legacy"))
 CAPTURE_GEOMETRY_POLICY = coerce_setting_value("capture.geometry_policy", os.getenv("AURORA_CAPTURE_GEOMETRY_POLICY", "verified"))
 CAPTURE_TARGET = coerce_setting_value("capture.target", os.getenv("AURORA_CAPTURE_TARGET", "legacy_options"))
 CAPTURE_REQUEST_TIMEOUT_SECONDS = coerce_setting_value("capture.request_timeout_seconds", os.getenv("AURORA_CAPTURE_REQUEST_TIMEOUT", "0"))
 CAPTURE_REQUEST_MAX_ATTEMPTS = coerce_setting_value("capture.request_max_attempts", os.getenv("AURORA_CAPTURE_REQUEST_ATTEMPTS", "0"))
 GAMEPLAY_SCENE_POLICY = coerce_setting_value("game.scene_policy", os.getenv("AURORA_GAMEPLAY_SCENE_POLICY", "evidence"))
 GOAL_SAVE_FORMAT = coerce_setting_value("goals.save_format", os.getenv("AURORA_GOAL_SAVE_FORMAT", "versioned"))
+JOURNAL_ORDER = coerce_setting_value("memory.journal_order", os.getenv("AURORA_JOURNAL_ORDER", "legacy"))
+COMPLETED_GOAL_PROJECTION = coerce_setting_value("goals.completed_projection", os.getenv("AURORA_COMPLETED_GOAL_PROJECTION", "legacy"))
 HIERARCHY_DISPATCH = coerce_setting_value("goals.hierarchy_dispatch", os.getenv("AURORA_HIERARCHY_DISPATCH", "legacy"))
 HORIZON_SYNC = coerce_setting_value("goals.horizon_sync", os.getenv("AURORA_HORIZON_SYNC", "legacy"))
 HIERARCHY_DISPATCH_ARMED = HIERARCHY_DISPATCH == "legacy"
 ASSISTANT_POLICY = coerce_setting_value("runtime.assistant_policy", os.getenv("AURORA_ASSISTANT_POLICY", "legacy"))
 INIT_DELIVERY_MODE = coerce_setting_value("context.init_delivery", os.getenv("AURORA_INIT_DELIVERY", "legacy"))
+INPUT_RECOVERY_MODE = coerce_setting_value("conversation.input_recovery", os.getenv("AURORA_INPUT_RECOVERY", "legacy"))
+INPUT_RECOVERY_STARTUP_MODE = INPUT_RECOVERY_MODE
+INPUT_RECOVERY_STARTUP_SOURCE = 'AURORA_INPUT_RECOVERY' if 'AURORA_INPUT_RECOVERY' in os.environ else 'default'
+INPUT_RECOVERY_DIAGNOSTICS = RecoveryDiagnostics()
+INPUT_RECOVERY = None
+INPUT_RECOVERY_LOCK = threading.RLock()
 TASK_CONTINUATION_MODE = coerce_setting_value("task.continuation_mode", os.getenv("AURORA_TASK_CONTINUATION", "legacy"))
 TASK_MAX_MODEL_TURNS = coerce_setting_value("task.max_model_turns", os.getenv("AURORA_TASK_MAX_MODEL_TURNS", "8"))
 TASK_MAX_SECONDS = coerce_setting_value("task.max_seconds", os.getenv("AURORA_TASK_MAX_SECONDS", "120"))
@@ -28967,10 +29235,37 @@ TASK_OUTCOME_REPORTING = coerce_setting_value("task.outcome_reporting", os.geten
 TASK_MAX_COMMANDS = coerce_setting_value("task.max_commands", os.getenv("AURORA_TASK_MAX_COMMANDS", "0"))
 TASK_MAX_REPORTED_TOKENS = coerce_setting_value("task.max_reported_tokens", os.getenv("AURORA_TASK_MAX_REPORTED_TOKENS", "0"))
 TASK_UNKNOWN_USAGE_POLICY = coerce_setting_value("task.unknown_usage_policy", os.getenv("AURORA_TASK_UNKNOWN_USAGE_POLICY", "continue"))
+TASK_OBJECTIVE_MODE = coerce_setting_value("task.objective_mode", os.getenv("AURORA_TASK_OBJECTIVE_MODE", "legacy"))
 TASK_PLAN_CARRY_POLICY = coerce_setting_value("task.plan_carry_policy", os.getenv("AURORA_TASK_PLAN_CARRY_POLICY", "carry"))
 TASK_PENDING_CARRY_POLICY = coerce_setting_value("task.pending_carry_policy", os.getenv("AURORA_TASK_PENDING_CARRY_POLICY", "carry"))
 READBACK_WAKE_ENABLED = coerce_setting_value("scheduler.readback_wake_enabled", os.getenv("AURORA_READBACK_WAKE", "off"))
 READBACK_SCOPE = coerce_setting_value("scheduler.readback_scope", os.getenv("AURORA_READBACK_SCOPE", "discovery"))
+EXECUTION_RECORDING_MODE = "off"
+EXECUTION_RECORDING_SERVICE = None
+
+
+def build_execution_recording_snapshot():
+    service = EXECUTION_RECORDING_SERVICE
+    state = service.snapshot() if service else {"mode": "off", "state": "off", "source": "runtime_session"}
+    return dict(state, effective_mode=state["mode"], mode=EXECUTION_RECORDING_MODE)
+
+
+def tick_execution_recording():
+    """Reconcile desired mode after settings transactions; never wait for publication."""
+    global EXECUTION_RECORDING_SERVICE
+    with SETTINGS_TRANSACTION_LOCK:
+        if EXECUTION_RECORDING_SERVICE is None:
+            if EXECUTION_RECORDING_MODE == "off":
+                return
+            from aurora_recording_service import RecordingService
+            EXECUTION_RECORDING_SERVICE = RecordingService(TASK_CONTINUATION, Path(__file__).resolve().parent / "execution_recordings")
+        service = EXECUTION_RECORDING_SERVICE
+        try:
+            service.set_mode(EXECUTION_RECORDING_MODE)
+        except ValueError:
+            # An earlier epoch must drain/reconcile before another can begin.
+            pass
+    service.tick()
 
 
 def build_task_continuation_snapshot(*, include_progress=True):
@@ -28979,10 +29274,12 @@ def build_task_continuation_snapshot(*, include_progress=True):
             "max_commands": TASK_MAX_COMMANDS, "max_reported_tokens": TASK_MAX_REPORTED_TOKENS,
             "unknown_usage_policy": TASK_UNKNOWN_USAGE_POLICY,
             "plan_carry_policy": TASK_PLAN_CARRY_POLICY, "pending_carry_policy": TASK_PENDING_CARRY_POLICY,
+            "objective_mode": TASK_OBJECTIVE_MODE,
             "active_task": TASK_CONTINUATION.snapshot(include_progress=include_progress),
             "source": "runtime_session", "readback_wake_effective": bool(
                 READBACK_WAKE_ENABLED and TASK_CONTINUATION_MODE == "bounded" and (COMMAND_DISCOVERY_CONTEXT or READBACK_SCOPE == "reviewed")),
-            "readback_scope": READBACK_SCOPE}
+            "readback_scope": READBACK_SCOPE,
+            **({"recording": build_execution_recording_snapshot()} if include_progress else {})}
 
 
 def get_effective_screenshot_interval():
@@ -29993,16 +30290,12 @@ def initialize_overlay():
 
 
 
-def encode_image_to_base64(image_path):
+def encode_image_to_base64(image_path, *, evidence=None):
     """
     Encodes an image to base64.
     """
     try:
-        with Image.open(image_path) as image:
-            buffered = io.BytesIO()
-            image.save(buffered, format="PNG")  # You can change PNG to a different format if needed
-            img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
-        return img_str
+        return capture_artifacts.encode_image(image_path, evidence)
     except Exception as e:
         print(f"Error encoding image to base64: {e}")
         return None
@@ -30683,29 +30976,44 @@ def listen_to_keyboard():
 def handle_queued_input(screenshot_file_path, image_timestamp, wake_reason="", wake_details="", before_dispatch=None, capture_frame=None):
     if not SEND_TO_MODEL or not ENABLE_MODEL_RESPONSES:
         return False  # Pausing inference must not consume queued operator messages.
-    input_queue = get_input_queue_store()
-    combined_input_list = []
-    while True:
-        try:
-            combined_input_list.append(input_queue.get_nowait())
-        except queue.Empty:
-            break
+    with INPUT_RECOVERY_LOCK:
+        input_queue = get_input_queue_store()
+        combined_input_list = []
+        while True:
+            try:
+                combined_input_list.append(input_queue.get_nowait())
+            except queue.Empty:
+                break
+
+        recovery = get_input_recovery()
+        managed_refs = queued_input_identities([value for value in combined_input_list if getattr(value, 'recovery_managed', False)])
+        if recovery is not None and managed_refs:
+            try:
+                accepted = recovery.claim(managed_refs)
+            except Exception:
+                for value in combined_input_list:
+                    input_queue.put(value)
+                raise
+            combined_input_list = [value for value in combined_input_list if not getattr(value, 'recovery_managed', False)
+                                   or any(recovery_identity_key(ref) in accepted for ref in value.delivery_refs)]
+            if not combined_input_list:
+                return False
 
     if combined_input_list:
         combined_input = ' '.join(combined_input_list)
         prompt = f"user input: {combined_input}"
-        if before_dispatch is not None:
-            before_dispatch()
-        send_prompt_to_chatgpt(
-            prompt,
-            role="user",
-            image_path=screenshot_file_path,
-            image_timestamp=image_timestamp,
-            wake_reason=wake_reason,
-            wake_details=wake_details,
-            delivery_refs=queued_input_identities(combined_input_list),
-            capture_frame=capture_frame,
-        )
+        try:
+            if before_dispatch is not None:
+                before_dispatch()
+            send_prompt_to_chatgpt(
+                prompt, role="user", image_path=screenshot_file_path, image_timestamp=image_timestamp,
+                wake_reason=wake_reason, wake_details=wake_details,
+                delivery_refs=queued_input_identities(combined_input_list), capture_frame=capture_frame,
+                operator_inputs=tuple(str(value) for value in combined_input_list),
+            )
+        finally:
+            if recovery is not None and managed_refs:
+                recovery.abandon_claims(managed_refs)
         return True
     else:
         if "command_readback" in wake_reason.split(",") and not screenshot_file_path:
@@ -30741,9 +31049,12 @@ def handle_queued_input(screenshot_file_path, image_timestamp, wake_reason="", w
 
 def maybe_run_due_inference_turn():
     if MODEL_IO.busy:
+        set_runtime_value("turn_scheduler_decision", dict(state="model_running", detail="model I/O in progress", observed_at_epoch=time.time()))
         return False
     input_pending = not get_input_queue_store().empty()
     scheduler_decision = evaluate_turn_scheduler(input_pending=input_pending)
+    set_runtime_value("turn_scheduler_decision", dict(state=scheduler_decision.get("state", "unknown"),
+        detail=scheduler_decision.get("detail", ""), observed_at_epoch=time.time()))
     if not scheduler_decision.get("should_run"):
         return False
     capture_frame = scheduler_decision.get("capture_frame") or {}
@@ -30759,6 +31070,7 @@ def maybe_run_due_inference_turn():
     if not screenshot_file_path and not input_pending and "command_readback" not in reasons:
         return False
     details = normalize_text_content(scheduler_decision.get("detail", "")).strip()
+    set_runtime_value("turn_scheduler_decision", dict(state="model_running", detail="preparing or running model turn", observed_at_epoch=time.time()))
     dispatched = handle_queued_input(
         screenshot_file_path,
         image_timestamp,
@@ -30827,7 +31139,7 @@ def require_current_artifact_origin(origin, policy_key):
         raise RuntimeError("Prior-task work cannot publish a new queued artifact under the current task policy.")
 
 
-def reserve_task_continuation_for_turn(operator_input=False, trigger="manual"):
+def reserve_task_continuation_for_turn(operator_input=False, trigger="manual", operator_messages=()):
     """Latch a new task and reconcile queued artifacts before model preparation.
 
     Lock order is settings -> pending -> task controller; command submission never
@@ -30840,6 +31152,7 @@ def reserve_task_continuation_for_turn(operator_input=False, trigger="manual"):
                 outcome_reporting=TASK_OUTCOME_REPORTING, max_commands=TASK_MAX_COMMANDS,
                 max_reported_tokens=TASK_MAX_REPORTED_TOKENS, unknown_usage_policy=TASK_UNKNOWN_USAGE_POLICY,
                 plan_carry_policy=TASK_PLAN_CARRY_POLICY, pending_carry_policy=TASK_PENDING_CARRY_POLICY,
+                objective_mode=TASK_OBJECTIVE_MODE, operator_messages=operator_messages,
                 operator_input=operator_input, trigger=trigger):
             return False
         active = TASK_CONTINUATION.snapshot()
@@ -30897,11 +31210,19 @@ def record_task_progress(delivery, phase):
     return TASK_CONTINUATION.record_request_progress(delivery, phase)
 
 
+def stop_model_turn_task(delivery, reason):
+    """A delayed or pre-reservation turn cannot stop a replacement task."""
+    task_id = getattr(delivery, "task_id", "")
+    if task_id:
+        return TASK_CONTINUATION.stop_if_current(task_id, reason)
+    return None
+
+
 def serialized_model_turn(function):
     """Preserve legacy synchronous callers while allowing control during I/O."""
     @wraps(function)
     def run(*args, **kwargs):
-        with delivery_turn(write_external_bridge_log, kwargs.get("delivery_refs", ()), observer=record_task_progress) as delivery:
+        with delivery_turn(write_external_bridge_log, kwargs.get("delivery_refs", ()), observer=record_task_progress, guard=guard_input_delivery) as delivery:
             if not is_agent_running():
                 delivery.emit("not_sent", reason="Runtime stopped before this turn began. Inspect Outbox before resending.")
                 return None
@@ -30917,7 +31238,8 @@ def serialized_model_turn(function):
                             return None
                         bounded = TASK_CONTINUATION_MODE == "bounded" and SEND_TO_MODEL and ENABLE_MODEL_RESPONSES
                         if bounded and not reserve_task_continuation_for_turn(
-                            operator_input="user_input" in kwargs.get("wake_reason", "").split(",") or bool(kwargs.get("delivery_refs")),
+                            operator_input=bool(kwargs.get("operator_inputs")) or "user_input" in kwargs.get("wake_reason", "").split(",") or bool(kwargs.get("delivery_refs")),
+                            operator_messages=kwargs.get("operator_inputs", ()),
                             trigger=kwargs.get("wake_reason") or "manual",
                         ):
                             delivery.emit("not_sent", reason="Task continuation limit reached; no request started. New operator input starts another task.")
@@ -30928,20 +31250,23 @@ def serialized_model_turn(function):
                             delivery.observe("preparing")
                         result = function(*args, **kwargs)
                         if bounded and result is None:
-                            TASK_CONTINUATION.stop(runtime_state.get("last_model_turn_status", "model_turn_failed"))
+                            stop_model_turn_task(delivery, runtime_state.get("last_model_turn_status", "model_turn_failed"))
                         return result
                 finally:
                     MODEL_TURN_LOCK.release()
+            except TaskObjectiveCapacity as error:
+                delivery.emit("not_sent", reason=str(error))
+                set_runtime_value("last_model_turn_status", "objective_capacity")
+                append_runtime_feedback(str(error))
+                return None
             except WorkCancelled as error:
-                if TASK_CONTINUATION_MODE == "bounded":
-                    TASK_CONTINUATION.stop("cancelled")
+                stop_model_turn_task(delivery, "cancelled")
                 delivery.emit("cancelled", reason="Cancelled locally; remote cancellation is unconfirmed. No automatic resend.")
                 set_runtime_value("last_model_turn_status", "cancelled")
                 append_runtime_feedback(f"Model turn cancelled: {error}")
                 return None
             except Exception:
-                if TASK_CONTINUATION_MODE == "bounded":
-                    TASK_CONTINUATION.stop("turn_exception")
+                stop_model_turn_task(delivery, "turn_exception")
                 set_runtime_value("last_model_turn_status", "turn_exception")
                 raise
             finally:
@@ -30965,6 +31290,7 @@ def send_prompt_to_chatgpt(
     wake_details="",
     delivery_refs=(),
     capture_frame=None,
+    operator_inputs=(),
 ) -> str | None:
     global image_detail
     global Recent_images_High
@@ -31046,6 +31372,10 @@ def send_prompt_to_chatgpt(
 
     base_system_prompt = build_base_system_prompt()
     messages: list[dict[str, Any]] = [{"role": "system", "content": base_system_prompt}]
+    if TASK_CONTINUATION_MODE == "bounded":
+        task_context = TASK_CONTINUATION.prepare_objective(getattr(delivery, "task_id", ""))
+        messages.extend(task_context['messages'])
+        delivery.task_context = task_context['metadata']
     ensure_default_pinned_message()
 
     state_snapshot = build_agent_state_snapshot()
@@ -31104,6 +31434,7 @@ def send_prompt_to_chatgpt(
 
     history_exemption = normalize_memory_item(exemption).strip() or "None"
 
+    encoding_evidence = {}
     if image_path:
         # Set the detail level for the latest image
         #image_detail = latest_image_detail
@@ -31111,7 +31442,7 @@ def send_prompt_to_chatgpt(
         print(image_path)
         set_runtime_value('last_image_status', f"encoding:{os.path.basename(image_path)}")
         set_runtime_value('last_image_path', image_path)
-        base64_image = encode_image_to_base64(image_path)
+        base64_image = encode_image_to_base64(image_path, evidence=encoding_evidence)
         image_text = build_visual_user_prompt(request_prompt)
         selected_frame = capture_frame if capture_frame and capture_frame.get("path") == image_path else None
         image_text += "\n" + capture_geometry.frame_geometry_prompt(selected_frame)
@@ -31174,10 +31505,17 @@ def send_prompt_to_chatgpt(
     CONVERSATION_ARCHIVE.record_prepared(runtime_state.get("last_prompt_materials", {}))
     delivery.frame_id = ((capture_frame or {}).get("provenance", {}).get("frame_id", "")
                          if image_path and capture_frame and capture_frame.get("path") == image_path else "")
+    delivery.frame_provenance = ((capture_frame or {}).get("provenance", {}) if delivery.frame_id else {})
+    delivery.frame_artifact = (capture_artifacts.prepared_reference(capture_frame, image_path, encoding_evidence)
+                               if delivery.frame_id else {})
+    delivery.prepared_settings = dict(reasoning_effort=reasoning_effort,
+        service_tier=turn_plan.get("service_tier", "regular"), configured_transport=MODEL_TRANSPORT,
+        configured_auth=AUTH_MODE, review_turn=bool(is_review_turn), critique_turn=bool(is_critique_turn))
     delivery.emit("prepared", model=model_name, reason="Current input included in the prepared turn; no provider response yet.")
     set_runtime_value("last_prompt_diagnostics", {
         "inference_request_id": delivery.inference_request_id,
         "task_id": getattr(delivery, "task_id", ""),
+        "task_context": copy.deepcopy(getattr(delivery, "task_context", {})),
         "command_readbacks": copy.deepcopy(readback_manifest),
         "input_receipts": list(delivery.references),
         "model": model_name,
@@ -31237,6 +31575,7 @@ def send_prompt_to_chatgpt(
         inference_request_id=delivery.inference_request_id,
         task_id=getattr(delivery, "task_id", ""),
         command_readback_ids=[row["record_id"] for row in readback_manifest["records"]],
+        task_context=copy.deepcopy(getattr(delivery, 'task_context', {})),
         input_receipts=list(delivery.references),
         role="system",
         transport=MODEL_TRANSPORT,
@@ -31780,17 +32119,20 @@ def replace_memory_store(target_store, items, limit=None):
     parsed_items = parse_memory_items(items)
     if limit is not None:
         parsed_items = parsed_items[:limit]
-    target_store[:] = parsed_items
+    with GOAL_LOCK:
+        target_store[:] = parsed_items
+        horizon_identity_state()
     update_pinned_information()
     return list(target_store)
 
 
 def append_memory_store(target_store, items, limit=None):
-    merged = list(target_store) + parse_memory_items(items)
-    merged = dedupe_preserve_order(merged)
-    if limit is not None:
-        merged = merged[-limit:]
-    target_store[:] = merged
+    with GOAL_LOCK:
+        merged = dedupe_preserve_order(list(target_store) + parse_memory_items(items))
+        if limit is not None:
+            merged = merged[-limit:]
+        target_store[:] = merged
+        horizon_identity_state()
     update_pinned_information()
     return list(target_store)
 
@@ -32966,6 +33308,7 @@ def promote_associated_goals_from_tasks():
 
 
 ASSISTANT_MEMORY_COMMANDS = {
+    "LINK_HORIZON_GOAL",
     "INIT",
     "PIN",
     "ADD_GOAL",
@@ -33896,7 +34239,7 @@ def evaluate_task_flow_permission(command, operating_context, gameplay_scene, py
             return "allow", "task-flow registered setting query; no mutation"
         if name in {"SHOW_RUNTIME", "SHOW_NEXT_INFERENCE", "SHOW_RETRIEVAL_RESULT", "SEARCH_COMMANDS", "LOOKUP_COMMAND", "LIST_COMMANDS"}:
             return "allow", "task-flow discovery/readback; no runtime permission change"
-        if name == "REQUEST_SCREENSHOT_CAPTURE":
+        if name in {"REQUEST_SCREENSHOT_CAPTURE", "OBSERVE_SCREEN_CHANGE"}:
             require_runtime_setting_unlocked("screenshot_interval", "Requested capture")
             return ("allow", "task-flow observation request; demand capture enabled") if DEMAND_CAPTURE_ENABLED else (
                 "hold", "demand capture is disabled; operator must enable it")
@@ -34220,6 +34563,8 @@ def enqueue_or_execute_command(
     else:
         execution_result = execute_command_entry(command_entry)
         ingest_command_result(execution_result)
+        if (execution_result.get("capture_batch") or {}).get("requests", 0):
+            publish_batch_observation([execution_result])
         return dict(command_entry, submission_status=("cancelled" if execution_result.get("cancelled") else
                     "completed" if execution_result.get("success", True) else "failed"), execution_result=execution_result)
     return command_entry
@@ -34835,6 +35180,7 @@ def ingest_command_result(action_entry, shared_recent_executed_actions=None):
                 "goal_file_results": action_entry.get("goal_file_results", []),
                 "memory_command_results": action_entry.get("memory_command_results", []),
                 "task_control_results": action_entry.get("task_control_results", []),
+                "observation_results": action_entry.get("observation_results", []),
                 "task_budget_results": action_entry.get("task_budget_results", []),
                 "desktop_results": action_entry.get('desktop_results', []),
                 "input_cleanup_results": action_entry.get("input_cleanup_results", []),
@@ -34913,10 +35259,12 @@ def ingest_command_result(action_entry, shared_recent_executed_actions=None):
   goal_file_results=action_entry.get('goal_file_results', []),
   memory_command_results=action_entry.get('memory_command_results', []),
   task_control_results=action_entry.get('task_control_results', []),
+  observation_results=action_entry.get('observation_results', []),
   task_budget_results=action_entry.get('task_budget_results', []),
   pending_id=action_entry.get('pending_id', ''),
   pending_attempt_id=action_entry.get('pending_attempt_id', ''),
   desktop_results=action_entry.get('desktop_results', []),
+  capture_batch=action_entry.get('capture_batch', {}),
   input_cleanup_results=action_entry.get('input_cleanup_results', []),
   held_input_results=action_entry.get('held_input_results', []),
   blocked_commands=action_entry.get('blocked_commands', []),
@@ -35362,10 +35710,12 @@ def sync_action_horizons_from_hierarchical_tasks():
                 if summary:
                     long_term_items.append(summary)
 
-    agent_state.pinned_immediate_actions[:] = dedupe_preserve_order(immediate_items)[:MAX_ROUTE_ITEMS]
-    agent_state.pinned_short_term_actions[:] = dedupe_preserve_order(short_term_items)[:MAX_ROUTE_ITEMS]
-    agent_state.mid_term_context[:] = dedupe_preserve_order(mid_term_items)[:MAX_MID_TERM_ITEMS]
-    agent_state.long_term_context[:] = dedupe_preserve_order(long_term_items)[:MAX_LONG_TERM_ITEMS]
+    with GOAL_LOCK:
+        agent_state.pinned_immediate_actions[:] = dedupe_preserve_order(immediate_items)[:MAX_ROUTE_ITEMS]
+        agent_state.pinned_short_term_actions[:] = dedupe_preserve_order(short_term_items)[:MAX_ROUTE_ITEMS]
+        agent_state.mid_term_context[:] = dedupe_preserve_order(mid_term_items)[:MAX_MID_TERM_ITEMS]
+        agent_state.long_term_context[:] = dedupe_preserve_order(long_term_items)[:MAX_LONG_TERM_ITEMS]
+        horizon_identity_state()
 
 def construct_hierarchical_tasks_text():
     tasks_text = "**Hierarchical Tasks with Immediate Actions:**\n\n"
@@ -35548,7 +35898,8 @@ def parse_hierarchical_tasks(tasks_text):
 #        'content': pinned_message_content
 #    }
 def update_pinned_information(shared_recent_executed_actions=None):
-    with HISTORY_LOCK:
+    # Memory projection may inspect linked goals. Always acquire goal before history.
+    with GOAL_LOCK, HISTORY_LOCK:
         history_store = get_chat_history_store()
         route_state_store = agent_state.route_state
         if shared_recent_executed_actions is None:
@@ -35626,25 +35977,25 @@ def update_pinned_information(shared_recent_executed_actions=None):
 
         if agent_state.pinned_immediate_actions:
             pinned_text += "**Pinned Immediate Actions:**\n"
-            for item in agent_state.pinned_immediate_actions:
+            for item in project_horizon_entries(agent_state.pinned_immediate_actions, "pinned_immediate_actions"):
                 pinned_text += f"- {item}\n"
             pinned_text += "\n"
 
         if agent_state.pinned_short_term_actions:
             pinned_text += "**Pinned Short-Term Actions:**\n"
-            for item in agent_state.pinned_short_term_actions:
+            for item in project_horizon_entries(agent_state.pinned_short_term_actions, "pinned_short_term_actions"):
                 pinned_text += f"- {item}\n"
             pinned_text += "\n"
 
         if agent_state.mid_term_context:
             pinned_text += "**Mid-Term Context:**\n"
-            for item in agent_state.mid_term_context:
+            for item in project_horizon_entries(agent_state.mid_term_context, "mid_term_context"):
                 pinned_text += f"- {item}\n"
             pinned_text += "\n"
 
         if agent_state.long_term_context:
             pinned_text += "**Long-Term Context:**\n"
-            for item in agent_state.long_term_context:
+            for item in project_horizon_entries(agent_state.long_term_context, "long_term_context"):
                 pinned_text += f"- {item}\n"
             pinned_text += "\n"
 
@@ -35656,9 +36007,7 @@ def update_pinned_information(shared_recent_executed_actions=None):
 
         if agent_state.journal_entries:
             pinned_text += "**Journal:**\n"
-            for item in agent_state.journal_entries:
-                pinned_text += f"- {item}\n"
-            pinned_text += "\n"
+            pinned_text += build_journal_projection(agent_state.journal_entries) + "\n\n"
 
         if agent_state.recent_context_events:
             pinned_text += "**Recent Context:**\n"
@@ -35677,6 +36026,10 @@ def update_pinned_information(shared_recent_executed_actions=None):
             for item in agent_state.party_status:
                 pinned_text += f"- {item}\n"
             pinned_text += "\n"
+
+        completion_history = build_completed_goal_projection(agent_state.significant_past_tasks)
+        if completion_history:
+            pinned_text += completion_history + "\n\n"
 
         # Add hierarchical tasks
         pinned_text += construct_hierarchical_tasks_text()
@@ -36003,6 +36356,7 @@ is_known_command_prefixes.extend([
     'SET_DEMAND_CAPTURE', 'set_demand_capture',
     'REQUEST_SCREENSHOT_CAPTURE', 'request_screenshot_capture',
     'REQUEST_DEMAND_CAPTURE', 'request_demand_capture',
+    'OBSERVE_SCREEN_CHANGE', 'observe_screen_change',
     'SHOW_TURN_SCHEDULER', 'show_turn_scheduler',
     'SET_CHAT_HEAD_SEND_ANIMATION', 'set_chat_head_send_animation',
     'SET_CHAT_HEAD_SEND_ANIMATION_SECONDS', 'set_chat_head_send_animation_seconds',
@@ -36194,6 +36548,10 @@ def wait_command(args, is_user=True):
 def handle_commands(command_input, is_user=True, prepared_commands=None, command_generation=None):
     set_last_command_value(command_input)
     batch_started_at = time.perf_counter()
+    with CAPTURE_SERVICE.lock:
+        capture_batch = (dict(policy=CAPTURE_COMMAND_POLICY, session_id=CAPTURE_SERVICE.session_id,
+            lifecycle=CAPTURE_SERVICE.lifecycle, requests=0, settle_seconds=0.0)
+            if CAPTURE_COMMAND_POLICY in {"batch_end", "batch_end_explicit"} else {})
 
     executed_commands = []
     failed_commands = []
@@ -36209,6 +36567,7 @@ def handle_commands(command_input, is_user=True, prepared_commands=None, command
     goal_file_results = []
     memory_command_results = []
     task_control_results = []
+    observation_results = []
     desktop_results = []
     input_cleanup_results = []
     held_input_results = []
@@ -36278,6 +36637,8 @@ def handle_commands(command_input, is_user=True, prepared_commands=None, command
                         elif cmd_name.upper() in LOCK_COMMANDS:
                             result = execute_runtime_lock_command(cmd_name, args, is_user=is_user)
                             lock_results.append(dict(result, input=command))
+                        elif capture_batch and cmd_name.upper() in {"REQUEST_SCREENSHOT_CAPTURE", "REQUEST_DEMAND_CAPTURE"}:
+                            result = request_screenshot_capture_command(args, is_user, deferred=capture_batch)
                         else:
                             result = handler(args, is_user)
                         if isinstance(result, dict) and result.get("schema_version") == "aurora_inference_plan_result_v1":
@@ -36296,6 +36657,8 @@ def handle_commands(command_input, is_user=True, prepared_commands=None, command
                             memory_command_results.append(dict(result, input=command))
                         if isinstance(result, dict) and result.get("schema_version") == TASK_CONTROL_RESULT_SCHEMA:
                             task_control_results.append(dict(result, input=command))
+                        if isinstance(result, dict) and result.get("schema_version") == "aurora_observation_result_v1":
+                            observation_results.append(dict(result, input=command))
                         if isinstance(result, dict) and "input_cleanup" in result:
                             input_cleanup_results.append(dict(result["input_cleanup"], command=cmd_name))
                         if isinstance(result, dict) and "held_inputs" in result:
@@ -36362,7 +36725,9 @@ def handle_commands(command_input, is_user=True, prepared_commands=None, command
         "goal_file_results": goal_file_results,
         "memory_command_results": memory_command_results,
         "task_control_results": task_control_results,
+        "observation_results": observation_results,
         "desktop_results": desktop_results,
+        "capture_batch": capture_batch,
         "input_cleanup_results": input_cleanup_results,
         "held_input_results": held_input_results,
         "blocked_commands": blocked_commands,
@@ -37056,7 +37421,7 @@ def execute_history_command(name, args, *, actor="unknown"):
               "effect_status": "not_started", "reason": "", "removed_count": 0, "edited_count": 0,
               "added_count": 0, "responses_invalidated": False, "model_work_cancelled": False}
     saved_snapshot = None
-    with HISTORY_LOCK:
+    with GOAL_LOCK, HISTORY_LOCK:
         store = get_chat_history_store()
         ensure_message_ids(store)
         CONVERSATION_ARCHIVE.observe(store)
@@ -37435,42 +37800,46 @@ def recall_previous_summary(character_name):
 
 
 def build_pinned_tasks_snapshot():
-    data_to_save = {
-        'goals_list': encode_goals(tasks_list),
-        'apriority_goals': apriority_tasks,
-        'overarching_goals': overarching_goals,
-        'unknown_priority_candidates': unknown_priority_candidates,
-        'notable_inventory': notable_inventory,
-        'party_status': party_status,
-        'recent_context_events': recent_context_events,
-        'route_intent': route_intent,
-        'local_path_plan': local_path_plan,
-        'route_blockers': route_blockers,
-        'route_state': {
-            'current_area': route_state.get('current_area', ''),
-            'target_area': route_state.get('target_area', ''),
-            'travel_heading': route_state.get('travel_heading', ''),
-            'last_landmark': route_state.get('last_landmark', ''),
-            'status': route_state.get('status', 'unknown'),
-            'stale_reasons': route_state.get('stale_reasons', []),
-            'field_meta': route_state.get('field_meta', {}),
-            'last_updated': route_state.get('last_updated', ''),
-        },
-        'recent_movement_results': recent_movement_results,
-        'notes': notes,
-        'journal_entries': journal_entries,
-        'pinned_immediate_actions': pinned_immediate_actions,
-        'pinned_short_term_actions': pinned_short_term_actions,
-        'mid_term_context': mid_term_context,
-        'long_term_context': long_term_context,
-        'recent_action_intents': recent_action_intents,
-        'recent_command_proposals': recent_command_proposals,
-        'command_drip_history': agent_state.command_drip_history,
-        'hierarchical_tasks': hierarchical_tasks,
-        'significant_past_goals': significant_past_tasks,
-        'recent_executed_actions': recent_executed_actions
-    }
-    return copy.deepcopy(data_to_save)
+    with GOAL_LOCK:
+        ledger = horizon_identity_state()
+        data_to_save = {
+            'goals_list': encode_goals(tasks_list, include_identity=ledger is not None),
+            'apriority_goals': apriority_tasks,
+            'overarching_goals': overarching_goals,
+            'unknown_priority_candidates': unknown_priority_candidates,
+            'notable_inventory': notable_inventory,
+            'party_status': party_status,
+            'recent_context_events': recent_context_events,
+            'route_intent': route_intent,
+            'local_path_plan': local_path_plan,
+            'route_blockers': route_blockers,
+            'route_state': {
+                'current_area': route_state.get('current_area', ''),
+                'target_area': route_state.get('target_area', ''),
+                'travel_heading': route_state.get('travel_heading', ''),
+                'last_landmark': route_state.get('last_landmark', ''),
+                'status': route_state.get('status', 'unknown'),
+                'stale_reasons': route_state.get('stale_reasons', []),
+                'field_meta': route_state.get('field_meta', {}),
+                'last_updated': route_state.get('last_updated', ''),
+            },
+            'recent_movement_results': recent_movement_results,
+            'notes': notes,
+            'journal_entries': journal_entries,
+            'pinned_immediate_actions': pinned_immediate_actions,
+            'pinned_short_term_actions': pinned_short_term_actions,
+            'mid_term_context': mid_term_context,
+            'long_term_context': long_term_context,
+            'recent_action_intents': recent_action_intents,
+            'recent_command_proposals': recent_command_proposals,
+            'command_drip_history': agent_state.command_drip_history,
+            'hierarchical_tasks': hierarchical_tasks,
+            'significant_past_goals': significant_past_tasks,
+            'recent_executed_actions': recent_executed_actions
+        }
+        if ledger is not None:
+            data_to_save['horizon_identity'] = ledger.export()
+        return copy.deepcopy(data_to_save)
 
 def save_pinned_tasks(file_name="pinned_tasks.json"):
     token = COMMAND_WORK.current()
@@ -37486,6 +37855,7 @@ def load_pinned_tasks(file_name="pinned_tasks.json"):
         token.check()
         data, file_hash, saved_format = read_goal_document(file_name)
         replacement_goals = decode_goals(data["goals_list"])
+        replacement_identity = HorizonIdentityLedger(data, data['horizon_identity']) if 'horizon_identity' in data else None
         token.check()
         before = hashlib.sha256(json.dumps(build_pinned_tasks_snapshot(), sort_keys=True).encode()).hexdigest()
         # Full validation and reconstruction precede publication. Preserve list
@@ -37494,6 +37864,7 @@ def load_pinned_tasks(file_name="pinned_tasks.json"):
             agent_state.tasks_list[:] = replacement_goals
             for disk_name, state_name in GOAL_LIST_FIELDS.items():
                 getattr(agent_state, state_name)[:] = data[disk_name]
+            agent_state.horizon_identity = replacement_identity
             route = data["route_state"]
             for key in ("current_area", "target_area", "travel_heading", "last_landmark", "status", "last_updated"):
                 agent_state.route_state[key] = route[key]
@@ -37814,6 +38185,175 @@ def set_init_delivery_command(args, is_user):
     display_message("system", f"Init delivery: {INIT_DELIVERY_MODE}; stored history is preserved.")
 
 
+def set_input_recovery(value):
+    global INPUT_RECOVERY_MODE, INPUT_RECOVERY
+    value = coerce_setting_value('conversation.input_recovery', value)
+    with SETTINGS_TRANSACTION_LOCK, INPUT_RECOVERY_LOCK:
+        require_runtime_setting_unlocked('execution', 'Input recovery')
+        if value == INPUT_RECOVERY_MODE:
+            return value
+        if SEND_TO_MODEL or not get_input_queue_store().empty() or MODEL_IO.busy or MODEL_WORK.snapshot()['active_scopes']:
+            raise ValueError('Pause inference and finish/cancel queued and active work before changing input recovery.')
+        if INPUT_RECOVERY is not None and any(row['phase'] in {'claimed','preparing','prepared','submitted'} for row in INPUT_RECOVERY.rows.values()):
+            raise ValueError('Active recovery evidence must be resolved by stopping/restarting the runtime before changing mode.')
+        previous = INPUT_RECOVERY_MODE
+        INPUT_RECOVERY_MODE = value
+        try:
+            if value == 'durable':
+                get_input_recovery()
+            elif INPUT_RECOVERY is not None:
+                import atexit
+                atexit.unregister(INPUT_RECOVERY.close)
+                INPUT_RECOVERY.close()
+                INPUT_RECOVERY = None
+        except Exception:
+            INPUT_RECOVERY_MODE = previous
+            raise
+        return value
+
+
+def set_input_recovery_command(args, is_user):
+    if args:
+        if not is_user:
+            raise ValueError('Only the operator may change durable input recovery.')
+        set_input_recovery(args[0])
+    display_message('system', f'Input recovery: {INPUT_RECOVERY_MODE}; restarting never automatically retries input.')
+    return True
+
+
+def execute_input_recovery_command(name, args, is_user):
+    result = dict(schema_version=MEMORY_RESULT_SCHEMA, command=name, scope='input_recovery',
+                  success=False, changed=False, effect_status='not_started')
+    reconciliation_write_started = False
+    with INPUT_RECOVERY_LOCK:
+        try:
+            options = parse_input_recovery_arguments(name, args)
+            COMMAND_WORK.current().check()
+            status_command = name in {'SHOW_INPUT_RECOVERY_STATUS', 'ACK_INPUT_RECOVERY_DIAGNOSTIC'}
+            recovery = None if status_command else get_input_recovery()
+            if not status_command and recovery is None:
+                raise ValueError('Enable durable input recovery while paused to inspect or recover its inputs.')
+            if name == 'SHOW_INPUT_RECOVERY_STATUS':
+                result['readback'] = get_input_recovery_readiness()
+            elif name == 'ACK_INPUT_RECOVERY_DIAGNOSTIC':
+                if not is_user:
+                    raise ValueError('Only the operator may acknowledge a recovery diagnostic.')
+                require_runtime_setting_unlocked('execution', 'Recovery diagnostic acknowledgement')
+                result['before'] = get_input_recovery_readiness()
+                COMMAND_WORK.current().check()
+                changed = INPUT_RECOVERY_DIAGNOSTICS.acknowledge(**options)
+                result.update(changed=changed, effect_status='applied' if changed else 'unchanged',
+                              after=get_input_recovery_readiness(), note='Diagnostic seen only; no repair, replay or retry permission.')
+            elif name == 'SHOW_INPUT_RECOVERY':
+                result['readback'] = recovery.snapshot(**options)
+            elif name == 'PREVIEW_INPUT_RECONCILIATION':
+                result['readback'] = recovery.preview_reconciliation(**options, receipt_path=external_bridge_log_path)
+                result['note'] = result['readback']['note']
+            elif name == 'RECONCILE_INPUT_DELIVERY':
+                if not is_user:
+                    raise ValueError('Only the operator may reconcile durable input delivery.')
+                require_runtime_setting_unlocked('execution', 'Input delivery reconciliation')
+                if SEND_TO_MODEL or MODEL_IO.busy or MODEL_WORK.snapshot()['active_scopes']:
+                    raise ValueError('Pause inference and wait for active/draining model work before reconciliation.')
+                def before_publish():
+                    nonlocal reconciliation_write_started
+                    COMMAND_WORK.current().check()
+                    reconciliation_write_started = True
+                reconciled = recovery.reconcile_delivery(**options, receipt_path=external_bridge_log_path,
+                                                         before_publish=before_publish)
+                result.update(reconciled, changed=True, effect_status='applied')
+            elif name == 'PREVIEW_INPUT_RECOVERY_COMPACTION':
+                result['readback'] = recovery.compaction_preview(**options)
+                result['note'] = result['readback']['note']
+            elif name == 'PREVIEW_INPUT_RECOVERY_ARCHIVE':
+                result['readback'] = recovery.archive_preview(**options)
+                result['note'] = result['readback']['note']
+            elif name == 'COMPACT_INPUT_RECOVERY':
+                if not is_user:
+                    raise ValueError('Only the operator may discard retained recovery text.')
+                require_runtime_setting_unlocked('execution', 'Input recovery compaction')
+                result['before'] = recovery.summary()
+                after = recovery.compact(**options)
+                result.update(after=after, changed=bool(after['compacted_count']),
+                              effect_status='applied' if after['compacted_count'] else 'unchanged', note=after['note'])
+            else:
+                if not is_user:
+                    raise ValueError('Only the operator may cancel/retry queued input.')
+                require_runtime_setting_unlocked('execution', 'Input recovery')
+                retry = name == 'RETRY_INPUT'
+                if retry and (MODEL_IO.busy or MODEL_WORK.snapshot()['active_scopes']):
+                    raise ValueError('Wait for active/draining model work before retrying input.')
+                result['before'] = next((row for row in recovery.snapshot(0,1000)['entries'] if row['entry_id'] == options['entry_id']), None)
+                row = recovery.act(**options, retry=retry)
+                result.update(changed=True, effect_status='applied', after=row)
+                if retry:
+                    value = TrackedInput(row['text'], row['identity'])
+                    value.recovery_managed = True
+                    get_input_queue_store().put(value)
+                else:
+                    pending = get_input_queue_store()
+                    with pending.mutex:
+                        kept = [value for value in pending.queue if not (getattr(value, 'recovery_managed', False)
+                                and row['identity'] in getattr(value, 'delivery_refs', ()))]
+                        removed = len(pending.queue) - len(kept)
+                        pending.queue.clear()
+                        pending.queue.extend(kept)
+                        pending.unfinished_tasks = max(0, pending.unfinished_tasks-removed)
+                        if not pending.unfinished_tasks:
+                            pending.all_tasks_done.notify_all()
+            result['success'] = True
+            result.setdefault('note', 'Queue recovery only; no undo or remote cancellation. Retry uses current context/settings and does not itself enable inference.')
+            if not result['changed'] and result['effect_status'] == 'not_started':
+                result['effect_status'] = 'observed'
+        except Exception as error:
+            result.update(reason=f'{type(error).__name__}: {error}', cancelled=isinstance(error, WorkCancelled))
+            if result['changed'] or reconciliation_write_started:
+                result['effect_status'] = 'failed_uncertain'
+    set_runtime_value('last_input_recovery_result', result)
+    display_message('system' if result['success'] else 'error', json.dumps(result, ensure_ascii=False))
+    return result
+
+
+def show_input_recovery_command(args, is_user):
+    return execute_input_recovery_command('SHOW_INPUT_RECOVERY', args, is_user)
+
+
+def show_input_recovery_status_command(args, is_user):
+    return execute_input_recovery_command('SHOW_INPUT_RECOVERY_STATUS', args, is_user)
+
+
+def acknowledge_input_recovery_diagnostic_command(args, is_user):
+    return execute_input_recovery_command('ACK_INPUT_RECOVERY_DIAGNOSTIC', args, is_user)
+
+
+def cancel_queued_input_command(args, is_user):
+    return execute_input_recovery_command('CANCEL_QUEUED_INPUT', args, is_user)
+
+
+def retry_input_command(args, is_user):
+    return execute_input_recovery_command('RETRY_INPUT', args, is_user)
+
+
+def preview_input_recovery_compaction_command(args, is_user):
+    return execute_input_recovery_command('PREVIEW_INPUT_RECOVERY_COMPACTION', args, is_user)
+
+
+def preview_input_recovery_archive_command(args, is_user):
+    return execute_input_recovery_command('PREVIEW_INPUT_RECOVERY_ARCHIVE', args, is_user)
+
+
+def compact_input_recovery_command(args, is_user):
+    return execute_input_recovery_command('COMPACT_INPUT_RECOVERY', args, is_user)
+
+
+def preview_input_reconciliation_command(args, is_user):
+    return execute_input_recovery_command('PREVIEW_INPUT_RECONCILIATION', args, is_user)
+
+
+def reconcile_input_delivery_command(args, is_user):
+    return execute_input_recovery_command('RECONCILE_INPUT_DELIVERY', args, is_user)
+
+
 def set_task_continuation_command(args, is_user):
     global TASK_CONTINUATION_MODE
     if args:
@@ -37863,6 +38403,40 @@ def set_task_max_reported_tokens_command(args, is_user):
         require_runtime_setting_unlocked("execution", "Task reported-token threshold")
         TASK_MAX_REPORTED_TOKENS = coerce_setting_value("task.max_reported_tokens", args[0])
     display_message("system", f"Next bounded task reported-token threshold: {TASK_MAX_REPORTED_TOKENS} (0 = off; the last request may overshoot).")
+    return True
+
+
+def set_execution_recording_command(args, is_user):
+    global EXECUTION_RECORDING_MODE
+    if args:
+        if not is_user:
+            raise ValueError("Only the operator may change execution recording.")
+        require_runtime_setting_unlocked("execution", "Execution recording")
+        EXECUTION_RECORDING_MODE = coerce_setting_value("execution.recording", args[0])
+    display_message("system", "Execution recording: " + json.dumps(build_execution_recording_snapshot()))
+    return True
+
+
+def retry_execution_recording_command(args, is_user):
+    if args:
+        raise ValueError("RETRY_EXECUTION_RECORDING takes no arguments.")
+    if not is_user:
+        raise ValueError("Only the operator may retry execution recording.")
+    require_runtime_setting_unlocked("execution", "Execution recording retry")
+    if EXECUTION_RECORDING_SERVICE:
+        EXECUTION_RECORDING_SERVICE.retry()
+    display_message("system", "Execution recording retry requested; inspect continuation.recording for publication confirmation.")
+    return True
+
+
+def set_task_objective_mode_command(args, is_user):
+    global TASK_OBJECTIVE_MODE
+    if args:
+        if not is_user:
+            raise ValueError("Only the operator may change task objective retention.")
+        require_runtime_setting_unlocked("execution", "Next-task operator context")
+        TASK_OBJECTIVE_MODE = coerce_setting_value("task.objective_mode", args[0])
+    display_message("system", f"Next bounded task objective mode: {TASK_OBJECTIVE_MODE}; active task policy is latched. Stop then send a complete new objective to replace it.")
     return True
 
 
@@ -37916,6 +38490,38 @@ def show_task_status_command(args, is_user):
                   success=True, effect_status="observed", continuation=build_task_continuation_snapshot())
     display_message("system", json.dumps(result, ensure_ascii=False))
     return result
+
+
+def execute_task_context_command(name, args, is_user):
+    """One authority for explicit context inspection and version-bound steering."""
+    values = parse_task_control_arguments(name, args)
+    result = dict(schema_version=TASK_CONTROL_RESULT_SCHEMA, command=name, task_id=values['task_id'],
+                  success=False, changed=False, effect_status='not_started')
+    with SETTINGS_TRANSACTION_LOCK:
+        if not is_user:
+            result.update(code='operator_only', reason='Only the operator may inspect or amend retained operator context.')
+        elif TASK_CONTINUATION_MODE != 'bounded':
+            result.update(code='bounded_required', reason='Task context controls require bounded mode; legacy input remains unchanged.')
+        elif name == 'SHOW_TASK_CONTEXT':
+            result.update(TASK_CONTINUATION.inspect_context(values['task_id']))
+        else:
+            try:
+                require_runtime_setting_unlocked('execution', 'Task steering')
+            except RuntimeError:
+                result.update(code='execution_locked', reason='Task steering is locked by the current execution policy.')
+            else:
+                COMMAND_WORK.current().check()
+                result.update(TASK_CONTINUATION.steer(**values))
+    display_message('system', json.dumps(result, ensure_ascii=False))
+    return result
+
+
+def show_task_context_command(args, is_user):
+    return execute_task_context_command('SHOW_TASK_CONTEXT', args, is_user)
+
+
+def steer_task_command(args, is_user):
+    return execute_task_context_command('STEER_TASK', args, is_user)
 
 
 def report_task_outcome_command(args, is_user):
@@ -37984,6 +38590,40 @@ def set_subscription_policy_command(args, is_user):
             raise ValueError("Only the operator may change the subscription stream policy.")
         set_subscription_policy(args[0])
     display_message("system", f"Subscription stream policy: {SUBSCRIPTION_POLICY}; applies to the next subscription request, without replay or API fallback.")
+    return True
+
+
+def set_journal_order(value):
+    global JOURNAL_ORDER
+    with SETTINGS_TRANSACTION_LOCK:
+        require_runtime_setting_unlocked("execution", "Memory projection")
+        JOURNAL_ORDER = coerce_setting_value("memory.journal_order", value)
+        return JOURNAL_ORDER
+
+
+def set_journal_order_command(args, is_user):
+    if args:
+        if not is_user:
+            raise ValueError("Only the operator may change memory projection policy.")
+        set_journal_order(args[0])
+    display_message("system", f"memory.journal_order: {JOURNAL_ORDER}; session-only, next memory projection.")
+    return True
+
+
+def set_completed_goal_projection(value):
+    global COMPLETED_GOAL_PROJECTION
+    with SETTINGS_TRANSACTION_LOCK:
+        require_runtime_setting_unlocked("execution", "Memory projection")
+        COMPLETED_GOAL_PROJECTION = coerce_setting_value("goals.completed_projection", value)
+        return COMPLETED_GOAL_PROJECTION
+
+
+def set_completed_goal_projection_command(args, is_user):
+    if args:
+        if not is_user:
+            raise ValueError("Only the operator may change memory projection policy.")
+        set_completed_goal_projection(args[0])
+    display_message("system", f"goals.completed_projection: {COMPLETED_GOAL_PROJECTION}; session-only, next memory projection.")
     return True
 
 
@@ -38057,6 +38697,22 @@ def set_capture_provenance_policy(value):
     CAPTURE_PROVENANCE_POLICY = coerce_setting_value("capture.provenance_policy", value)
     append_runtime_feedback(f"Capture provenance policy: {CAPTURE_PROVENANCE_POLICY}.")
     return CAPTURE_PROVENANCE_POLICY
+
+
+def set_capture_command_policy(value):
+    global CAPTURE_COMMAND_POLICY
+    require_runtime_setting_unlocked("screenshot_interval", "Command-batch capture")
+    CAPTURE_COMMAND_POLICY = coerce_setting_value("capture.command_policy", value)
+    return CAPTURE_COMMAND_POLICY
+
+
+def set_capture_command_policy_command(args, is_user):
+    if args:
+        if not is_user:
+            raise ValueError("Only the operator may change command-batch capture policy.")
+        set_capture_command_policy(args[0])
+    display_message("system", f"Command-batch capture: {CAPTURE_COMMAND_POLICY}; applies to the next batch.")
+    return True
 
 
 def set_capture_provenance_policy_command(args, is_user):
@@ -38320,6 +38976,7 @@ def _build_runtime_preferences_snapshot():
         "screenshot_interval": time_interval,
         "capture_mode": CAPTURE_MODE,
         "capture_provenance_policy": CAPTURE_PROVENANCE_POLICY,
+            "capture_command_policy": CAPTURE_COMMAND_POLICY,
         "capture_geometry_policy": CAPTURE_GEOMETRY_POLICY,
         "capture_target": CAPTURE_TARGET,
         "capture_request_timeout_seconds": CAPTURE_REQUEST_TIMEOUT_SECONDS,
@@ -39375,7 +40032,7 @@ def set_demand_capture_command(args, is_user):
     return True
 
 
-def request_screenshot_capture_command(args, is_user):
+def request_screenshot_capture_command(args, is_user, deferred=None):
     reason = "manual"
     settle_seconds = 0.0
     if args:
@@ -39386,6 +40043,11 @@ def request_screenshot_capture_command(args, is_user):
         except (TypeError, ValueError):
             display_message('error', "REQUEST_SCREENSHOT_CAPTURE optional second argument must be a settle delay in seconds.")
             return False
+    if deferred is not None and bool(runtime_state.get("demand_capture_enabled", DEMAND_CAPTURE_ENABLED)):
+        deferred["requests"] += 1
+        deferred["settle_seconds"] = max(deferred["settle_seconds"], get_demand_capture_settle_seconds(settle_seconds))
+        display_message('system', f"Capture deferred until this batch's receipt; settle={deferred['settle_seconds']:.2f}s. No frame captured yet.")
+        return True
     with CAPTURE_SERVICE.lock:
         queued = request_demand_capture(reason, settle_seconds)
         if queued:
@@ -39403,6 +40065,55 @@ def request_screenshot_capture_command(args, is_user):
         f"{build_turn_scheduler_summary()} {build_queue_next_action_runtime_cue()}",
     )
     return True
+
+
+def observe_screen_change_command(args, is_user):
+    """Optional bounded observation in the command worker; no desktop input."""
+    from aurora_observation_wait import parse_observation_arguments, observe_screen_change, RESULT_SCHEMA
+    frame_id, timeout, interval = parse_observation_arguments(args)
+    result = dict(schema_version=RESULT_SCHEMA, command="OBSERVE_SCREEN_CHANGE", success=False,
+                  status="not_started", condition_met=None, baseline_frame_id=frame_id)
+    try:
+        require_runtime_setting_unlocked("screenshot_interval", "Bounded screen observation")
+        if CAPTURE_MODE != "request_only" or CAPTURE_PROVENANCE_POLICY != "verified" or CAPTURE_GEOMETRY_POLICY != "verified":
+            raise ValueError("Bounded observation requires request_only capture and verified provenance/geometry; no settings were changed.")
+        if threading.current_thread() is threading.main_thread() or active_command_queue is None:
+            raise ValueError("Bounded observation requires the threaded command worker and active capture/main workers.")
+        service = CAPTURE_SERVICE
+        token = COMMAND_WORK.current()
+        def check():
+            token.check()
+            if not is_agent_running() or CAPTURE_SERVICE is not service:
+                raise WorkCancelled("Capture runtime stopped or replaced")
+            try:
+                require_runtime_setting_unlocked("screenshot_interval", "Bounded screen observation")
+            except RuntimeError as error:
+                raise WorkCancelled(str(error)) from error
+            if CAPTURE_MODE != "request_only" or CAPTURE_PROVENANCE_POLICY != "verified" or CAPTURE_GEOMETRY_POLICY != "verified":
+                raise WorkCancelled("Capture configuration changed")
+            if not bool(runtime_state.get("demand_capture_enabled", DEMAND_CAPTURE_ENABLED)):
+                raise WorkCancelled("Demand capture disabled")
+        def request(remaining, first):
+            # The observation runner holds the service lock and checks its owner.
+            check()
+            limit = min(remaining, CAPTURE_REQUEST_TIMEOUT_SECONDS) if CAPTURE_REQUEST_TIMEOUT_SECONDS else remaining
+            if not request_demand_capture("bounded_screen_change", 0, timeout_seconds=limit, max_attempts=1):
+                return None
+            if first:
+                mark_turn_scheduler_command_result_pending(settle_seconds=0, request_capture=False)
+            return service.generation
+        result = observe_screen_change(service, frame_id, timeout, interval,
+            request=request, check=check, wait=token.wait)
+    except (ValueError, RuntimeError) as error:
+        result.update(reason=str(error))
+    if result.get("status") == "cancelled":
+        with service.lock:
+            if (CAPTURE_SERVICE is service and not service.pending
+                    and runtime_state.get("turn_scheduler_capture_request_generation") in result.get("capture_generations", [])):
+                clear_turn_scheduler_command_result_pending()
+    set_runtime_value("last_observation_wait", result)
+    display_message('system', 'Screen observation: ' + json.dumps(result, ensure_ascii=True))
+    return result
 
 
 def set_command_drip_retention_command(args, is_user):
@@ -42779,6 +43490,39 @@ def cancel_active_work_command(args, is_user):
             "reason": "" if cleanup["success"] else "Work cancelled; some owned input releases remain unconfirmed."}
 
 
+def cancel_active_work_if_task_command(args, is_user):
+    """Conditional global Cancel work; input release uses captured generations."""
+    values = parse_task_control_arguments("CANCEL_ACTIVE_WORK_IF_TASK", args)
+    result = dict(schema_version=TASK_CONTROL_RESULT_SCHEMA, command="CANCEL_ACTIVE_WORK_IF_TASK",
+                  task_id=values["task_id"], success=False, changed=False, effect_status="not_started",
+                  effects={}, remote_cancellation_confirmed=False,
+                  scope="Same global work scope as CANCEL_ACTIVE_WORK, conditional on exact current bounded task; includes unscoped work, not task-isolated cancellation.")
+    # Reservations take settings before task; capture publication may take capture
+    # before task. Keep this order and perform no native input under these locks.
+    with SETTINGS_TRANSACTION_LOCK, CAPTURE_SERVICE.lock:
+        if not is_user:
+            result.update(code="operator_only", reason="Only the operator may conditionally cancel active work.")
+        elif TASK_CONTINUATION_MODE != "bounded":
+            result.update(code="bounded_required", reason="Conditional task cancellation requires bounded mode. Use existing Cancel work for legacy mode.")
+        else:
+            def cancel_generations(effects):
+                effects["model_cancelled_through_generation"] = MODEL_WORK.cancel("Operator conditionally cancelled active work")
+                effects["command_cancelled_through_generation"] = COMMAND_WORK.cancel("Operator conditionally cancelled active and queued commands")
+                effects["capture_lifecycle_before"] = CAPTURE_SERVICE.snapshot()["lifecycle"]
+                cancel_capture_requests("Operator conditionally cancelled active work")
+                effects["capture_lifecycle_after"] = CAPTURE_SERVICE.snapshot()["lifecycle"]
+            result.update(TASK_CONTINUATION.stop_if_current(values["task_id"], "operator_cancelled", on_stop=cancel_generations))
+    generation = result["effects"].get("command_cancelled_through_generation")
+    if generation is not None:
+        cleanup = HELD_INPUTS.cancel_through(generation, "Operator conditionally cancelled active and queued commands")
+        result["input_cleanup"] = cleanup
+        if not cleanup["success"]:
+            result.update(success=False, code="input_cleanup_uncertain", effect_status="failed_uncertain",
+                          reason="Task stopped; some owned input releases remain unconfirmed. Inspect SHOW_HELD_INPUTS and use explicit Release held inputs if needed.")
+    display_message("system", json.dumps(result, ensure_ascii=False))
+    return result
+
+
 def release_held_inputs_command(args, is_user):
     validate_command_arguments("RELEASE_HELD_INPUTS", args)
     cleanup = cancel_command_inputs("Operator released owned inputs and cancelled command batches")
@@ -42960,6 +43704,43 @@ def init_command(args, is_user):
 
 def pin_command(args, is_user):
     return execute_history_command('PIN', args)
+
+def execute_horizon_identity_command(name, args, is_user=True):
+    """Inspect/link through the shared lock and memory receipt path."""
+    result = dict(schema_version=MEMORY_RESULT_SCHEMA, command=name, success=False,
+                  effect_status='not_started', changed=False, actor=current_history_actor())
+    with GOAL_LOCK:
+        try:
+            options = parse_identity_arguments(name, args)
+            COMMAND_WORK.current().check()
+            goals = horizon_goal_rows()
+            ledger = horizon_identity_state(create=True)
+            if name == 'SHOW_HORIZON_ENTRIES':
+                result['readback'] = ledger.inspect(goals, **options)
+                result['persistence'] = {'save_format': GOAL_SAVE_FORMAT,
+                    'note': 'Only explicit versioned saves retain identity links; legacy saves omit metadata. Loads invalidate old edit tokens.'}
+            else:
+                result.update(ledger.link(goals=goals, **options))
+            result.update(success=True, effect_status='applied' if result['changed'] else 'unchanged')
+        except Exception as error:
+            result.update(reason=f'{type(error).__name__}: {error}', cancelled=isinstance(error, WorkCancelled))
+    if result['changed']:
+        try:
+            update_pinned_information()
+        except Exception as error:
+            result['refresh_warning'] = str(error)
+    set_runtime_value('last_memory_command_result', result)
+    display_message('system' if result['success'] else 'error', json.dumps(result, ensure_ascii=False))
+    return result
+
+
+def show_horizon_entries_command(args, is_user):
+    return execute_horizon_identity_command('SHOW_HORIZON_ENTRIES', args, is_user)
+
+
+def link_horizon_goal_command(args, is_user):
+    return execute_horizon_identity_command('LINK_HORIZON_GOAL', args, is_user)
+
 
 def memory_command_readback(name):
     """Bounded memory readback; its fingerprint covers the complete selected list."""
@@ -43669,6 +44450,7 @@ def display_help():
     - SET_TURN_POST_ACTION_SETTLE_SECONDS(seconds): Set the post-action settle delay before a follow-up turn may run.
     - SET_DEMAND_CAPTURE(on|off): Enable or disable auxiliary command-push screenshot requests. This is an observation/wake lane, not pending-command approval.
     - REQUEST_SCREENSHOT_CAPTURE(optional_reason, optional_settle_seconds): Request a one-off screenshot capture without changing the normal timer heartbeat or reordering pending commands.
+    - OBSERVE_SCREEN_CHANGE(frame_id, optional_timeout_seconds, optional_poll_seconds): Opt-in standalone bounded observation from the exact latest frame; sampled pixel change is not proof that a transition finished. Requires request-only capture and verified geometry/provenance; default 3s/0.25s, at most 12 samples. Inspect its typed receipt before acting.
     - SET_EPISODIC_MEMORY(on|off): Enable or disable compact episodic snapshot writing.
     - SET_EPISODIC_MEMORY_INTERVAL(seconds): Set the periodic episodic snapshot interval. Minimum 60 seconds.
     - SET_EPISODIC_MEMORY_PERIODIC(on|off): Enable or disable periodic episodic snapshot writes.
@@ -43850,6 +44632,9 @@ def display_help():
         - LAUNCH_CONTROL_PANEL(): Open the Aurora control panel window.
         - SHUTDOWN_RUNTIME(): Request a clean Aurora runtime shutdown.
         - CANCEL_ACTIVE_WORK(): Cancel model/command work and release Aurora-owned inputs using their original routes. Inspect cleanup receipts; Live stays unchanged and remote model work may still drain.
+        - CANCEL_ACTIVE_WORK_IF_TASK(task_id): Operator-only conditional Cancel work in bounded mode. Use the exact ID from SHOW_TASK_STATUS; a stale ID has no cancellation effects. Same global scope as Cancel work, including unscoped work; remote cancellation is unconfirmed.
+        - SHOW_TASK_CONTEXT(task_id): Operator-only current retained context/version readback, not the last request or full conversation.
+        - STEER_TASK(task_id, context_version, text_json_base64url): Operator-only exact-task/version append. Requires the task's latched operator context mode and execution unlocked. Next normal preparation only; no wake, restart, budget reset or in-flight interruption. Text is literal, not executed commands.
         - SHOW_HELD_INPUTS(): Inspect input owners, frozen routes and uncertain releases.
         - RELEASE_HELD_INPUTS(): Cancel command batches and release owned inputs; model work and Live remain unchanged. Retry explicitly after a reported release failure.
         - SHOW_PENDING_COMMANDS(): Display assistant commands currently held for review in the pending-command planning lane.
@@ -44042,6 +44827,7 @@ command_dispatch = {
     'SET_DEMAND_CAPTURE': set_demand_capture_command,
     'REQUEST_SCREENSHOT_CAPTURE': request_screenshot_capture_command,
     'REQUEST_DEMAND_CAPTURE': request_screenshot_capture_command,
+    'OBSERVE_SCREEN_CHANGE': observe_screen_change_command,
     'SET_EPISODIC_MEMORY': set_episodic_memory_command,
     'SET_EPISODIC_MEMORY_INTERVAL': set_episodic_memory_interval_command,
     'SET_EPISODIC_MEMORY_PERIODIC': set_episodic_memory_periodic_command,
@@ -44089,6 +44875,7 @@ command_dispatch = {
     'SET_SCREENSHOT_INTERVAL': set_screenshot_interval_command,
     'SET_CAPTURE_MODE': set_capture_mode_command,
     'SET_CAPTURE_PROVENANCE_POLICY': set_capture_provenance_policy_command,
+    'SET_CAPTURE_COMMAND_POLICY': set_capture_command_policy_command,
     'SET_CAPTURE_GEOMETRY_POLICY': set_capture_geometry_policy_command,
     'SET_CAPTURE_TARGET': set_capture_target_command,
     'SET_CAPTURE_REQUEST_TIMEOUT': set_capture_request_timeout_command,
@@ -44096,6 +44883,17 @@ command_dispatch = {
     'SET_GAMEPLAY_SCENE_POLICY': set_gameplay_scene_policy_command,
     'SET_ASSISTANT_POLICY': set_assistant_policy_command,
     'SET_INIT_DELIVERY': set_init_delivery_command,
+    'SET_INPUT_RECOVERY': set_input_recovery_command,
+    'SHOW_INPUT_RECOVERY': show_input_recovery_command,
+    'SHOW_INPUT_RECOVERY_STATUS': show_input_recovery_status_command,
+    'ACK_INPUT_RECOVERY_DIAGNOSTIC': acknowledge_input_recovery_diagnostic_command,
+    'CANCEL_QUEUED_INPUT': cancel_queued_input_command,
+    'RETRY_INPUT': retry_input_command,
+    'PREVIEW_INPUT_RECOVERY_COMPACTION': preview_input_recovery_compaction_command,
+    'PREVIEW_INPUT_RECOVERY_ARCHIVE': preview_input_recovery_archive_command,
+    'COMPACT_INPUT_RECOVERY': compact_input_recovery_command,
+    'PREVIEW_INPUT_RECONCILIATION': preview_input_reconciliation_command,
+    'RECONCILE_INPUT_DELIVERY': reconcile_input_delivery_command,
     'SET_TASK_CONTINUATION': set_task_continuation_command,
     'SET_TASK_MAX_MODEL_TURNS': set_task_max_model_turns_command,
     'SET_TASK_MAX_SECONDS': set_task_max_seconds_command,
@@ -44104,14 +44902,23 @@ command_dispatch = {
     'SET_TASK_MAX_REPORTED_TOKENS': set_task_max_reported_tokens_command,
     'SET_TASK_UNKNOWN_USAGE_POLICY': set_task_unknown_usage_policy_command,
     'SET_TASK_PLAN_CARRY_POLICY': set_task_plan_carry_policy_command,
+    'SET_TASK_OBJECTIVE_MODE': set_task_objective_mode_command,
+    'SET_EXECUTION_RECORDING': set_execution_recording_command,
+    'RETRY_EXECUTION_RECORDING': retry_execution_recording_command,
     'SET_TASK_PENDING_CARRY_POLICY': set_task_pending_carry_policy_command,
     'SHOW_TASK_STATUS': show_task_status_command,
+    'SHOW_TASK_CONTEXT': show_task_context_command,
+    'STEER_TASK': steer_task_command,
     'REPORT_TASK_OUTCOME': report_task_outcome_command,
     'SET_READBACK_WAKE': set_readback_wake_command,
     'SET_READBACK_SCOPE': set_readback_scope_command,
     'SET_GOAL_SAVE_FORMAT': set_goal_save_format_command,
     'SET_HIERARCHY_DISPATCH': set_hierarchy_dispatch_command,
     'SET_HORIZON_SYNC': set_horizon_sync_command,
+    'SET_JOURNAL_ORDER': set_journal_order_command,
+    'SET_COMPLETED_GOAL_PROJECTION': set_completed_goal_projection_command,
+    'SHOW_HORIZON_ENTRIES': show_horizon_entries_command,
+    'LINK_HORIZON_GOAL': link_horizon_goal_command,
     'SET_LIVE_INIT': set_live_init_command,
     'SET_SOUND_EFFECTS': set_sound_effects_command,
     'SET_TIME_LOGGING': set_time_logging_command,
@@ -44141,6 +44948,7 @@ command_dispatch = {
     'LAUNCH_CONTROL_PANEL': launch_control_panel_command,
     'SHUTDOWN_RUNTIME': shutdown_runtime_command,
     'CANCEL_ACTIVE_WORK': cancel_active_work_command,
+    'CANCEL_ACTIVE_WORK_IF_TASK': cancel_active_work_if_task_command,
     'SHOW_HELD_INPUTS': show_held_inputs_command,
     'RELEASE_HELD_INPUTS': release_held_inputs_command,
     'SHOW_RUNTIME': show_runtime_status_command,
@@ -44530,6 +45338,7 @@ def build_startup_config_snapshot():
         "subscription_policy": SUBSCRIPTION_POLICY,
         "capture_mode": CAPTURE_MODE,
         "capture_provenance_policy": CAPTURE_PROVENANCE_POLICY,
+            "capture_command_policy": CAPTURE_COMMAND_POLICY,
         "capture_geometry_policy": CAPTURE_GEOMETRY_POLICY,
         "capture_target": CAPTURE_TARGET,
         "capture_request_timeout_seconds": CAPTURE_REQUEST_TIMEOUT_SECONDS,
@@ -44810,6 +45619,7 @@ def persist_runtime_capture(image, capture_hash, persist_reason, image_timestamp
     image_timestamp = image_timestamp or datetime.datetime.fromtimestamp(acquired_epoch).strftime('%Y-%m-%d %H:%M:%S')
     screenshot_file_path = save_capture(image, logging_folder)
     screenshot_file_hash = compute_image_fingerprint(screenshot_file_path, max_bytes=16 * 1024 * 1024)
+    artifact = capture_artifacts.capture_reference(screenshot_file_path, stamp.frame_id, logging_folder) if stamp else {}
     with CAPTURE_SERVICE.lock:
         if stamp is not None and not CAPTURE_SERVICE.accepts(stamp):
             os.unlink(screenshot_file_path)  # our new, unpublished immutable file
@@ -44817,7 +45627,7 @@ def persist_runtime_capture(image, capture_hash, persist_reason, image_timestamp
         capture_frame = {"path": screenshot_file_path, "timestamp": image_timestamp, "hash": capture_hash,
                          "counter": int(runtime_state.get("turn_scheduler_capture_counter", 0) or 0) + 1,
                          "provenance": stamp.to_dict() if stamp else {"status": "unknown"},
-                         "geometry": geometry.to_dict() if geometry else {"status": "unknown"}}
+                         "geometry": geometry.to_dict() if geometry else {"status": "unknown"}, "artifact": artifact}
         sidecar = ""
         try:
             sidecar = write_image_context_sidecar(
@@ -44836,7 +45646,7 @@ def persist_runtime_capture(image, capture_hash, persist_reason, image_timestamp
         if not sidecar:
             raise OSError("Capture metadata publication failed")
         if stamp and not CAPTURE_SERVICE.publish(stamp, path=screenshot_file_path, timestamp=image_timestamp,
-                                                capture_hash=capture_hash, counter=capture_frame["counter"], geometry=geometry):
+                                                capture_hash=capture_hash, counter=capture_frame["counter"], geometry=geometry, artifact=artifact):
             # Deadline checks include slow metadata I/O. Never advance scheduler
             # state after the service rejected this newly written artifact.
             for owned_path in (screenshot_file_path, sidecar):
@@ -44923,7 +45733,7 @@ def drain_runtime_command_results(context):
     if processed:
         update_pinned_information(list(context.shared_recent_executed_actions))
         if observation_entries:
-            mark_turn_scheduler_command_result_pending(command_entries=observation_entries)
+            publish_batch_observation(observation_entries)
         write_control_panel_state_snapshot(force=True)
     return processed
 
@@ -44942,6 +45752,13 @@ def main():
     global active_runtime_context
         # Initialize variables
     agent_state.reset().bind_globals()
+    try:
+        get_input_recovery()  # Recover evidence only; no automatic input replay.
+    except Exception:
+        # Publish the failed prerequisite without starting workers or silently falling back.
+        set_runtime_value('runtime_process_active', False)
+        write_control_panel_state_snapshot(force=True)
+        raise
     global CAPTURE_SERVICE
     CAPTURE_SERVICE = CaptureService()
     mirror_capture_service_state()
@@ -45024,6 +45841,7 @@ def main():
             maybe_run_smoke_test_step(smoke_test_state)
             poll_external_reply_bridges()
             maybe_write_periodic_episodic_snapshot()
+            tick_execution_recording()
             write_control_panel_state_snapshot()
             if not is_agent_running():
                 break
@@ -45116,6 +45934,8 @@ def main():
         for name, p in processes.items():
             p.join(0.5)
         set_runtime_value("worker_shutdown_survivors", [name for name, p in processes.items() if p.is_alive()])
+        if EXECUTION_RECORDING_SERVICE is not None:
+            EXECUTION_RECORDING_SERVICE.close(timeout=5)
         mirror_capture_service_state()
         context.close()
         active_runtime_context = None

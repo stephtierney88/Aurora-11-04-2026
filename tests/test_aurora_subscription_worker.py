@@ -17,6 +17,20 @@ from aurora_subscription_worker import run_bounded_stream, stream_worker_snapsho
 
 
 class SubscriptionWorkerTests(unittest.TestCase):
+    def test_request_local_evidence_survives_child_protocol(self):
+        import aurora_execution_evidence as evidence
+        item = evidence.TransportEvidence({'reasoning_effort': 'low'})
+        with evidence.observe_transport(item):
+            evidence.instrumented()
+            self.run_stream('complete')
+        result = item.snapshot(close=True)
+        self.assertEqual(len(result['attempts']), 1)
+        self.assertEqual(result['attempts'][0]['transport'], 'chatgpt_subscription_responses')
+        self.assertEqual(result['attempts'][0]['provider_model'], 'fixture-model')
+        self.assertEqual(result['attempts'][0]['provider_request_id'], 'req_local_fixture')
+        self.assertTrue(result['attempts'][0]['http_response_observed'])
+        self.assert_clean('completed')
+
     def setUp(self):
         self.requests = []
         self.received = threading.Event()
@@ -34,6 +48,7 @@ class SubscriptionWorkerTests(unittest.TestCase):
                         outer.release.wait(5)
                     self.send_response(200)
                     self.send_header("Content-Type", "text/event-stream")
+                    self.send_header("x-request-id", "req_local_fixture")
                     self.end_headers()
                     if self.path.startswith("/partial"):
                         self.wfile.write(b'data: {"type":"response.output_text.delta","delta":"UNEXECUTABLE_PARTIAL"}\n\n')

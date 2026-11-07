@@ -1,5 +1,6 @@
 # Aurora commands — summaries
 
+- `ACK_INPUT_RECOVERY_DIAGNOSTIC(version)`: Available in legacy and durable modes. Acknowledgement is operator-only and execution-unlocked; it never clears failures, changes records/settings, authorizes retries or proves disk health. Diagnostics are session-only; a new failure needs a new acknowledgement.
 - `ADD_APRIORITY_GOAL(text)`: Add non-empty text to the named memory list, retaining its existing deduplication/retention policy.
 - `ADD_GOAL(goal_text[, priority, significance])`: Add a goal with opaque priority/significance labels; duplicates are unchanged, not relabeled. Accepts comma fields or one semicolon-delimited argument.
 - `ADD_JOURNAL(text)`: Add non-empty text to the named memory list, retaining its existing deduplication/retention policy.
@@ -24,6 +25,8 @@
 - `BUILD_RESPONSES_SHADOW_OFFLINE_POSTURE()`: Build and log the offline token/cost/state posture without calling the Responses API.
 - `BUILD_RESPONSES_SHADOW_PAYLOAD_PREVIEW()`: Build and log the no-send Responses payload preview without calling the Responses API.
 - `CANCEL_ACTIVE_WORK()`: Cancel model and command work and release Aurora-owned inputs. Live stays unchanged; remote model work may still drain.
+- `CANCEL_ACTIVE_WORK_IF_TASK(task_id)`: Operator-only: cancel active work only if the exact bounded task is still current. Same global work scope as Cancel work, including unscoped work; not task-isolated cancellation.
+- `CANCEL_QUEUED_INPUT(entry_id, version)`: Durable mode only. Recovered input never auto-runs. Use fresh IDs/versions; active input requires Cancel work. Retry creates a fresh request; uncertain prior delivery needs allow_uncertain and idle model I/O.
 - `CHECK_PREVIOUS_HANDOFF()`: Load yesterday's handoff file into pinned handoff context if it exists.
 - `CLEAR()`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
 - `CLEAR%(percentage)`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
@@ -42,6 +45,7 @@
 - `CLEAR_RESPONSES_SHADOW_PROBE()`: Clear the Responses live-probe scaffold while keeping chat/completions as the fallback.
 - `CLEAR_ROUTE_STATE()`: Clear route state, route intent, local path, blockers, and recent movement results.
 - `CLOSE_CHAT_HEAD()`: Ask the control panel to close the floating chat strip and its attached history pane.
+- `COMPACT_INPUT_RECOVERY(keep_terminal, limit, version, discard_text)`: Durable mode only. Keeps newest eligible records by admission order, not date. At most 100 removals. Operator-only apply requires a fresh whole-store preview version and discard_text. Pending/failed/uncertain records stay. No log erasure or undo; no automatic eviction of deduplication hashes.
 - `COMPLETE_GOAL(goal_id)`: Complete the exact recursive goal ID; a missing ID fails, repeated completion is unchanged.
 - `DELETE_MSG(timestamp)`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
 - `DHISTORY()`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
@@ -61,6 +65,7 @@
 - `LAUNCH_CONTROL_PANEL()`: Open the Aurora control panel window.
 - `LINK_AGENT_SUGGESTION_TASK(task_id|latest|agent_id, suggestion=latest|suggestion_id|agent_id, note=...)`: Link a task packet to a suggestion as review provenance while keeping the Pending gate closed.
 - `LINK_AGENT_TASK_SUGGESTION(task_id|latest|agent_id, suggestion=latest|suggestion_id|agent_id, note=...)`: Link a task packet to a suggestion as review provenance while keeping the Pending gate closed.
+- `LINK_HORIZON_GOAL(entry_id, entry_version, goal_uid|none)`: Use fresh entry/version and goal_uid readbacks. Reject stale tokens/missing targets. Bulk list replacement invalidates affected links; versioned saves retain links, legacy saves omit them.
 - `LIST_COMMANDS(low|medium|high)`: Display the mirrored Aurora command catalog at the requested verbosity.
 - `LIST_EPISODIC_SNAPSHOTS([limit])`: Existing episodic snapshot write/list/lexical-search behavior with complete argument admission and correlated receipts; no inferred persistence or rollback guarantee.
 - `LOAD_TASKS([path])`: Save a validated recursive task snapshot atomically, or validate and restore a complete snapshot. Does not undo live actions.
@@ -77,9 +82,13 @@
 - `MEM(query, [k,] options...)`: Validate the complete query before batch execution, then recheck with runtime defaults. argument_policy=legacy preserves old clamps/fallbacks; strict rejects invalid legacy numeric/enum fields. Hard filters, option names, Boolean/date syntax and new options always validate. May call embeddings and update cache/feedback/results; no automatic memory promotion.
 - `MOD_AGENT(agent_id, role=..., rank=..., urgency=..., allow=..., deny=..., history=..., status=active|paused|silenced|retired)`: Modify registry metadata only.
 - `NO_ACTION_MODE()`: Set runtime.action to none. Uses the same runtime setting lock and observed readback.
+- `OBSERVE_SCREEN_CHANGE(frame_id[, timeout_seconds=3, poll_seconds=0.25])`: Standalone, opt-in observation only; at most 12 fresh captures. Requires request-only capture, verified geometry/provenance and the exact latest frame. No input or permission changes.
 - `OPEN_CHAT_HEAD()`: Ask the control panel to open the floating always-on-top chat strip.
 - `OVERRIDE_PENDING(command)`: Hold a validated command/batch using the chosen normal, insert or replace mode.
 - `PIN(text...)`: CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches.
+- `PREVIEW_INPUT_RECONCILIATION(entry_id, version)`: Durable mode only. Exact current attempt and turn; complete local receipt chain within a bounded log window. Operator-only apply requires paused inference, idle model I/O, execution unlocked and unchanged entry/evidence. Never sends input, restores context, executes actions or confirms remote cancellation. Missing/conflicting evidence stays unresolved.
+- `PREVIEW_INPUT_RECOVERY_ARCHIVE([limit=1000])`: Durable mode only. Default 1000, maximum 10000 compacted identities, sorted by identity hash. Reports exact candidate byte digest/size and source version; no full text, files, eviction, migration or replay. Savings are hypothetical. Archive activation and lookup remain unavailable.
+- `PREVIEW_INPUT_RECOVERY_COMPACTION([keep_terminal, limit])`: Durable mode only. Keeps newest eligible records by admission order, not date. At most 100 removals. Operator-only apply requires a fresh whole-store preview version and discard_text. Pending/failed/uncertain records stay. No log erasure or undo; no automatic eviction of deduplication hashes.
 - `PREVIEW_SETTINGS_TRANSACTION(token)`: Preview, atomically apply, or explicitly roll back registered runtime settings through the existing transaction service.
 - `PROMOTE_EPISODIC_MEMORY(index, target[, prefix, result_handle])`: Copy a legacy preview item, or exact full retained summary when a handle is supplied, into live memory; no state rewind.
 - `pyag:click(x=None, y=None, button='left')`: Click at optional coordinates; omitted or null coordinates use the current position.
@@ -106,6 +115,7 @@
 - `QUEUE_PENDING(command)`: Hold a validated command/batch using the chosen normal, insert or replace mode.
 - `RECALL(query, [k,] options...)`: Validate the complete query before batch execution, then recheck with runtime defaults. argument_policy=legacy preserves old clamps/fallbacks; strict rejects invalid legacy numeric/enum fields. Hard filters, option names, Boolean/date syntax and new options always validate. May call embeddings and update cache/feedback/results; no automatic memory promotion.
 - `RECALL_PREVIOUS_SUMMARY(optional_character_name)`: Display yesterday's handoff summary and the init profile for review.
+- `RECONCILE_INPUT_DELIVERY(entry_id, version, evidence_version)`: Durable mode only. Exact current attempt and turn; complete local receipt chain within a bounded log window. Operator-only apply requires paused inference, idle model I/O, execution unlocked and unchanged entry/evidence. Never sends input, restores context, executes actions or confirms remote cancellation. Missing/conflicting evidence stays unresolved.
 - `RECORD_LIVE_VISUAL_HARNESS_PROBE_RESULT()`: Record the latest post-arm model-turn diagnostics against the live visual probe contract.
 - `REF(query_or_pack, optional_pack_name|all)`: Shorthand reference lookup; exact pack names expand to SHOW_REFERENCE_PACK(...), otherwise SEARCH_REFERENCE_PACK(...).
 - `REHEARSE_LIVE_VISUAL_HARNESS()`: Run the Window 11 offline harness rehearsal without model calls or desktop/game actions; records checks for live/action/next-turn/image/count/setup posture.
@@ -121,6 +131,8 @@
 - `RESET_RESPONSES_SESSION()`: Explicitly start a fresh Responses chain after inspecting status; clears local continuation identity, never replays a failed request.
 - `RETRIEVAL_PULL(query_or_filters, options...)`: Validate the complete query before batch execution, then recheck with runtime defaults. argument_policy=legacy preserves old clamps/fallbacks; strict rejects invalid legacy numeric/enum fields. Hard filters, option names, Boolean/date syntax and new options always validate. May call embeddings and update cache/feedback/results; no automatic memory promotion.
 - `RETRIEVE_HANDOFF(optional_filename)`: Load a handoff file into pinned handoff context. Defaults to yesterday if no file is provided.
+- `RETRY_EXECUTION_RECORDING()`: Operator-only retry of the exact unconfirmed recording batch. No action replay or automatic history deletion.
+- `RETRY_INPUT(entry_id, version[, allow_uncertain])`: Durable mode only. Recovered input never auto-runs. Use fresh IDs/versions; active input requires Cancel work. Retry creates a fresh request; uncertain prior delivery needs allow_uncertain and idle model I/O.
 - `ROLLBACK_SETTINGS_TRANSACTION(token)`: Preview, atomically apply, or explicitly roll back registered runtime settings through the existing transaction service.
 - `RUN_AGENT_HELPER_CLOSURE_CHECK()`: Build and log the Window 20 metadata-first sub-agent helper closure/readiness checklist.
 - `RUN_AGENT_PENDING_INSERT_DRY_RUN(optional_filter)`: Log and display a no-exec dry-run proving which review links satisfy the future insertion contract while leaving the executable Pending queue unchanged.
@@ -152,6 +164,7 @@
 - `SET_AUTO_PROMPT([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - `SET_BATTLE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`: Set battle reasoning effort.
 - `SET_BATTLE_VERBOSITY(low|medium|high)`: Set verbosity for battle turns.
+- `SET_CAPTURE_COMMAND_POLICY([value])`: Set capture.command_policy, or omit value to read it. Legacy requests captures immediately; batch_end shares one post-batch observation. batch_end_explicit additionally uses only the requested delay for proven capture-only batches.
 - `SET_CAPTURE_GEOMETRY_POLICY([value])`: Set capture.geometry_policy, or omit value to read it. Verified captures an explicit physical rectangle; legacy keeps startup scaling and default desktop grabs.
 - `SET_CAPTURE_MODE([value])`: Set capture.mode, or omit value to read it. Heartbeat captures periodically; request_only captures only when the demand service has a due request.
 - `SET_CAPTURE_PROVENANCE_POLICY([value])`: Set capture.provenance_policy, or omit value to read it. Verified requires pixels acquired after the action settle boundary; legacy retains counter/clock freshness checks.
@@ -169,6 +182,7 @@
 - `SET_COMMAND_DRIP_RETENTION(turns)`: Set how many recent turns of command drip history remain on hand. Recommended normal range: 3-7.
 - `SET_COMMAND_DRIP_SHOW_LIKELY_DROPPED([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - `SET_COMMAND_DRIP_SHOW_VARIANTS([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
+- `SET_COMPLETED_GOAL_PROJECTION([value])`: Set goals.completed_projection, or omit value to read it. Legacy hides hints; annotate reviews exact text matches; linked shows explicit entry-to-goal status (including missing targets). Completion history is declared, not verified. No plans are deleted or executed.
 - `SET_CONTEXT_MARK_APPROVAL(mark_id|target, approval=draft|requested|approved|rejected, optional mark_type=...)`: Update a context mark approval state.
 - `SET_CRITIQUE_REASONING_EFFORT(minimal|none|low|medium|high|xhigh|max)`: Set reasoning effort for critique/self-review turns.
 - `SET_CRITIQUE_TURN_INTERVAL(turns)`: Set how often Aurora performs a deeper critique/self-review turn.
@@ -185,9 +199,10 @@
 - `SET_EPISODIC_PLANNING_ASSIST_COOLDOWN(turns)`: Set the minimum turn gap before bounded planning retrieval may run again. Range 0-12.
 - `SET_EPISODIC_PLANNING_ASSIST_K(k)`: Set how many episodic memories bounded planning turns may inject. Range 1-4.
 - `SET_EXECUTION_MODE([value])`: Set runtime.execution, or omit value to read it. Approval and execution posture for commands proposed by the model.
+- `SET_EXECUTION_RECORDING([value])`: Set execution.recording, or omit value to read it. Request bounded metadata recording at controller boundaries. Off closes and drains the current session; errors require explicit retry.
 - `SET_GAMEPLAY_SCENE_POLICY([value])`: Set game.scene_policy, or omit value to read it. Evidence uses fresh model observation/scene sections with token boundaries and conflict checks. Legacy retains mixed-context substring inference.
 - `SET_GAME_PROFILE([value])`: Set game.profile, or omit value to read it. Gameplay assumptions, prompts, controls, and save-state guidance.
-- `SET_GOAL_SAVE_FORMAT([value])`: Set goals.save_format, or omit value to read it. Versioned saves add a schema envelope; legacy preserves the existing task document shape. Both use recursive IDs, validation and atomic replacement.
+- `SET_GOAL_SAVE_FORMAT([value])`: Set goals.save_format, or omit value to read it. Versioned saves retain optional horizon identities/links in v2, or use v1 without them. Legacy preserves the old task shape and explicitly omits identity metadata. Both use recursive IDs, validation and atomic replacement.
 - `SET_HIERARCHY_DISPATCH([value])`: Set goals.hierarchy_dispatch, or omit value to read it. Legacy routes Level 1 commands; advisory keeps hierarchy as notes. Explicit commands remain available.
 - `SET_HIGH_DETAIL(...)`: Inspect the handler; detailed usage has not been reviewed.
 - `SET_HORIZON_SYNC([value])`: Set goals.horizon_sync, or omit value to read it. Legacy replaces four horizon lists from hierarchy levels; preserve keeps explicit horizon lists and hierarchy separate.
@@ -195,6 +210,8 @@
 - `SET_IMPORTANT_MESSAGES([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - `SET_IMSGS_DECAY_CHECK([on|off])`: Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no.
 - `SET_INIT_DELIVERY([value])`: Set context.init_delivery, or omit value to read it. System once omits exact Init history copies only when the full text is already in the system prompt. Stored history is preserved.
+- `SET_INPUT_RECOVERY([value])`: Set conversation.input_recovery, or omit value to read it. Legacy keeps the in-memory input queue. Durable stores identified inbox input locally, holds it after restart, and requires explicit retry. Does not persist shell/audio input or automatically resend.
+- `SET_JOURNAL_ORDER([value])`: Set memory.journal_order, or omit value to read it. Legacy shows the first retained entries; recent selects the newest retained tail in insertion order. Full PinnedInfo remains complete.
 - `SET_KEYPOINT_GRID(on|off)`: Toggle the red key-point grid overlay.
 - `SET_LATEST_IMAGE_DETAIL(...)`: Inspect the handler; detailed usage has not been reviewed.
 - `SET_LIVE_INIT([value])`: Set runtime.live_init, or omit value to read it. Whether Aurora loads its full live initialization prompt when that path is used.
@@ -233,6 +250,7 @@
 - `SET_TASK_MAX_MODEL_TURNS([value])`: Set task.max_model_turns, or omit value to read it. Maximum model-turn admissions, across primary/review slots. Latched at the next task start.
 - `SET_TASK_MAX_REPORTED_TOKENS([value])`: Set task.max_reported_tokens, or omit value to read it. Stop automatic continuation and response commands when provider-reported total tokens reach this threshold. Zero disables it; latched at next task start.
 - `SET_TASK_MAX_SECONDS([value])`: Set task.max_seconds, or omit value to read it. Elapsed-time admission limit; late model responses cannot launch new commands. Latched at next task start.
+- `SET_TASK_OBJECTIVE_MODE([value])`: Set task.objective_mode, or omit value to read it. Retain queued operator messages outside ordinary chat decay and the recent-text window for a bounded task.
 - `SET_TASK_OUTCOME_REPORTING([value])`: Set task.outcome_reporting, or omit value to read it. Allow a standalone declared done/wait/approval/error report to stop automatic continuation. Latched at next bounded task start.
 - `SET_TASK_PENDING_CARRY_POLICY([value])`: Set task.pending_carry_policy, or omit value to read it. Carry, hold for operator review, or discard explicitly task-scoped unsubmitted proposals from previous tasks.
 - `SET_TASK_PLAN_CARRY_POLICY([value])`: Set task.plan_carry_policy, or omit value to read it. Carry queued plans, or discard explicitly task-scoped plans from a previous task. Operator and unattributed plans are preserved.
@@ -277,8 +295,11 @@
 - `SHOW_GAME_PROFILE()`: Display the current game profile, profile source, and the active save-state caveat.
 - `SHOW_HELD_INPUTS()`: Inspect Aurora-owned inputs, their request identity, frozen route and release uncertainty.
 - `SHOW_HISTORY_CONTEXT_SERVICE()`: Display the Window 16 history/context service inventory, current store ownership, companion read/write contract preview, and cleanup candidates.
+- `SHOW_HORIZON_ENTRIES([all|goals|immediate|short|medium|long[, offset, limit]])`: Inspect bounded entries or goals with stable IDs. Lazily creates metadata; does not change list text. Views: all, goals, immediate, short, medium, long; limit 1..200.
 - `SHOW_IMAGE_CONTEXT_INDEX()`: Display Window 12 screenshot sidecar/index metadata for capture reason, prompt-context state, hashes, caption/OCR/tags, and embedding placeholders.
 - `SHOW_IMAGE_COST_POSTURE()`: Display Window 18 screenshot/image-index cost posture, bounded scan/backfill/search limits, cache posture, and cheap-versus-expensive image-work guardrails without changing files or model context.
+- `SHOW_INPUT_RECOVERY([offset, limit])`: Durable mode only. Recovered input never auto-runs. Use fresh IDs/versions; active input requires Cancel work. Retry creates a fresh request; uncertain prior delivery needs allow_uncertain and idle model I/O.
+- `SHOW_INPUT_RECOVERY_STATUS()`: Available in legacy and durable modes. Acknowledgement is operator-only and execution-unlocked; it never clears failures, changes records/settings, authorizes retries or proves disk health. Diagnostics are session-only; a new failure needs a new acknowledgement.
 - `SHOW_LIVE_VISUAL_HARNESS()`: Display the Window 11 bounded live visual/reasoning harness contract, readiness warnings, expected image/context counts, escalation stages, and cleanup expectations.
 - `SHOW_LIVE_VISUAL_HARNESS_PROBE()`: Display the armed live probe contract and latest recorded result.
 - `SHOW_LIVE_VISUAL_HARNESS_REHEARSAL()`: Display the latest recorded offline harness rehearsal result.
@@ -338,6 +359,7 @@
 - `SHOW_RUNTIME_HEALTH()`: Display the Window 18 operator health readout that summarizes monitor, state export, queue/bridge, capture, image-index cost, recovery/defaults, auth, and safety guardrail posture without changing settings.
 - `SHOW_SECURITY()`: Display the external-operator passcode/authorization state.
 - `SHOW_STATEFUL_MODEL_PRESETS()`: Display explicit stateful preset profiles and whether they are metadata-only or active.
+- `SHOW_TASK_CONTEXT(task_id)`: Operator-only: inspect the exact current task's retained operator messages and context version. Not the exact last request or full chat history.
 - `SHOW_TASK_STATUS()`: Inspect the controller's current bounded task, limits and declared outcome.
 - `SHOW_TURN_SCHEDULER()`: Display the current turn-scheduler mode, cadence, and last wake reason.
 - `SHOW_TURN_SCHEDULER_PROFILES()`: Display the named scheduler profiles and their thresholds.
@@ -346,6 +368,7 @@
 - `SILENCE_AGENT(agent_id, note=...)`: Silence a sub-agent registry row without deleting history or stopping a worker.
 - `STAGE_AGENT_SUGGESTION(suggestion_id|latest|agent_id, note=...)`: Create a visible Pending Command candidate object while leaving the executable Pending Commands queue untouched.
 - `STATUS()`: Display the current runtime mode and key toggles.
+- `STEER_TASK(task_id, context_version, text_json_base64url)`: Operator-only: append literal operator context to an exact running task using its current context version. Applies at next normal preparation; no wake, new task, budget reset or interruption of in-flight requests.
 - `SUGGEST_AGENT_COMMAND(agent_id, command=..., reason=..., risk=low|medium|high, target=pending_commands)`: Record a policy-tagged suggestion audit row without Pending Command insertion or execution.
 - `SUMMON_AGENT(agent_id, role=..., rank=..., urgency=..., allow=..., deny=..., history=private|parent_visible)`: Add or reactivate a sub-agent registry row without spawning a worker.
 - `TASKS()`: Unimplemented legacy placeholder: reports failure and stops the batch tail; does not start inference.

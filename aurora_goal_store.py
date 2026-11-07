@@ -8,12 +8,16 @@ import os
 from pathlib import Path
 import tempfile
 import threading
+import uuid
+
+from aurora_horizon_identity import HorizonIdentityLedger, HORIZON_FIELDS, valid_uid
 
 GOAL_LOCK = threading.RLock()
 MAX_BYTES = 8 * 1024 * 1024
 MAX_GOALS = 10000
 MAX_DEPTH = 32
 SCHEMA = "aurora_tasks_v1"
+IDENTITY_TASK_SCHEMA = "aurora_tasks_v2"
 GOAL_FILE_COMMANDS = {"SAVE_TASKS", "LOAD_TASKS"}
 MEMORY_RESULT_SCHEMA = "aurora_memory_command_result_v1"
 MEMORY_COMMANDS = {
@@ -121,8 +125,11 @@ LIST_FIELDS = {
 class Goal:
     _next_id = 1
 
-    def __init__(self, text, priority="No Priority", significance="No Significance", status="Incomplete", sub_goals=None, id=None):
+    def __init__(self, text, priority="No Priority", significance="No Significance", status="Incomplete", sub_goals=None, id=None, uid=None):
         with GOAL_LOCK:
+            if uid is not None and not valid_uid(uid):
+                raise ValueError("Invalid goal UID")
+            self.uid = uid or uuid.uuid4().hex
             if id is None:
                 id = Goal._next_id
             if type(id) is not int or id < 1:
@@ -137,8 +144,8 @@ class Goal:
             self.sub_goals.append(sub_goal)
 
 
-def encode_goals(goals):
-    seen, active = set(), set()
+def encode_goals(goals, *, include_identity=False):
+    seen, active, uids = set(), set(), set()
     def encode(goal, depth):
         if depth > MAX_DEPTH or len(seen) >= MAX_GOALS or id(goal) in active:
             raise ValueError("Goal tree exceeds limits or contains a cycle")
@@ -147,6 +154,11 @@ def encode_goals(goals):
         seen.add(goal.id)
         active.add(id(goal))
         row = {name: getattr(goal, name) for name in ("id", "text", "priority", "significance", "status")}
+        if include_identity:
+            if not valid_uid(goal.uid) or goal.uid in uids:
+                raise ValueError("Goal UIDs must be valid and unique")
+            uids.add(goal.uid)
+            row["uid"] = goal.uid
         if any(not isinstance(row[key], str) for key in ("text", "priority", "significance", "status")):
             raise ValueError("Goal text and labels must be strings")
         row["sub_goals"] = [encode(child, depth + 1) for child in goal.sub_goals]
@@ -158,25 +170,34 @@ def encode_goals(goals):
 def validate_document(document):
     if not isinstance(document, dict):
         raise ValueError("Task document must be an object")
-    if "schema_version" in document:
-        if document["schema_version"] != SCHEMA:
+    schema = document.get("schema_version")
+    if schema is not None:
+        if schema not in {SCHEMA, IDENTITY_TASK_SCHEMA}:
             raise ValueError("Unsupported task schema version")
         if set(document) - {"schema_version", "state"}:
             raise ValueError("Unsupported task envelope fields")
         document = document.get("state")
     if not isinstance(document, dict) or "goals_list" not in document:
         raise ValueError("Task document requires goals_list")
-    unknown = set(document) - {"goals_list", "route_state", *LIST_FIELDS}
+    identity = "horizon_identity" in document
+    if schema == SCHEMA and identity or schema == IDENTITY_TASK_SCHEMA and not identity:
+        raise ValueError("Task schema and horizon identity metadata disagree")
+    unknown = set(document) - {"goals_list", "route_state", "horizon_identity", *LIST_FIELDS}
     if unknown:
         raise ValueError("Unsupported task state fields: " + ", ".join(sorted(unknown)))
     state = copy.deepcopy(document)
-    seen = set()
+    seen, uids = set(), set()
     def validate(rows, depth=0):
         if not isinstance(rows, list) or depth > MAX_DEPTH:
             raise ValueError("Invalid goal tree or depth")
         for row in rows:
-            if not isinstance(row, dict) or set(row) - {"id", "text", "priority", "significance", "status", "sub_goals"}:
+            allowed = {"id", "text", "priority", "significance", "status", "sub_goals"} | ({"uid"} if identity else set())
+            if not isinstance(row, dict) or set(row) - allowed:
                 raise ValueError("Invalid or unknown goal fields")
+            if identity:
+                if not valid_uid(row.get("uid")) or row["uid"] in uids:
+                    raise ValueError("Goal UIDs must be valid and unique")
+                uids.add(row["uid"])
             goal_id = row.get("id")
             if type(goal_id) is not int or goal_id < 1 or goal_id in seen or len(seen) >= MAX_GOALS:
                 raise ValueError("Goal IDs must be positive and unique; original file was not changed")
@@ -192,6 +213,8 @@ def validate_document(document):
         state.setdefault(name, [])
         if not isinstance(state[name], list):
             raise ValueError(f"{name} must be a list")
+    if identity:
+        HorizonIdentityLedger.validate_saved(state["horizon_identity"], state)
     route = state.setdefault("route_state", {})
     if not isinstance(route, dict):
         raise ValueError("route_state must be an object")
@@ -232,7 +255,16 @@ def write_document(path, state, *, format="versioned", check_cancel=lambda: None
     if format not in {"legacy", "versioned"}:
         raise ValueError("Unknown task save format")
     state = validate_document(state)
-    document = state if format == "legacy" else {"schema_version": SCHEMA, "state": state}
+    identity_omitted = format == "legacy" and "horizon_identity" in state
+    if identity_omitted:
+        state.pop("horizon_identity")
+        def strip_identity(rows):
+            for row in rows:
+                row.pop("uid", None)
+                strip_identity(row["sub_goals"])
+        strip_identity(state["goals_list"])
+    schema = IDENTITY_TASK_SCHEMA if "horizon_identity" in state else SCHEMA
+    document = state if format == "legacy" else {"schema_version": schema, "state": state}
     data = json.dumps(document, ensure_ascii=False, allow_nan=False, indent=2).encode("utf-8")
     if len(data) > MAX_BYTES:
         raise ValueError("Task document exceeds size limit")
@@ -253,7 +285,8 @@ def write_document(path, state, *, format="versioned", check_cancel=lambda: None
             if current_hash != before_hash:
                 raise ValueError("Task destination changed during save; retry after inspection")
             os.replace(temporary, path)
-            return {"before_hash": before_hash, "after_hash": hashlib.sha256(data).hexdigest(), "format": format, "bytes": len(data)}
+            return {"before_hash": before_hash, "after_hash": hashlib.sha256(data).hexdigest(), "format": format, "bytes": len(data),
+                    "identity_omitted": identity_omitted, "document_schema": schema if format != "legacy" else None}
         finally:
             if temporary is not None:
                 temporary.unlink(missing_ok=True)

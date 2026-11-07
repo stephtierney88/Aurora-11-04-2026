@@ -246,7 +246,7 @@ class RuntimeResponsesTests(unittest.TestCase):
     def setUp(self):
         self.scope = runtime_scope()
         self.calls = []
-        def post(body, endpoint, timeout):
+        def post(body, endpoint, timeout, **kwargs):
             self.calls.append((copy.deepcopy(body), endpoint, timeout))
             return SimpleNamespace(status_code=200, json=lambda: completed(len(self.calls))), "api_key"
         self.scope["post_openai_model_request"] = post

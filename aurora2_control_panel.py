@@ -29,6 +29,7 @@ from aurora_panel_layout import (
 )
 
 from aurora_control_plane import (
+    release_info,
     append_bridge_request,
     build_operator_dashboard,
     build_operator_status,
@@ -2047,7 +2048,7 @@ def get_screenshot_list_cache_stats(screenshots_dir, limit=SCREENSHOT_LIST_DEFAU
 class AuroraControlPanel(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Aurora 2 Control Panel")
+        self.title(release_info()['panel_title'])
         self.ui_preferences = load_layout_preferences(LAYOUT_PATH)
         self._closing = False
         self._refresh_after_id = None
@@ -3757,6 +3758,7 @@ class AuroraControlPanel(tk.Tk):
             command=self.toggle_dashboard_popout,
         )
         controls.add(self.dashboard_popout_button)
+        controls.add(ttk.Button(controls, text="Execution inspector", command=self.open_execution_inspector))
         controls.add(ttk.Checkbutton(controls, text="Wrap detail", variable=self.dashboard_wrap_var,
                                     command=self._update_dashboard_wrap))
         ttk.Label(
@@ -3838,6 +3840,10 @@ class AuroraControlPanel(tk.Tk):
         ttk.Label(frame, text="Structured Detail", style="SectionTitle.TLabel").pack(anchor="w", pady=(0, 4))
         self.dashboard_text = self._dashboard_detail_widget(frame, height=12)
         self.dashboard_text.bind("<Double-Button-1>", lambda _event: self.open_dashboard_popout())
+
+    def open_execution_inspector(self):
+        from aurora_execution_inspector import ExecutionInspector
+        return ExecutionInspector.open(self)
 
     def _dashboard_detail_widget(self, parent, *, height=12):
         shell = ttk.Frame(parent)
@@ -4361,7 +4367,10 @@ class AuroraControlPanel(tk.Tk):
             self.conversation_activity_label.grid_remove()
         if update_preview and self.conversation_outbox.rows:
             self.conversation_delivery_var.set(self.conversation_outbox.summary(include_text=enhanced))
-        self.conversation_outbox_button.configure(text=f"Outbox ({len(self.conversation_outbox.rows)})")
+        recovery = (self.state_cache.get("conversation_io") or {}).get("input_recovery") or {}
+        retained = recovery.get("total", 0)
+        suffix = f" · {retained} retained" if (self.state_cache.get("modes") or {}).get("input_recovery") == "durable" else ""
+        self.conversation_outbox_button.configure(text=f"Outbox ({len(self.conversation_outbox.rows)}{suffix})")
         self.conversation_awaiting.refresh()
         popout = self.conversation_popout_window
         if popout is not None and popout.winfo_exists():

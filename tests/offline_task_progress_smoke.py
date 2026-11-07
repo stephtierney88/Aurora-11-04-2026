@@ -39,6 +39,18 @@ SCENARIOS = r'''
     check("selected frame and readback join same command", command["command_batch_id"] in request["frame_batch_ids"] and command["command_batch_id"] in request["readback_batch_ids"] and request["frame_id"] == stamp.frame_id)
     check("local observation timing uses controller clock", command["latency_ms"]["frame_observed_to_request_prepared"] == 1000 and command["latency_ms"]["receipt_to_readback_prepared"] == 3000)
     check("request phases report actual local submission and response", request["phase"] == "responded" and {"preparing", "prepared", "submitted", "responded"} <= set(request["phase_times"]) and request["latency_ms"]["submitted_to_response"] is not None)
+    check("inspector retains admitted binding names without arguments", command["binding_names"] == ["UPDATE_NOTES", "REQUEST_SCREENSHOT_CAPTURE"])
+    check("prepared frame provenance matches selected exact frame", request["frame_provenance"]["frame_id"] == stamp.frame_id and request["frame_provenance"]["request_generation"] == stamp.request_generation)
+    from aurora_capture_artifacts import check_artifact
+    artifact = request["frame_artifact"]
+    check("actual encoded request binds published source bytes", artifact["status"] == "bound" and artifact["frame_id"] == stamp.frame_id and artifact["sha256"] == artifact["source_sha256_at_preparation"] and len(artifact["encoded_png_sha256"]) == 64)
+    check("selected request artifact remains available", check_artifact(runtime.logging_folder, artifact)["status"] == "available")
+    check("capture service and exact request retain same source reference", runtime.CAPTURE_SERVICE.snapshot()["latest"]["artifact"]["sha256"] == artifact["sha256"])
+    check("per request settings are retained separately from provider claims", request["prepared_settings"]["configured_transport"] == "chat_completions" and request["prepared_settings"]["service_tier"] == "regular" and "provider_model" in request)
+    from aurora_execution_inspector import inspection_snapshot, inspection_detail
+    inspected = inspection_snapshot({"continuation": runtime.build_task_continuation_snapshot()})
+    detail = inspection_detail(inspected, "commands", command["command_batch_id"])
+    check("inspector joins production receipt and request by exact identity", detail["latest_command_in_snapshot"]["receipt_id"] == command["receipt_id"] and detail["linked_records"]["frame_request_id"]["frame_id"] == stamp.frame_id)
     check("diagnostics are not task success or another wake", runtime.TASK_CONTINUATION.snapshot()["status"] == "running" and not runtime.maybe_run_due_inference_turn())
     check("task progress retains no private text paths or pixels", "PROGRESS_PRIVATE_NOTE" not in json.dumps(progress) and "path" not in json.dumps(progress) and "base64" not in json.dumps(progress))
     check("prompt uses compact progress only", '"events":' not in runtime.build_base_system_prompt() and '"commands":' not in json.dumps(runtime.build_task_continuation_snapshot(include_progress=False)["active_task"]["progress"]))
@@ -47,7 +59,7 @@ SCENARIOS = r'''
     bad_frame = dict(frame, path="different-fixture-file.png")
     check("mismatched metadata does not prevent normal model call", bool(runtime.send_prompt_to_chatgpt("Inspect a synthetic image with unknown identity.", image_path=published[0], image_timestamp=published[1], capture_frame=bad_frame)))
     mismatch = runtime.TASK_CONTINUATION.snapshot(include_progress=True)["progress"]["requests"][-1]
-    check("mismatched image path cannot claim another frame identity", mismatch["frame_id"] == "" and mismatch["frame_batch_ids"] == [])
+    check("mismatched image path cannot claim another frame identity", mismatch["frame_id"] == "" and mismatch["frame_batch_ids"] == [] and mismatch['frame_provenance'] == {} and mismatch['frame_artifact'] == {})
 
     provider_mode[0] = "error"
     input_turn("Exercise a failed request after observation.")

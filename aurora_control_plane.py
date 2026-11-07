@@ -24,6 +24,18 @@ DEFAULT_CLIENT_ID = "aurora_operator"
 IDENTIFIER_MAX_CHARS = 160
 
 
+def release_info():
+    """Immutable source release identity; actual commit/export hashes live in manifests."""
+    return dict(family='aurora2', channel='preview', serial=84,
+                release_id='preview-2026.11.06-r84', release_date='2026-11-06',
+                display_name='Aurora 2 · Preview 84 · November 6, 2026',
+                panel_title='Aurora 2 Control Panel · Preview 84 (2026-11-06)',
+                built_at_utc='2026-11-07T01:18:39Z', release_timezone='America/Los_Angeles',
+                settings_schema='aurora_settings_registry_v1',
+                recovery_schemas=['aurora_input_recovery_v1','aurora_input_recovery_v2'],
+                recovery_archive='preview_only')
+
+
 def control_plane_paths(root: str | os.PathLike[str]) -> dict[str, Path]:
     root_path = Path(root).expanduser().resolve()
     return {
@@ -452,7 +464,7 @@ def build_mutation_decision_receipt(
             "inference_plan_results",
             "default_profile_results",
             "pending_command_results",
-            "history_command_results", "retrieval_results", "goal_file_results", "memory_command_results",
+            "history_command_results", "retrieval_results", "goal_file_results", "memory_command_results", "observation_results",
             "pending_id",
             "pending_attempt_id",
             "desktop_results",

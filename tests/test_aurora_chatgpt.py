@@ -210,7 +210,7 @@ class ChatGPTTests(unittest.TestCase):
         state = {"last_screenshot_path": "synthetic.png", "turn_scheduler_capture_counter": 1,
                  "turn_scheduler_last_submitted_capture_counter": 1, "last_turn_completed_at_epoch": time.time()-30}
         scope = {"time": time, "copy": copy, "CAPTURE_SERVICE": CaptureService(), "CAPTURE_PROVENANCE_POLICY": "legacy", "runtime_state": state, "SEND_TO_MODEL": True, "ENABLE_MODEL_RESPONSES": True,
-                 "active_command_queue": None, "active_runtime_context": None,
+                 "active_command_queue": None, "active_runtime_context": None, "CAPTURE_MODE": "request_only",
                  "COMMAND_WORK": ingress.CancellationDomain(),
                  "TASK_CONTINUATION_MODE": "legacy", "READBACK_WAKE_ENABLED": False, "TASK_CONTINUATION": TaskContinuation(),
                  "normalize_text_content": lambda value: str(value or ""), "set_runtime_value": state.__setitem__,

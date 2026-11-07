@@ -5,6 +5,7 @@ from aurora_capture_provenance import CaptureService
 from pathlib import Path
 import queue
 from types import SimpleNamespace
+import threading
 import unittest
 
 from aurora_runtime_work import CancellationDomain
@@ -58,9 +59,11 @@ class TurnFlowTests(unittest.TestCase):
             "last_turn_completed_at_epoch": 90.0,
         }
         self.scope = {
-            "runtime_state": self.state, "copy": copy, "CAPTURE_PROVENANCE_POLICY": "legacy",
+
+            "INPUT_RECOVERY_LOCK": threading.RLock(), "get_input_recovery": lambda: None,            "runtime_state": self.state, "copy": copy, "CAPTURE_PROVENANCE_POLICY": "legacy",
             "CAPTURE_SERVICE": CaptureService(epoch=lambda: self.now, monotonic=lambda: self.now), "time": SimpleNamespace(time=lambda: self.now), "queue": queue,
             "SEND_TO_MODEL": True, "ENABLE_MODEL_RESPONSES": True,
+            "CAPTURE_MODE": "request_only",
             "TASK_CONTINUATION_MODE": "legacy", "READBACK_WAKE_ENABLED": False, "READBACK_SCOPE": "discovery",
             "TASK_CONTINUATION": TaskContinuation(clock=lambda: self.now),
             "TURN_SCHEDULER_MODE": "event", "TURN_SCHEDULER_HEARTBEAT_SECONDS": 0,

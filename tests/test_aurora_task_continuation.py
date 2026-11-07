@@ -481,7 +481,7 @@ class ReviewedReadbackTests(unittest.TestCase):
             scope = {"AUTH_MODE": "api_key", "MODEL_TRANSPORT": "responses", "DEFAULT_REASONING_EFFORT": "low",
                      "ASTRA_MODEL": "requested-model", "normalize_reasoning_effort_for_model": lambda *a, **k: "low",
                      "MODEL_WORK": NS(current=lambda: NS(check=lambda: None)),
-                     "RESPONSES_REASONING": NS(prepare=lambda *a, **k: NS(payload={}), complete=lambda *a: "answer"),
+                     "RESPONSES_REASONING": NS(prepare=lambda *a, **k: NS(payload={}, effective_effort='low', configuration_update_sent=False), complete=lambda *a: "answer"),
                      "post_openai_model_request": lambda *a, **k: (NS(status_code=200, json=lambda: data), "api_key")}
             exec(compile(ast.Module(body=[FUNCTIONS["post_openai_turn_request"]], type_ignores=[]), "responses-wrapper", "exec"), scope)
             response, mode = scope["post_openai_turn_request"]({"model": "requested-model"}, current_messages=[])

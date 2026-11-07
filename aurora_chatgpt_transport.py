@@ -5,6 +5,7 @@ import requests
 from urllib3 import exceptions as network_errors
 from aurora_chatgpt_auth import ChatGPTAuth, ChatGPTAuthError, RESOURCE, provider_error, safe_code
 from aurora_responses_reasoning import completed_response_text
+import aurora_execution_evidence as evidence
 
 
 def network_failure_category(error):
@@ -159,11 +160,15 @@ def request_subscription_stream(payload, bearer, cancellation_token, *, idle_sec
     diagnostics = diagnostics if diagnostics is not None else {}
     started = last_line = time.monotonic()
     phase = phase_callback or (lambda _value: None)
+    evidence.attempt(payload, "chatgpt_subscription_responses", "openai_chatgpt")
     phase("waiting_headers")
     try:
         with requests.post(RESOURCE + "/responses", headers={"Authorization": "Bearer " + bearer, "Content-Type": "application/json", "Accept": "text/event-stream"},
                            json=payload, stream=True, timeout=(15, idle_seconds)) as response:
             diagnostics["headers_seconds"] = round(time.monotonic()-started, 3)
+            diagnostics["http_status"] = response.status_code
+            diagnostics["provider_request_id"] = evidence.code(response.headers.get("x-request-id"))
+            evidence.response(status=response.status_code, headers=response.headers)
             phase("headers_received")
             if response.status_code != 200:
                 raise provider_error(response)
@@ -182,7 +187,9 @@ def request_subscription_stream(payload, bearer, cancellation_token, *, idle_sec
                         diagnostics["first_line_seconds"] = round(now-started, 3)
                         phase("first_line")
                     yield line
-            return consume_events(observed_lines(), cancellation_token, deadline=time.monotonic()+total_seconds)
+            result, answer = consume_events(observed_lines(), cancellation_token, deadline=time.monotonic()+total_seconds)
+            evidence.response(body=result)
+            return result, answer
     except requests.RequestException as error:
         category = network_failure_category(error)
         raise ChatGPTAuthError("Subscription connection interrupted (" + category + "); no commands accepted and no request replayed.") from None
@@ -191,6 +198,7 @@ def request_subscription_stream(payload, bearer, cancellation_token, *, idle_sec
 
 
 def perform_subscription_request(chat, cancellation_token, auth=None, *, policy="legacy"):
+    evidence.instrumented()
     if policy not in {"legacy", "bounded"}:
         raise ChatGPTAuthError("Unknown subscription request policy; no request sent.")
     auth = auth or ChatGPTAuth()

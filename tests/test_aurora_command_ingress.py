@@ -9,10 +9,12 @@ import re
 import tempfile
 import time
 import unittest
+import threading
 import uuid
 from pathlib import Path
 from types import SimpleNamespace
 from aurora_runtime_work import CancellationDomain, WorkCancelled
+from aurora_capture_provenance import CaptureService
 from aurora_delivery_receipts import TrackedInput
 from aurora_input_ownership import HeldInputLedger, InputOwnershipError, cooperative_move
 from aurora_pending_commands import PENDING_WRAPPER_MODES
@@ -47,7 +49,7 @@ extract_command_arguments parse_command_signature_raw get_command_name_key
 is_privileged_operator_command can_dispatch_external_single_command
 can_dispatch_external_raw_command is_external_mutation_command prepare_command_batch
 normalize_action_command parse_command_signature expand_structured_memory_command
-format_command_text handle_commands enqueue_or_execute_command poll_external_inbox_messages
+format_command_text handle_commands enqueue_or_execute_command poll_external_inbox_messages queue_recoverable_input
 is_urgent_control_command execute_command_entry
 desktop_command_arguments
 input_key_callbacks acquire_key_input release_input_leases release_owned_key acquire_mouse_input cancel_command_inputs
@@ -90,12 +92,15 @@ class RuntimeIngressTests(unittest.TestCase):
         self.inputs = queue.Queue()
         self.journal = MutationAdmissionJournal(self.temp.name, session_id="test")
         self.scope = {
+            "CAPTURE_SERVICE": CaptureService(), "CAPTURE_COMMAND_POLICY": "legacy",
             "TASK_CONTINUATION_MODE": "legacy", "TASK_CONTINUATION": TaskContinuation(),
             "TASK_CONTROL_COMMANDS": TASK_CONTROL_COMMANDS, "TASK_CONTROL_RESULT_SCHEMA": TASK_CONTROL_RESULT_SCHEMA,
             "TASK_BUDGET_RESULT_SCHEMA": TASK_BUDGET_RESULT_SCHEMA,
             "TASK_ORIGIN_SCHEMA": TASK_ORIGIN_SCHEMA, "scoped_task_id": scoped_task_id, "copy": copy,
             "command_task_scope": command_task_scope, "current_command_task": current_command_task,
             "TrackedInput": TrackedInput,
+            "INPUT_RECOVERY_LOCK": threading.RLock(), "get_input_recovery": lambda: None,
+            "INPUT_RECOVERY_MODE": "legacy",
             "current_history_actor": current_history_actor, "history_actor_scope": history_actor_scope,
             **runtime_constants(), "json": json, "re": re, "time": time, "os": os,
             "datetime": datetime, "CommandSyntaxError": CommandSyntaxError,

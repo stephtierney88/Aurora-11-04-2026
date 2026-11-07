@@ -73,6 +73,8 @@ def provider(packet, token):
     body = packet["payload"]
     text = json.dumps(body["messages"])
     calls.append({"model": body["model"], "init_occurrences": text.count("INIT_SENTINEL_37"),
+                  "correlation": dict(packet.get("correlation") or {}),
+                  "worker_delivery_context_present": runtime.current_delivery() is not None,
                   "message_count": len(body["messages"]), "serialized_message_chars": len(text),
                   "wake": runtime.runtime_state.get("last_turn_wake_reason"),
                   "readback_in_context": "Command discovery result" in text,
@@ -96,6 +98,20 @@ try:
     check("shared registry enables optional path", operator(
         "SET_INIT_DELIVERY(system_once); SET_TASK_MAX_MODEL_TURNS(2); SET_TASK_MAX_SECONDS(120); "
         "SET_TASK_CONTINUATION(bounded); SET_READBACK_WAKE(on)")["success"])
+    saved_prompt_modes = (runtime.INIT_PROMPT_PROFILE, runtime.ASSISTANT_POLICY, runtime.DEMAND_CAPTURE_ENABLED)
+    try:
+        runtime.INIT_PROMPT_PROFILE, runtime.ASSISTANT_POLICY, runtime.DEMAND_CAPTURE_ENABLED = 'current', 'task_flow', True
+        check('dynamic prompt explains automatic post-action capture', 'Dynamic observation flow:' in runtime.build_base_system_prompt())
+        runtime.DEMAND_CAPTURE_ENABLED = False
+        check('disabled demand never promises automatic capture', 'Dynamic observation flow:' not in runtime.build_base_system_prompt())
+        runtime.DEMAND_CAPTURE_ENABLED = True
+        runtime.ASSISTANT_POLICY = 'legacy'
+        check('legacy admission keeps prior prompt path', 'Dynamic observation flow:' not in runtime.build_base_system_prompt())
+        runtime.ASSISTANT_POLICY = 'task_flow'
+        runtime.INIT_PROMPT_PROFILE = 'legacy'
+        check('legacy Init keeps prior prompt path', 'Dynamic observation flow:' not in runtime.build_base_system_prompt())
+    finally:
+        runtime.INIT_PROMPT_PROFILE, runtime.ASSISTANT_POLICY, runtime.DEMAND_CAPTURE_ENABLED = saved_prompt_modes
     before_generation = runtime.TASK_CONTINUATION.readback()["generation"]
     runtime.enable_unimportant_messages = False
     runtime.publish_command_discovery(False, "REJECTED_READBACK_SENTINEL")
@@ -103,6 +119,9 @@ try:
     check("disabled history cannot create an empty readback loop", runtime.TASK_CONTINUATION.readback()["generation"] == before_generation)
     reply[0] = "Executed Commands:\nLOOKUP_COMMAND(REQUEST_SCREENSHOT_CAPTURE,low)"
     check("bounded first turn dispatched", input_turn("Look up the capture command before proceeding."))
+    check('network worker receives exact frozen turn and task IDs without ContextVar propagation',
+          calls[-1]['correlation']['task_id'] == runtime.TASK_CONTINUATION.snapshot()['task_id']
+          and bool(calls[-1]['correlation']['inference_request_id']) and not calls[-1]['worker_delivery_context_present'])
     check("request contains Init exactly once", calls[-1]["init_occurrences"] == 1)
     check("original Init still retained", any(row.get("Exemption") == "Init" for row in runtime.get_chat_history_store()))
     check("readback wake pending", "command_readback" in runtime.evaluate_turn_scheduler()["reasons"])

@@ -4,6 +4,41 @@
       "aliases": [],
       "binding_kind": "runtime",
       "callable": true,
+      "category": "Runtime commands",
+      "command": "ACK_INPUT_RECOVERY_DIAGNOSTIC",
+      "contract": {
+        "argument_style": "positional",
+        "effects": "Mark one exact recovery diagnostic seen",
+        "max_arguments": 1,
+        "min_arguments": 1,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "name": "version",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "result": {
+          "failure_policy": "Failures stop the batch tail; stale diagnostic versions change nothing.",
+          "protocol": "aurora_memory_command_result_v1",
+          "receipt_field": "memory_command_results"
+        },
+        "semantics": "Available in legacy and durable modes. Acknowledgement is operator-only and execution-unlocked; it never clears failures, changes records/settings, authorizes retries or proves disk health. Diagnostics are session-only; a new failure needs a new acknowledgement."
+      },
+      "handler": "acknowledge_input_recovery_diagnostic_command",
+      "signature": "ACK_INPUT_RECOVERY_DIAGNOSTIC(version)",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38325
+      },
+      "summary": "Available in legacy and durable modes. Acknowledgement is operator-only and execution-unlocked; it never clears failures, changes records/settings, authorizes retries or proves disk health. Diagnostics are session-only; a new failure needs a new acknowledgement."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
       "category": "Goal Management Commands",
       "command": "ADD_APRIORITY_GOAL",
       "contract": {
@@ -33,7 +68,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43032
+        "line": 43813
       },
       "summary": "Add non-empty text to the named memory list, retaining its existing deduplication/retention policy."
     },
@@ -82,7 +117,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43029
+        "line": 43810
       },
       "summary": "Add a goal with opaque priority/significance labels; duplicates are unchanged, not relabeled. Accepts comma fields or one semicolon-delimited argument."
     },
@@ -119,7 +154,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43198
+        "line": 43979
       },
       "summary": "Add non-empty text to the named memory list, retaining its existing deduplication/retention policy."
     },
@@ -145,7 +180,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40432
+        "line": 41143
       },
       "summary": "Validate a model with a short test call and add it to the custom Aurora catalog."
     },
@@ -182,7 +217,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43035
+        "line": 43816
       },
       "summary": "Add non-empty text to the named memory list, retaining its existing deduplication/retention policy."
     },
@@ -219,7 +254,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43038
+        "line": 43819
       },
       "summary": "Add non-empty text to the named memory list, retaining its existing deduplication/retention policy."
     },
@@ -245,7 +280,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41426
+        "line": 42137
       },
       "summary": "Append an explicit operator note to one sub-agent private JSONL log without writing parent chat history, prompts, Pending Commands, or execution queues."
     },
@@ -303,6 +338,7 @@
           "turn_post_action_settle_seconds",
           "demand_capture_enabled",
           "capture_mode",
+          "capture_command_policy",
           "capture_geometry_policy",
           "capture_request_timeout_seconds",
           "capture_request_max_attempts",
@@ -463,7 +499,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39694
+        "line": 40405
       },
       "summary": "Validate and apply the saved personal profile; reapply retains setter effects, while changed_only skips unchanged values."
     },
@@ -503,7 +539,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 2298
+        "line": 2315
       },
       "summary": "Preview, atomically apply, or explicitly roll back registered runtime settings through the existing transaction service."
     },
@@ -561,6 +597,7 @@
           "turn_post_action_settle_seconds",
           "demand_capture_enabled",
           "capture_mode",
+          "capture_command_policy",
           "capture_geometry_policy",
           "capture_request_timeout_seconds",
           "capture_request_max_attempts",
@@ -721,7 +758,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39698
+        "line": 40409
       },
       "summary": "Validate and apply the process-start system profile; reapply retains setter effects, while changed_only skips unchanged values."
     },
@@ -747,7 +784,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41504
+        "line": 42215
       },
       "summary": "Mark a policy-allowed suggestion approved for review only."
     },
@@ -784,7 +821,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42917
+        "line": 43661
       },
       "summary": "Submit the selected held commands once; preserve unstarted or uncertain items for inspection."
     },
@@ -810,7 +847,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41974
+        "line": 42685
       },
       "summary": "Approve a Prompt Pin mark as metadata; model-visible inclusion remains off until a later explicit slice."
     },
@@ -836,7 +873,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40256
+        "line": 40967
       },
       "summary": "Arm a one-turn cheap live visual probe while keeping live mode off; default is gpt-5.4-mini unless nano/mini/model is supplied."
     },
@@ -862,7 +899,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40154
+        "line": 40865
       },
       "summary": "Arm a cheap Responses live-probe scaffold while keeping send/API/default migration disabled; default is gpt-5.4-mini unless nano/mini/model is supplied."
     },
@@ -888,7 +925,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40263
+        "line": 40974
       },
       "summary": "Arm a one-turn live visual probe while keeping live mode off; tier is inferred from the selected model."
     },
@@ -914,7 +951,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40130
+        "line": 40841
       },
       "summary": "Arm a Responses live-probe scaffold for a chosen model, metadata-only and no-send."
     },
@@ -940,7 +977,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40270
+        "line": 40981
       },
       "summary": "Arm a one-turn stronger-model visual comparison while keeping live mode off; default is gpt-5.4."
     },
@@ -966,7 +1003,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41304
+        "line": 42015
       },
       "summary": "Record a metadata-only sub-agent work brief without spawning workers, writing parent history, inserting Pending Commands, or changing model context."
     },
@@ -992,7 +1029,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42674
+        "line": 43385
       },
       "summary": "Temporarily unlock privileged external operator commands for the configured TTL."
     },
@@ -1018,7 +1055,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40315
+        "line": 41026
       },
       "summary": "Create missing metadata sidecars for a bounded newest-first set of existing screenshots without renaming files."
     },
@@ -1044,7 +1081,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40090
+        "line": 40801
       },
       "summary": "Build and log the offline token/cost/state posture without calling the Responses API."
     },
@@ -1070,7 +1107,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40054
+        "line": 40765
       },
       "summary": "Build and log the no-send Responses payload preview without calling the Responses API."
     },
@@ -1098,9 +1135,87 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42770
+        "line": 43481
       },
       "summary": "Cancel model and command work and release Aurora-owned inputs. Live stays unchanged; remote model work may still drain."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Other Commands",
+      "command": "CANCEL_ACTIVE_WORK_IF_TASK",
+      "contract": {
+        "actor": "operator_only",
+        "batch_policy": "Standalone controller command only; no pending wrappers or mixed batches.",
+        "effects": "Operator-only: cancel active work only if the exact bounded task is still current. Same global work scope as Cancel work, including unscoped work; not task-isolated cancellation.",
+        "max_arguments": 1,
+        "min_arguments": 1,
+        "mode": "bounded",
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "name": "task_id",
+            "pattern": "^task-[0-9a-f]{32}$",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "result": {
+          "failure_policy": "Stale IDs, legacy mode and model actors have no cancellation effects. Already stopped is idempotent. Partial cleanup is uncertain; inspect owned inputs before explicit release.",
+          "protocol": "aurora_task_control_result_v1",
+          "receipt_field": "task_control_results",
+          "verification": "Local cancellation only; remote cancellation and rollback are unconfirmed. Captured generation cleanup cannot release newer holds. Live mode, settings, plans and goals are preserved."
+        }
+      },
+      "handler": "cancel_active_work_if_task_command",
+      "signature": "CANCEL_ACTIVE_WORK_IF_TASK(task_id)",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 43493
+      },
+      "summary": "Operator-only: cancel active work only if the exact bounded task is still current. Same global work scope as Cancel work, including unscoped work; not task-isolated cancellation."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "CANCEL_QUEUED_INPUT",
+      "contract": {
+        "argument_style": "positional",
+        "effects": "Operator-only explicit queued input recovery",
+        "max_arguments": 2,
+        "min_arguments": 2,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "name": "entry_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "result": {
+          "failure_policy": "Failures stop the batch tail. No automatic resend or rollback of earlier effects.",
+          "protocol": "aurora_memory_command_result_v1",
+          "receipt_field": "memory_command_results"
+        },
+        "semantics": "Durable mode only. Recovered input never auto-runs. Use fresh IDs/versions; active input requires Cancel work. Retry creates a fresh request; uncertain prior delivery needs allow_uncertain and idle model I/O."
+      },
+      "handler": "cancel_queued_input_command",
+      "signature": "CANCEL_QUEUED_INPUT(entry_id, version)",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38329
+      },
+      "summary": "Durable mode only. Recovered input never auto-runs. Use fresh IDs/versions; active input requires Cancel work. Retry creates a fresh request; uncertain prior delivery needs allow_uncertain and idle model I/O."
     },
     {
       "aliases": [],
@@ -1124,7 +1239,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43295
+        "line": 44076
       },
       "summary": "Load yesterday's handoff file into pinned handoff context if it exists."
     },
@@ -1151,7 +1266,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43249
+        "line": 44030
       },
       "summary": "CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches."
     },
@@ -1186,7 +1301,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43246
+        "line": 44027
       },
       "summary": "CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches."
     },
@@ -1212,7 +1327,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41850
+        "line": 42561
       },
       "summary": "Append a clear event for writable context marks without deleting audit history."
     },
@@ -1238,7 +1353,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41898
+        "line": 42609
       },
       "summary": "Clear active do-not-include/drop metadata without erasing the audit log."
     },
@@ -1265,7 +1380,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43265
+        "line": 44046
       },
       "summary": "CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches."
     },
@@ -1292,7 +1407,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43257
+        "line": 44038
       },
       "summary": "CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches."
     },
@@ -1324,7 +1439,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39681
+        "line": 40392
       },
       "summary": "Clear the queued one-turn override, retaining normal session policy. Works while setting locks are enabled."
     },
@@ -1351,7 +1466,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43253
+        "line": 44034
       },
       "summary": "CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches."
     },
@@ -1397,7 +1512,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43243
+        "line": 44024
       },
       "summary": "CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches."
     },
@@ -1423,7 +1538,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42647
+        "line": 43358
       },
       "summary": "Clear the configured external-operator passcode."
     },
@@ -1462,7 +1577,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42922
+        "line": 43666
       },
       "summary": "Drop matching held/uncertain items without execution; an empty match changes nothing."
     },
@@ -1501,7 +1616,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42922
+        "line": 43666
       },
       "summary": "Drop matching held/uncertain items without execution; an empty match changes nothing."
     },
@@ -1528,7 +1643,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43261
+        "line": 44042
       },
       "summary": "CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches."
     },
@@ -1554,7 +1669,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43269
+        "line": 44050
       },
       "summary": "Clear recent-context memory."
     },
@@ -1580,7 +1695,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40178
+        "line": 40889
       },
       "summary": "Clear the Responses live-probe scaffold while keeping chat/completions as the fallback."
     },
@@ -1606,7 +1721,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43274
+        "line": 44055
       },
       "summary": "Clear route state, route intent, local path, blockers, and recent movement results."
     },
@@ -1632,9 +1747,59 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 38879
+        "line": 39536
       },
       "summary": "Ask the control panel to close the floating chat strip and its attached history pane."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "COMPACT_INPUT_RECOVERY",
+      "contract": {
+        "argument_style": "positional",
+        "effects": "Discard selected terminal recovery text; preserve deduplication hashes",
+        "max_arguments": 4,
+        "min_arguments": 4,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "name": "keep_terminal",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "limit",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "version",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "discard_text",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "result": {
+          "failure_policy": "Failures stop the batch tail; stale preview or disk failure leaves data unchanged.",
+          "protocol": "aurora_memory_command_result_v1",
+          "receipt_field": "memory_command_results"
+        },
+        "semantics": "Durable mode only. Keeps newest eligible records by admission order, not date. At most 100 removals. Operator-only apply requires a fresh whole-store preview version and discard_text. Pending/failed/uncertain records stay. No log erasure or undo; no automatic eviction of deduplication hashes."
+      },
+      "handler": "compact_input_recovery_command",
+      "signature": "COMPACT_INPUT_RECOVERY(keep_terminal, limit, version, discard_text)",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38345
+      },
+      "summary": "Durable mode only. Keeps newest eligible records by admission order, not date. At most 100 removals. Operator-only apply requires a fresh whole-store preview version and discard_text. Pending/failed/uncertain records stay. No log erasure or undo; no automatic eviction of deduplication hashes."
     },
     {
       "aliases": [],
@@ -1669,7 +1834,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43207
+        "line": 43988
       },
       "summary": "Complete the exact recursive goal ID; a missing ID fails, repeated completion is unchanged."
     },
@@ -1702,7 +1867,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43328
+        "line": 44109
       },
       "summary": "CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches."
     },
@@ -1729,7 +1894,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43334
+        "line": 44115
       },
       "summary": "CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches."
     },
@@ -1757,7 +1922,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41654
+        "line": 42365
       },
       "summary": "Log and display a no-exec dry-run proving which review links satisfy the future insertion contract while leaving the executable Pending queue unchanged."
     },
@@ -1791,7 +1956,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43322
+        "line": 44103
       },
       "summary": "CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches."
     },
@@ -1819,7 +1984,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40534
+        "line": 41245
       },
       "summary": "Alias for REF(...) when a more explicit command name reads better."
     },
@@ -1941,7 +2106,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42809
+        "line": 43553
       },
       "summary": "Set runtime.action to gb. Uses the same runtime setting lock and observed readback."
     },
@@ -1967,7 +2132,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43237
+        "line": 44018
       },
       "summary": "Display this help message."
     },
@@ -1993,7 +2158,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43422
+        "line": 44203
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -2019,7 +2184,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43416
+        "line": 44197
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -2045,7 +2210,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43428
+        "line": 44209
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -2071,7 +2236,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43410
+        "line": 44191
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -2105,7 +2270,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42958
+        "line": 43702
       },
       "summary": "CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches."
     },
@@ -2133,7 +2298,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41661
+        "line": 42372
       },
       "summary": "Insert a contract-ready sub-agent suggestion into the held Pending queue only after exact dry-run confirmation; it still requires APPROVE_PENDING before execution."
     },
@@ -2161,7 +2326,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41661
+        "line": 42372
       },
       "summary": "Insert a contract-ready sub-agent suggestion into the held Pending queue only after exact dry-run confirmation; it still requires APPROVE_PENDING before execution."
     },
@@ -2197,7 +2362,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39620
+        "line": 40331
       },
       "summary": "Hold a validated command/batch using the chosen normal, insert or replace mode."
     },
@@ -2223,7 +2388,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42751
+        "line": 43462
       },
       "summary": "Open the Aurora control panel window."
     },
@@ -2251,7 +2416,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41594
+        "line": 42305
       },
       "summary": "Link a task packet to a suggestion as review provenance while keeping the Pending gate closed."
     },
@@ -2279,9 +2444,54 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41594
+        "line": 42305
       },
       "summary": "Link a task packet to a suggestion as review provenance while keeping the Pending gate closed."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "LINK_HORIZON_GOAL",
+      "contract": {
+        "argument_style": "positional",
+        "effects": "Link or unlink an existing horizon entry; never execute or complete a goal",
+        "max_arguments": 3,
+        "min_arguments": 3,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "name": "entry_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "entry_version",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "goal_uid_or_none",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "result": {
+          "failure_policy": "Syntax validated before batch effects; stale identity fails without mutation and stops the tail. No automatic retry.",
+          "protocol": "aurora_memory_command_result_v1",
+          "receipt_field": "memory_command_results"
+        },
+        "semantics": "Use fresh entry/version and goal_uid readbacks. Reject stale tokens/missing targets. Bulk list replacement invalidates affected links; versioned saves retain links, legacy saves omit them."
+      },
+      "handler": "link_horizon_goal_command",
+      "signature": "LINK_HORIZON_GOAL(entry_id, entry_version, goal_uid|none)",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 43741
+      },
+      "summary": "Use fresh entry/version and goal_uid readbacks. Reject stale tokens/missing targets. Bulk list replacement invalidates affected links; versioned saves retain links, legacy saves omit them."
     },
     {
       "aliases": [],
@@ -2305,7 +2515,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42347
+        "line": 43058
       },
       "summary": "Display the mirrored Aurora command catalog at the requested verbosity."
     },
@@ -2340,7 +2550,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42089
+        "line": 42800
       },
       "summary": "Existing episodic snapshot write/list/lexical-search behavior with complete argument admission and correlated receipts; no inferred persistence or rollback guarantee."
     },
@@ -2375,7 +2585,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43216
+        "line": 43997
       },
       "summary": "Save a validated recursive task snapshot atomically, or validate and restore a complete snapshot. Does not undo live actions."
     },
@@ -2401,7 +2611,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42690
+        "line": 43401
       },
       "summary": "Clear the current external-operator authorization immediately."
     },
@@ -2556,7 +2766,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42696
+        "line": 43407
       },
       "summary": "Read locks when omitted; otherwise enable or disable the named runtime setting lock. Settings values are unchanged."
     },
@@ -2582,7 +2792,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42735
+        "line": 43446
       },
       "summary": "Open the ChatGPT/Codex OAuth sign-in helper in a new window."
     },
@@ -2608,7 +2818,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42363
+        "line": 43074
       },
       "summary": "Look up one command from the mirrored Aurora command catalog."
     },
@@ -2636,7 +2846,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41569
+        "line": 42280
       },
       "summary": "Link a staged suggestion to a Context Mark provenance row without prompt inclusion or execution."
     },
@@ -2664,7 +2874,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41569
+        "line": 42280
       },
       "summary": "Link a staged suggestion to a Context Mark provenance row without prompt inclusion or execution."
     },
@@ -2690,7 +2900,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41769
+        "line": 42480
       },
       "summary": "Record a metadata-only context mark; it stays visible in Prompt Ledger but does not become model-visible."
     },
@@ -2716,7 +2926,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41873
+        "line": 42584
       },
       "summary": "Convenience command to record a metadata-only do-not-include/drop mark while preserving local evidence."
     },
@@ -2742,7 +2952,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41823
+        "line": 42534
       },
       "summary": "Record a metadata-only mark for a reply target."
     },
@@ -2768,7 +2978,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41796
+        "line": 42507
       },
       "summary": "Record a metadata-only mark for a turn target."
     },
@@ -3020,7 +3230,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42212
+        "line": 42923
       },
       "summary": "Validate the complete query before batch execution, then recheck with runtime defaults. argument_policy=legacy preserves old clamps/fallbacks; strict rejects invalid legacy numeric/enum fields. Hard filters, option names, Boolean/date syntax and new options always validate. May call embeddings and update cache/feedback/results; no automatic memory promotion."
     },
@@ -3046,7 +3256,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41718
+        "line": 42429
       },
       "summary": "Modify registry metadata only."
     },
@@ -3168,9 +3378,60 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42829
+        "line": 43573
       },
       "summary": "Set runtime.action to none. Uses the same runtime setting lock and observed readback."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Other Commands",
+      "command": "OBSERVE_SCREEN_CHANGE",
+      "contract": {
+        "effects": "Standalone, opt-in observation only; at most 12 fresh captures. Requires request-only capture, verified geometry/provenance and the exact latest frame. No input or permission changes.",
+        "max_arguments": 3,
+        "min_arguments": 1,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "name": "frame_id",
+            "pattern": "[a-fA-F0-9]{32}",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "default": 3,
+            "maximum": 8,
+            "minimum": 0.25,
+            "name": "timeout_seconds",
+            "required": false,
+            "type": "number"
+          },
+          {
+            "default": 0.25,
+            "maximum": 2,
+            "minimum": 0.1,
+            "name": "poll_seconds",
+            "required": false,
+            "type": "number"
+          }
+        ],
+        "result": {
+          "failure_policy": "Cancellation remains effective. A no-change timeout with valid samples completes the observation; acquisition failure blocks continuation until explicit fresh capture or Cancel.",
+          "protocol": "aurora_observation_result_v1",
+          "receipt_field": "observation_results",
+          "verification": "Sampled pre-overlay fingerprint change only; not transition completion, visual stability or successful action."
+        }
+      },
+      "handler": "observe_screen_change_command",
+      "signature": "OBSERVE_SCREEN_CHANGE(frame_id[, timeout_seconds=3, poll_seconds=0.25])",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 40070
+      },
+      "summary": "Standalone, opt-in observation only; at most 12 fresh captures. Requires request-only capture, verified geometry/provenance and the exact latest frame. No input or permission changes."
     },
     {
       "aliases": [],
@@ -3194,7 +3455,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 38870
+        "line": 39527
       },
       "summary": "Ask the control panel to open the floating always-on-top chat strip."
     },
@@ -3232,7 +3493,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39624
+        "line": 40335
       },
       "summary": "Hold a validated command/batch using the chosen normal, insert or replace mode."
     },
@@ -3266,9 +3527,124 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42961
+        "line": 43705
       },
       "summary": "CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "PREVIEW_INPUT_RECONCILIATION",
+      "contract": {
+        "argument_style": "positional",
+        "effects": "Preview exact delivery receipt reconciliation without mutation",
+        "max_arguments": 2,
+        "min_arguments": 2,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "name": "entry_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "result": {
+          "failure_policy": "Failures stop the batch tail. Reinspect after uncertain writes; never retry model work automatically.",
+          "protocol": "aurora_memory_command_result_v1",
+          "receipt_field": "memory_command_results"
+        },
+        "semantics": "Durable mode only. Exact current attempt and turn; complete local receipt chain within a bounded log window. Operator-only apply requires paused inference, idle model I/O, execution unlocked and unchanged entry/evidence. Never sends input, restores context, executes actions or confirms remote cancellation. Missing/conflicting evidence stays unresolved."
+      },
+      "handler": "preview_input_reconciliation_command",
+      "signature": "PREVIEW_INPUT_RECONCILIATION(entry_id, version)",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38349
+      },
+      "summary": "Durable mode only. Exact current attempt and turn; complete local receipt chain within a bounded log window. Operator-only apply requires paused inference, idle model I/O, execution unlocked and unchanged entry/evidence. Never sends input, restores context, executes actions or confirms remote cancellation. Missing/conflicting evidence stays unresolved."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "PREVIEW_INPUT_RECOVERY_ARCHIVE",
+      "contract": {
+        "argument_style": "positional",
+        "effects": "Preview a bounded immutable duplicate-protection segment without writing or activating it",
+        "max_arguments": 1,
+        "min_arguments": 0,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "result": {
+          "failure_policy": "Failures stop the batch tail. Invalid or closed stores produce no candidate.",
+          "protocol": "aurora_memory_command_result_v1",
+          "receipt_field": "memory_command_results"
+        },
+        "semantics": "Durable mode only. Default 1000, maximum 10000 compacted identities, sorted by identity hash. Reports exact candidate byte digest/size and source version; no full text, files, eviction, migration or replay. Savings are hypothetical. Archive activation and lookup remain unavailable."
+      },
+      "handler": "preview_input_recovery_archive_command",
+      "signature": "PREVIEW_INPUT_RECOVERY_ARCHIVE([limit=1000])",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38341
+      },
+      "summary": "Durable mode only. Default 1000, maximum 10000 compacted identities, sorted by identity hash. Reports exact candidate byte digest/size and source version; no full text, files, eviction, migration or replay. Savings are hypothetical. Archive activation and lookup remain unavailable."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "PREVIEW_INPUT_RECOVERY_COMPACTION",
+      "contract": {
+        "argument_style": "positional",
+        "effects": "Preview bounded recovery compaction without mutation",
+        "max_arguments": 2,
+        "min_arguments": 0,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "name": "keep_terminal",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "result": {
+          "failure_policy": "Failures stop the batch tail; stale preview or disk failure leaves data unchanged.",
+          "protocol": "aurora_memory_command_result_v1",
+          "receipt_field": "memory_command_results"
+        },
+        "semantics": "Durable mode only. Keeps newest eligible records by admission order, not date. At most 100 removals. Operator-only apply requires a fresh whole-store preview version and discard_text. Pending/failed/uncertain records stay. No log erasure or undo; no automatic eviction of deduplication hashes."
+      },
+      "handler": "preview_input_recovery_compaction_command",
+      "signature": "PREVIEW_INPUT_RECOVERY_COMPACTION([keep_terminal, limit])",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38337
+      },
+      "summary": "Durable mode only. Keeps newest eligible records by admission order, not date. At most 100 removals. Operator-only apply requires a fresh whole-store preview version and discard_text. Pending/failed/uncertain records stay. No log erasure or undo; no automatic eviction of deduplication hashes."
     },
     {
       "aliases": [],
@@ -3306,7 +3682,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 2294
+        "line": 2311
       },
       "summary": "Preview, atomically apply, or explicitly roll back registered runtime settings through the existing transaction service."
     },
@@ -3374,7 +3750,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42238
+        "line": 42949
       },
       "summary": "Copy a legacy preview item, or exact full retained summary when a handle is supplied, into live memory; no state rewind."
     },
@@ -3505,7 +3881,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36739
+        "line": 37104
       },
       "summary": "Click at optional coordinates; omitted or null coordinates use the current position."
     },
@@ -3634,7 +4010,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36746
+        "line": 37111
       },
       "summary": "Double-click at optional coordinates using the selected mouse button."
     },
@@ -3767,7 +4143,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36657
+        "line": 37022
       },
       "summary": "Drag to desktop coordinates with the selected mouse button."
     },
@@ -3877,7 +4253,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36803
+        "line": 37168
       },
       "summary": "Focus a matching window, or the configured emulator title when omitted; failure blocks later batch actions."
     },
@@ -3995,7 +4371,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36848
+        "line": 37213
       },
       "summary": "Hold a key; omit duration for an indefinite hold requiring an explicit release."
     },
@@ -4132,7 +4508,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36753
+        "line": 37118
       },
       "summary": "Hold a mouse button for a finite duration, releasing on completion or cancellation."
     },
@@ -4242,7 +4618,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36695
+        "line": 37060
       },
       "summary": "Press a complete chord; every key must be valid before any key is sent."
     },
@@ -4373,7 +4749,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36739
+        "line": 37104
       },
       "summary": "Click at optional coordinates; omitted or null coordinates use the current position."
     },
@@ -4493,7 +4869,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36647
+        "line": 37012
       },
       "summary": "Move the pointer to desktop coordinates; negative coordinates support other monitors."
     },
@@ -4608,7 +4984,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36877
+        "line": 37242
       },
       "summary": "Hold a game direction using the existing tile-duration calibration; game-specific accuracy is not guaranteed."
     },
@@ -4718,7 +5094,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36719
+        "line": 37084
       },
       "summary": "Hold all listed keys until explicitly released."
     },
@@ -4828,7 +5204,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36713
+        "line": 37078
       },
       "summary": "Press every listed key in order; invalid keys reject the whole request."
     },
@@ -4938,7 +5314,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36732
+        "line": 37097
       },
       "summary": "Release every listed desktop key."
     },
@@ -5062,7 +5438,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36820
+        "line": 37185
       },
       "summary": "Press one key a positive integer number of times, with an optional interval."
     },
@@ -5181,7 +5557,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36681
+        "line": 37046
       },
       "summary": "Release a key using its owned route; optional current explicitly uses the current mapping."
     },
@@ -5290,7 +5666,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36762
+        "line": 37127
       },
       "summary": "Save a desktop screenshot at the supplied path or screenshot.png."
     },
@@ -5398,7 +5774,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36675
+        "line": 37040
       },
       "summary": "Scroll downward by signed units; negative units reverse direction."
     },
@@ -5506,7 +5882,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36669
+        "line": 37034
       },
       "summary": "Scroll upward by signed units; negative units reverse direction."
     },
@@ -5621,7 +5997,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36707
+        "line": 37072
       },
       "summary": "Type text supported by the active PyAutoGUI character set, with an optional interval."
     },
@@ -5743,7 +6119,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42819
+        "line": 43563
       },
       "summary": "Set runtime.action to pyag. Uses the same runtime setting lock and observed readback."
     },
@@ -5769,7 +6145,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40277
+        "line": 40988
       },
       "summary": "Queue the bounded probe prompt while live mode is off. Turning live on afterward can spend one visual model turn."
     },
@@ -5805,7 +6181,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39616
+        "line": 40327
       },
       "summary": "Hold a validated command/batch using the chosen normal, insert or replace mode."
     },
@@ -6057,7 +6433,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42212
+        "line": 42923
       },
       "summary": "Validate the complete query before batch execution, then recheck with runtime defaults. argument_policy=legacy preserves old clamps/fallbacks; strict rejects invalid legacy numeric/enum fields. Hard filters, option names, Boolean/date syntax and new options always validate. May call embeddings and update cache/feedback/results; no automatic memory promotion."
     },
@@ -6083,9 +6459,54 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43304
+        "line": 44085
       },
       "summary": "Display yesterday's handoff summary and the init profile for review."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "RECONCILE_INPUT_DELIVERY",
+      "contract": {
+        "argument_style": "positional",
+        "effects": "Reconcile unresolved recovery bookkeeping from exact terminal delivery receipts",
+        "max_arguments": 3,
+        "min_arguments": 3,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "name": "entry_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "evidence_version",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "result": {
+          "failure_policy": "Failures stop the batch tail. Reinspect after uncertain writes; never retry model work automatically.",
+          "protocol": "aurora_memory_command_result_v1",
+          "receipt_field": "memory_command_results"
+        },
+        "semantics": "Durable mode only. Exact current attempt and turn; complete local receipt chain within a bounded log window. Operator-only apply requires paused inference, idle model I/O, execution unlocked and unchanged entry/evidence. Never sends input, restores context, executes actions or confirms remote cancellation. Missing/conflicting evidence stays unresolved."
+      },
+      "handler": "reconcile_input_delivery_command",
+      "signature": "RECONCILE_INPUT_DELIVERY(entry_id, version, evidence_version)",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38353
+      },
+      "summary": "Durable mode only. Exact current attempt and turn; complete local receipt chain within a bounded log window. Operator-only apply requires paused inference, idle model I/O, execution unlocked and unchanged entry/evidence. Never sends input, restores context, executes actions or confirms remote cancellation. Missing/conflicting evidence stays unresolved."
     },
     {
       "aliases": [],
@@ -6109,7 +6530,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40283
+        "line": 40994
       },
       "summary": "Record the latest post-arm model-turn diagnostics against the live visual probe contract."
     },
@@ -6137,7 +6558,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40534
+        "line": 41245
       },
       "summary": "Shorthand reference lookup; exact pack names expand to SHOW_REFERENCE_PACK(...), otherwise SEARCH_REFERENCE_PACK(...)."
     },
@@ -6165,7 +6586,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40244
+        "line": 40955
       },
       "summary": "Run the Window 11 offline harness rehearsal without model calls or desktop/game actions; records checks for live/action/next-turn/image/count/setup posture."
     },
@@ -6191,7 +6612,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41525
+        "line": 42236
       },
       "summary": "Mark a suggestion rejected for review only."
     },
@@ -6217,7 +6638,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41997
+        "line": 42708
       },
       "summary": "Reject a Prompt Pin mark as metadata."
     },
@@ -6245,7 +6666,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42782
+        "line": 43526
       },
       "summary": "Cancel active/queued command batches and release Aurora-owned inputs. Model work and Live stay unchanged."
     },
@@ -6271,7 +6692,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40444
+        "line": 41155
       },
       "summary": "Remove a custom model from the Aurora catalog."
     },
@@ -6309,7 +6730,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39624
+        "line": 40335
       },
       "summary": "Hold a validated command/batch using the chosen normal, insert or replace mode."
     },
@@ -6363,7 +6784,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37921
+        "line": 38527
       },
       "summary": "Declare done, wait, approval or error for the current opted-in task and stop automatic continuation. This is not verified success, approval, cancellation or rollback."
     },
@@ -6391,7 +6812,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39378
+        "line": 40035
       },
       "summary": "Request a one-off screenshot capture without changing the normal timer heartbeat or reordering pending commands."
     },
@@ -6417,7 +6838,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41922
+        "line": 42633
       },
       "summary": "Convenience command to request a metadata-only Prompt Pin."
     },
@@ -6445,7 +6866,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39378
+        "line": 40035
       },
       "summary": "Request a one-off screenshot capture without changing the normal timer heartbeat or reordering pending commands."
     },
@@ -6473,7 +6894,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 37550
+        "line": 37921
       },
       "summary": "Explicitly start a fresh Responses chain after inspecting status; clears local continuation identity, never replays a failed request."
     },
@@ -6723,7 +7144,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42097
+        "line": 42808
       },
       "summary": "Validate the complete query before batch execution, then recheck with runtime defaults. argument_policy=legacy preserves old clamps/fallbacks; strict rejects invalid legacy numeric/enum fields. Hard filters, option names, Boolean/date syntax and new options always validate. May call embeddings and update cache/feedback/results; no automatic memory promotion."
     },
@@ -6749,9 +7170,82 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43285
+        "line": 44066
       },
       "summary": "Load a handoff file into pinned handoff context. Defaults to yesterday if no file is provided."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "RETRY_EXECUTION_RECORDING",
+      "contract": {
+        "effects": "Operator-only retry of the exact unconfirmed recording batch. No action replay or automatic history deletion.",
+        "max_arguments": 0,
+        "min_arguments": 0,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [],
+        "result": {
+          "failure_policy": "Operator-only under execution lock; running writers reject retry. Failures keep the unacknowledged prefix.",
+          "protocol": "boolean_handler_result",
+          "success": "retry requested; publication is asynchronous",
+          "verification": "Inspect continuation.recording state, last_receipt and committed counters; true does not prove a disk commit."
+        }
+      },
+      "handler": "retry_execution_recording_command",
+      "signature": "RETRY_EXECUTION_RECORDING()",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38420
+      },
+      "summary": "Operator-only retry of the exact unconfirmed recording batch. No action replay or automatic history deletion."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "RETRY_INPUT",
+      "contract": {
+        "argument_style": "positional",
+        "effects": "Operator-only explicit queued input recovery",
+        "max_arguments": 3,
+        "min_arguments": 2,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "name": "entry_id",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "allow_uncertain",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "result": {
+          "failure_policy": "Failures stop the batch tail. No automatic resend or rollback of earlier effects.",
+          "protocol": "aurora_memory_command_result_v1",
+          "receipt_field": "memory_command_results"
+        },
+        "semantics": "Durable mode only. Recovered input never auto-runs. Use fresh IDs/versions; active input requires Cancel work. Retry creates a fresh request; uncertain prior delivery needs allow_uncertain and idle model I/O."
+      },
+      "handler": "retry_input_command",
+      "signature": "RETRY_INPUT(entry_id, version[, allow_uncertain])",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38333
+      },
+      "summary": "Durable mode only. Recovered input never auto-runs. Use fresh IDs/versions; active input requires Cancel work. Retry creates a fresh request; uncertain prior delivery needs allow_uncertain and idle model I/O."
     },
     {
       "aliases": [],
@@ -6789,7 +7283,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 2302
+        "line": 2319
       },
       "summary": "Preview, atomically apply, or explicitly roll back registered runtime settings through the existing transaction service."
     },
@@ -6815,7 +7309,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41010
+        "line": 41721
       },
       "summary": "Build and log the Window 20 metadata-first sub-agent helper closure/readiness checklist."
     },
@@ -6843,7 +7337,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41654
+        "line": 42365
       },
       "summary": "Log and display a no-exec dry-run proving which review links satisfy the future insertion contract while leaving the executable Pending queue unchanged."
     },
@@ -6869,7 +7363,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41081
+        "line": 41792
       },
       "summary": "Build and log the Window 21 companion contract closure/readiness checklist."
     },
@@ -6897,7 +7391,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40244
+        "line": 40955
       },
       "summary": "Run the Window 11 offline harness rehearsal without model calls or desktop/game actions; records checks for live/action/next-turn/image/count/setup posture."
     },
@@ -6923,7 +7417,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40968
+        "line": 41679
       },
       "summary": "Build and log the Window 19 Prompt Inclusion closure/readiness checklist after activation proof."
     },
@@ -6949,7 +7443,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40790
+        "line": 41501
       },
       "summary": "Create temporary approved Prompt Pin/drop metadata, build the no-send preview, clear the temporary marks, and report non-empty diff/rollback proof without changing prompt packing."
     },
@@ -6975,7 +7469,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40203
+        "line": 40914
       },
       "summary": "Build and log the closure/fallback readiness checklist without calling the Responses API."
     },
@@ -7009,7 +7503,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43331
+        "line": 44112
       },
       "summary": "CLEAR/CLEAR_NONPIN retain Init/Pinned/Handoff; CLEAR_NOPIN% removes a percentage of unprotected positions (random default, optional oldest/newest). CLEAR% keeps a total recency budget with protected priority and may remove protected rows. EDIT_MSGS changes first timestamp match per pair; DELETE_MSG removes all matches."
     },
@@ -7035,7 +7529,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43346
+        "line": 44127
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -7061,7 +7555,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43279
+        "line": 44060
       },
       "summary": "Save a structured handoff snapshot to the logging folder or a provided path."
     },
@@ -7108,6 +7602,7 @@
           "turn_post_action_settle_seconds",
           "demand_capture_enabled",
           "capture_mode",
+          "capture_command_policy",
           "capture_geometry_policy",
           "capture_request_timeout_seconds",
           "capture_request_max_attempts",
@@ -7268,7 +7763,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39690
+        "line": 40401
       },
       "summary": "Atomically save current profile settings, retaining unknown fields in a valid existing file."
     },
@@ -7294,7 +7789,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43337
+        "line": 44118
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -7329,7 +7824,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43213
+        "line": 43994
       },
       "summary": "Save a validated recursive task snapshot atomically, or validate and restore a complete snapshot. Does not undo live actions."
     },
@@ -7355,7 +7850,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42412
+        "line": 43123
       },
       "summary": "Search the mirrored Aurora command catalog by topic, summary, handler, or signature text."
     },
@@ -7395,7 +7890,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42093
+        "line": 42804
       },
       "summary": "Existing episodic snapshot write/list/lexical-search behavior with complete argument admission and correlated receipts; no inferred persistence or rollback guarantee."
     },
@@ -7421,7 +7916,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40357
+        "line": 41068
       },
       "summary": "Search image sidecars by caption, OCR text, tags, capture reason, image id, and path."
     },
@@ -7447,7 +7942,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42286
+        "line": 42997
       },
       "summary": "Search the mirrored runtime/control-panel symbol indexes and generated maps."
     },
@@ -7473,7 +7968,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40493
+        "line": 41204
       },
       "summary": "Search the mirrored Aurora reference packs by topic text."
     },
@@ -7613,7 +8108,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42796
+        "line": 43540
       },
       "summary": "Set runtime.action, or omit value to read it. Controller family available to Aurora for approved actions."
     },
@@ -7657,7 +8152,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39912
+        "line": 40623
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -7701,7 +8196,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39900
+        "line": 40611
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -7727,7 +8222,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41471
+        "line": 42182
       },
       "summary": "Append review-state metadata without Pending Command insertion or execution."
     },
@@ -7753,7 +8248,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41351
+        "line": 42062
       },
       "summary": "Append review/status metadata for a sub-agent task packet without execution or prompt inclusion."
     },
@@ -7779,7 +8274,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39948
+        "line": 40659
       },
       "summary": "Explicitly set always-mode and hide_input together."
     },
@@ -7908,7 +8403,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37800
+        "line": 38171
       },
       "summary": "Set runtime.assistant_policy, or omit value to read it. Task flow admits discovery, enabled capture requests, one-turn plans, bounded GB overworld movement and battle menu steps in Auto. Legacy keeps previous review decisions."
     },
@@ -8039,7 +8534,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42722
+        "line": 43433
       },
       "summary": "Set auth.mode, or omit value to read it. Credential route Aurora will resolve before a model request."
     },
@@ -8083,7 +8578,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39193
+        "line": 39850
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -8127,7 +8622,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39816
+        "line": 40527
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -8153,7 +8648,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39101
+        "line": 39758
       },
       "summary": "Set battle reasoning effort."
     },
@@ -8179,9 +8674,139 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39153
+        "line": 39810
       },
       "summary": "Set verbosity for battle turns."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "SET_CAPTURE_COMMAND_POLICY",
+      "contract": {
+        "apply_timing": "next_command_batch",
+        "argument_style": "positional",
+        "effects": "Read capture.command_policy when omitted; otherwise set it in this runtime session. Legacy requests captures immediately; batch_end shares one post-batch observation. batch_end_explicit additionally uses only the requested delay for proven capture-only batches. Saved defaults are unchanged.",
+        "lock_key": "screenshot_interval",
+        "max_arguments": 1,
+        "min_arguments": 0,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "enum": [
+              "legacy",
+              "batch_end",
+              "batch_end_explicit"
+            ],
+            "name": "value",
+            "nullable": false,
+            "omitted": "read_current_value",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "related_effects": "See setting metadata for application timing.",
+        "result": {
+          "failure_policy": "Stop the remaining batch after failure; no automatic replay or rollback of raw setters.",
+          "protocol": "aurora_setting_command_result_v1",
+          "receipt_field": "setting_results",
+          "schema": {
+            "properties": {
+              "after_version": {
+                "type": "string"
+              },
+              "before_value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "before_version": {
+                "type": "string"
+              },
+              "command": {
+                "type": "string"
+              },
+              "effect_status": {
+                "enum": [
+                  "observed",
+                  "not_started",
+                  "uncertain"
+                ]
+              },
+              "key": {
+                "const": "capture.command_policy"
+              },
+              "operation": {
+                "enum": [
+                  "read",
+                  "set",
+                  "toggle"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              },
+              "requested_value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "schema_version": {
+                "const": "aurora_setting_command_result_v1"
+              },
+              "success": {
+                "type": "boolean"
+              },
+              "value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "value_status": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "schema_version",
+              "command",
+              "key",
+              "operation",
+              "success",
+              "effect_status",
+              "requested_value",
+              "before_value",
+              "value",
+              "value_status",
+              "before_version",
+              "after_version",
+              "reason"
+            ],
+            "type": "object"
+          },
+          "verification": "Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior."
+        },
+        "scope": "runtime_session",
+        "setting_key": "capture.command_policy",
+        "validation_owner": "aurora_settings_registry.coerce_setting_value"
+      },
+      "handler": "set_capture_command_policy_command",
+      "signature": "SET_CAPTURE_COMMAND_POLICY([value])",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38709
+      },
+      "summary": "Set capture.command_policy, or omit value to read it. Legacy requests captures immediately; batch_end shares one post-batch observation. batch_end_explicit additionally uses only the requested delay for proven capture-only batches."
     },
     {
       "aliases": [],
@@ -8308,7 +8933,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 38077
+        "line": 38733
       },
       "summary": "Set capture.geometry_policy, or omit value to read it. Verified captures an explicit physical rectangle; legacy keeps startup scaling and default desktop grabs."
     },
@@ -8437,7 +9062,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 38048
+        "line": 38688
       },
       "summary": "Set capture.mode, or omit value to read it. Heartbeat captures periodically; request_only captures only when the demand service has a due request."
     },
@@ -8566,7 +9191,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 38062
+        "line": 38718
       },
       "summary": "Set capture.provenance_policy, or omit value to read it. Verified requires pixels acquired after the action settle boundary; legacy retains counter/clock freshness checks."
     },
@@ -8692,7 +9317,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 38122
+        "line": 38778
       },
       "summary": "Set capture.request_max_attempts, or omit value to read it. Maximum acquisition attempts for one request; zero preserves unlimited retries. Legacy drawing recapture shares its parent's attempt."
     },
@@ -8819,7 +9444,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 38107
+        "line": 38763
       },
       "summary": "Set capture.request_timeout_seconds, or omit value to read it. Total monotonic deadline from request admission through settle, acquisition, drawing and publication. Zero preserves unlimited waiting."
     },
@@ -8950,7 +9575,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 38092
+        "line": 38748
       },
       "summary": "Set capture.target, or omit value to read it. Choose primary monitor, virtual desktop or foreground window for verified geometry."
     },
@@ -8976,7 +9601,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 38951
+        "line": 39608
       },
       "summary": "Set the attached history window size."
     },
@@ -9002,7 +9627,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 38907
+        "line": 39564
       },
       "summary": "Set chat-head window opacity between 0.25 and 1.0."
     },
@@ -9028,7 +9653,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 38970
+        "line": 39627
       },
       "summary": "Control the send animation style used by the floating chat strip input."
     },
@@ -9054,7 +9679,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 38987
+        "line": 39644
       },
       "summary": "Set the floating chat strip send animation duration."
     },
@@ -9080,7 +9705,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 38932
+        "line": 39589
       },
       "summary": "Set the strip window size."
     },
@@ -9124,7 +9749,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 38920
+        "line": 39577
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -9150,7 +9775,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39795
+        "line": 40506
       },
       "summary": "Toggle compact [CHATLOG] console echo output."
     },
@@ -9176,7 +9801,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39421
+        "line": 40132
       },
       "summary": "Set how many turns ahead Aurora sketches likely command candidates; this does not approve commands."
     },
@@ -9202,7 +9827,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39408
+        "line": 40119
       },
       "summary": "Set how many recent turns of command drip history remain on hand. Recommended normal range: 3-7."
     },
@@ -9246,7 +9871,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39529
+        "line": 40240
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -9290,9 +9915,139 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39513
+        "line": 40224
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "SET_COMPLETED_GOAL_PROJECTION",
+      "contract": {
+        "apply_timing": "next_memory_projection",
+        "argument_style": "positional",
+        "effects": "Read goals.completed_projection when omitted; otherwise set it in this runtime session. Legacy hides hints; annotate reviews exact text matches; linked shows explicit entry-to-goal status (including missing targets). Completion history is declared, not verified. No plans are deleted or executed. Saved defaults are unchanged.",
+        "lock_key": "execution",
+        "max_arguments": 1,
+        "min_arguments": 0,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "enum": [
+              "legacy",
+              "annotate",
+              "linked"
+            ],
+            "name": "value",
+            "nullable": false,
+            "omitted": "read_current_value",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "related_effects": "See setting metadata for application timing.",
+        "result": {
+          "failure_policy": "Stop the remaining batch after failure; no automatic replay or rollback of raw setters.",
+          "protocol": "aurora_setting_command_result_v1",
+          "receipt_field": "setting_results",
+          "schema": {
+            "properties": {
+              "after_version": {
+                "type": "string"
+              },
+              "before_value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "before_version": {
+                "type": "string"
+              },
+              "command": {
+                "type": "string"
+              },
+              "effect_status": {
+                "enum": [
+                  "observed",
+                  "not_started",
+                  "uncertain"
+                ]
+              },
+              "key": {
+                "const": "goals.completed_projection"
+              },
+              "operation": {
+                "enum": [
+                  "read",
+                  "set",
+                  "toggle"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              },
+              "requested_value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "schema_version": {
+                "const": "aurora_setting_command_result_v1"
+              },
+              "success": {
+                "type": "boolean"
+              },
+              "value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "value_status": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "schema_version",
+              "command",
+              "key",
+              "operation",
+              "success",
+              "effect_status",
+              "requested_value",
+              "before_value",
+              "value",
+              "value_status",
+              "before_version",
+              "after_version",
+              "reason"
+            ],
+            "type": "object"
+          },
+          "verification": "Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior."
+        },
+        "scope": "runtime_session",
+        "setting_key": "goals.completed_projection",
+        "validation_owner": "aurora_settings_registry.coerce_setting_value"
+      },
+      "handler": "set_completed_goal_projection_command",
+      "signature": "SET_COMPLETED_GOAL_PROJECTION([value])",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38621
+      },
+      "summary": "Set goals.completed_projection, or omit value to read it. Legacy hides hints; annotate reviews exact text matches; linked shows explicit entry-to-goal status (including missing targets). Completion history is declared, not verified. No plans are deleted or executed."
     },
     {
       "aliases": [],
@@ -9316,7 +10071,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41944
+        "line": 42655
       },
       "summary": "Update a context mark approval state."
     },
@@ -9342,7 +10097,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39127
+        "line": 39784
       },
       "summary": "Set reasoning effort for critique/self-review turns."
     },
@@ -9368,7 +10123,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39218
+        "line": 39875
       },
       "summary": "Set how often Aurora performs a deeper critique/self-review turn."
     },
@@ -9394,7 +10149,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39166
+        "line": 39823
       },
       "summary": "Set verbosity for critique/self-review turns."
     },
@@ -9420,7 +10175,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42482
+        "line": 43193
       },
       "summary": "Toggle the near-cursor XY label."
     },
@@ -9555,7 +10310,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39358
+        "line": 40015
       },
       "summary": "Set capture.demand_enabled, or omit value to read it. Whether commands and explicit requests may ask the capture service for a fresh frame."
     },
@@ -9581,7 +10336,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40610
+        "line": 41321
       },
       "summary": "Choose lexical-only retrieval, lexical fallback, or embedding-required retrieval."
     },
@@ -9607,7 +10362,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40702
+        "line": 41413
       },
       "summary": "Set which OpenAI embedding model episodic retrieval should use."
     },
@@ -9651,7 +10406,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 40557
+        "line": 41268
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -9677,7 +10432,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40569
+        "line": 41280
       },
       "summary": "Set the periodic episodic snapshot interval. Minimum 60 seconds."
     },
@@ -9721,7 +10476,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 40584
+        "line": 41295
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -9765,7 +10520,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 40597
+        "line": 41308
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -9791,7 +10546,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40634
+        "line": 41345
       },
       "summary": "Bound automatic episodic retrieval injection to higher-attention planning turns."
     },
@@ -9817,7 +10572,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40681
+        "line": 41392
       },
       "summary": "Set the minimum turn gap before bounded planning retrieval may run again. Range 0-12."
     },
@@ -9843,7 +10598,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40662
+        "line": 41373
       },
       "summary": "Set how many episodic memories bounded planning turns may inject. Range 1-4."
     },
@@ -9978,9 +10733,138 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42839
+        "line": 43583
       },
       "summary": "Set runtime.execution, or omit value to read it. Approval and execution posture for commands proposed by the model."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "SET_EXECUTION_RECORDING",
+      "contract": {
+        "apply_timing": "next_runtime_tick",
+        "argument_style": "positional",
+        "effects": "Read execution.recording when omitted; otherwise set it in this runtime session. Request bounded metadata recording at controller boundaries. Off closes and drains the current session; errors require explicit retry. Saved defaults are unchanged.",
+        "lock_key": "execution",
+        "max_arguments": 1,
+        "min_arguments": 0,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "enum": [
+              "off",
+              "boundaries"
+            ],
+            "name": "value",
+            "nullable": false,
+            "omitted": "read_current_value",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "related_effects": "See setting metadata for application timing.",
+        "result": {
+          "failure_policy": "Stop the remaining batch after failure; no automatic replay or rollback of raw setters.",
+          "protocol": "aurora_setting_command_result_v1",
+          "receipt_field": "setting_results",
+          "schema": {
+            "properties": {
+              "after_version": {
+                "type": "string"
+              },
+              "before_value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "before_version": {
+                "type": "string"
+              },
+              "command": {
+                "type": "string"
+              },
+              "effect_status": {
+                "enum": [
+                  "observed",
+                  "not_started",
+                  "uncertain"
+                ]
+              },
+              "key": {
+                "const": "execution.recording"
+              },
+              "operation": {
+                "enum": [
+                  "read",
+                  "set",
+                  "toggle"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              },
+              "requested_value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "schema_version": {
+                "const": "aurora_setting_command_result_v1"
+              },
+              "success": {
+                "type": "boolean"
+              },
+              "value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "value_status": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "schema_version",
+              "command",
+              "key",
+              "operation",
+              "success",
+              "effect_status",
+              "requested_value",
+              "before_value",
+              "value",
+              "value_status",
+              "before_version",
+              "after_version",
+              "reason"
+            ],
+            "type": "object"
+          },
+          "verification": "Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior."
+        },
+        "scope": "runtime_session",
+        "setting_key": "execution.recording",
+        "validation_owner": "aurora_settings_registry.coerce_setting_value"
+      },
+      "handler": "set_execution_recording_command",
+      "signature": "SET_EXECUTION_RECORDING([value])",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38409
+      },
+      "summary": "Set execution.recording, or omit value to read it. Request bounded metadata recording at controller boundaries. Off closes and drains the current session; errors require explicit retry."
     },
     {
       "aliases": [],
@@ -10107,7 +10991,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 38027
+        "line": 38667
       },
       "summary": "Set game.scene_policy, or omit value to read it. Evidence uses fresh model observation/scene sections with token boundaries and conflict checks. Legacy retains mixed-context substring inference."
     },
@@ -10236,7 +11120,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 38839
+        "line": 39496
       },
       "summary": "Set game.profile, or omit value to read it. Gameplay assumptions, prompts, controls, and save-state guidance."
     },
@@ -10249,7 +11133,7 @@
       "contract": {
         "apply_timing": "next_explicit_save",
         "argument_style": "positional",
-        "effects": "Read goals.save_format when omitted; otherwise set it in this runtime session. Versioned saves add a schema envelope; legacy preserves the existing task document shape. Both use recursive IDs, validation and atomic replacement. Saved defaults are unchanged.",
+        "effects": "Read goals.save_format when omitted; otherwise set it in this runtime session. Versioned saves retain optional horizon identities/links in v2, or use v1 without them. Legacy preserves the old task shape and explicitly omits identity metadata. Both use recursive IDs, validation and atomic replacement. Saved defaults are unchanged.",
         "lock_key": "execution",
         "max_arguments": 1,
         "min_arguments": 0,
@@ -10365,9 +11249,9 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 38033
+        "line": 38673
       },
-      "summary": "Set goals.save_format, or omit value to read it. Versioned saves add a schema envelope; legacy preserves the existing task document shape. Both use recursive IDs, validation and atomic replacement."
+      "summary": "Set goals.save_format, or omit value to read it. Versioned saves retain optional horizon identities/links in v2, or use v1 without them. Legacy preserves the old task shape and explicitly omits identity metadata. Both use recursive IDs, validation and atomic replacement."
     },
     {
       "aliases": [],
@@ -10494,7 +11378,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 38009
+        "line": 38649
       },
       "summary": "Set goals.hierarchy_dispatch, or omit value to read it. Legacy routes Level 1 commands; advisory keeps hierarchy as notes. Explicit commands remain available."
     },
@@ -10520,7 +11404,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43377
+        "line": 44158
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -10649,7 +11533,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 38018
+        "line": 38658
       },
       "summary": "Set goals.horizon_sync, or omit value to read it. Legacy replaces four horizon lists from hierarchy levels; preserve keeps explicit horizon lists and hierarchy separate."
     },
@@ -10780,7 +11664,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43391
+        "line": 44172
       },
       "summary": "Set vision.image_detail, or omit value to read it. Default image detail before model-specific compatibility normalization."
     },
@@ -10824,7 +11708,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39888
+        "line": 40599
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -10868,7 +11752,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39936
+        "line": 40647
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -10997,9 +11881,267 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37806
+        "line": 38177
       },
       "summary": "Set context.init_delivery, or omit value to read it. System once omits exact Init history copies only when the full text is already in the system prompt. Stored history is preserved."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "SET_INPUT_RECOVERY",
+      "contract": {
+        "apply_timing": "paused_empty_queue",
+        "argument_style": "positional",
+        "effects": "Read conversation.input_recovery when omitted; otherwise set it in this runtime session. Legacy keeps the in-memory input queue. Durable stores identified inbox input locally, holds it after restart, and requires explicit retry. Does not persist shell/audio input or automatically resend. Saved defaults are unchanged.",
+        "lock_key": "execution",
+        "max_arguments": 1,
+        "min_arguments": 0,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "enum": [
+              "legacy",
+              "durable"
+            ],
+            "name": "value",
+            "nullable": false,
+            "omitted": "read_current_value",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "related_effects": "See setting metadata for application timing.",
+        "result": {
+          "failure_policy": "Stop the remaining batch after failure; no automatic replay or rollback of raw setters.",
+          "protocol": "aurora_setting_command_result_v1",
+          "receipt_field": "setting_results",
+          "schema": {
+            "properties": {
+              "after_version": {
+                "type": "string"
+              },
+              "before_value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "before_version": {
+                "type": "string"
+              },
+              "command": {
+                "type": "string"
+              },
+              "effect_status": {
+                "enum": [
+                  "observed",
+                  "not_started",
+                  "uncertain"
+                ]
+              },
+              "key": {
+                "const": "conversation.input_recovery"
+              },
+              "operation": {
+                "enum": [
+                  "read",
+                  "set",
+                  "toggle"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              },
+              "requested_value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "schema_version": {
+                "const": "aurora_setting_command_result_v1"
+              },
+              "success": {
+                "type": "boolean"
+              },
+              "value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "value_status": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "schema_version",
+              "command",
+              "key",
+              "operation",
+              "success",
+              "effect_status",
+              "requested_value",
+              "before_value",
+              "value",
+              "value_status",
+              "before_version",
+              "after_version",
+              "reason"
+            ],
+            "type": "object"
+          },
+          "verification": "Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior."
+        },
+        "scope": "runtime_session",
+        "setting_key": "conversation.input_recovery",
+        "validation_owner": "aurora_settings_registry.coerce_setting_value"
+      },
+      "handler": "set_input_recovery_command",
+      "signature": "SET_INPUT_RECOVERY([value])",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38215
+      },
+      "summary": "Set conversation.input_recovery, or omit value to read it. Legacy keeps the in-memory input queue. Durable stores identified inbox input locally, holds it after restart, and requires explicit retry. Does not persist shell/audio input or automatically resend."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "SET_JOURNAL_ORDER",
+      "contract": {
+        "apply_timing": "next_memory_projection",
+        "argument_style": "positional",
+        "effects": "Read memory.journal_order when omitted; otherwise set it in this runtime session. Legacy shows the first retained entries; recent selects the newest retained tail in insertion order. Full PinnedInfo remains complete. Saved defaults are unchanged.",
+        "lock_key": "execution",
+        "max_arguments": 1,
+        "min_arguments": 0,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "enum": [
+              "legacy",
+              "recent"
+            ],
+            "name": "value",
+            "nullable": false,
+            "omitted": "read_current_value",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "related_effects": "See setting metadata for application timing.",
+        "result": {
+          "failure_policy": "Stop the remaining batch after failure; no automatic replay or rollback of raw setters.",
+          "protocol": "aurora_setting_command_result_v1",
+          "receipt_field": "setting_results",
+          "schema": {
+            "properties": {
+              "after_version": {
+                "type": "string"
+              },
+              "before_value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "before_version": {
+                "type": "string"
+              },
+              "command": {
+                "type": "string"
+              },
+              "effect_status": {
+                "enum": [
+                  "observed",
+                  "not_started",
+                  "uncertain"
+                ]
+              },
+              "key": {
+                "const": "memory.journal_order"
+              },
+              "operation": {
+                "enum": [
+                  "read",
+                  "set",
+                  "toggle"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              },
+              "requested_value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "schema_version": {
+                "const": "aurora_setting_command_result_v1"
+              },
+              "success": {
+                "type": "boolean"
+              },
+              "value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "value_status": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "schema_version",
+              "command",
+              "key",
+              "operation",
+              "success",
+              "effect_status",
+              "requested_value",
+              "before_value",
+              "value",
+              "value_status",
+              "before_version",
+              "after_version",
+              "reason"
+            ],
+            "type": "object"
+          },
+          "verification": "Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior."
+        },
+        "scope": "runtime_session",
+        "setting_key": "memory.journal_order",
+        "validation_owner": "aurora_settings_registry.coerce_setting_value"
+      },
+      "handler": "set_journal_order_command",
+      "signature": "SET_JOURNAL_ORDER([value])",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38604
+      },
+      "summary": "Set memory.journal_order, or omit value to read it. Legacy shows the first retained entries; recent selects the newest retained tail in insertion order. Full PinnedInfo remains complete."
     },
     {
       "aliases": [],
@@ -11023,7 +12165,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42498
+        "line": 43209
       },
       "summary": "Toggle the red key-point grid overlay."
     },
@@ -11049,7 +12191,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43403
+        "line": 44184
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -11184,7 +12326,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39732
+        "line": 40443
       },
       "summary": "Set runtime.live_init, or omit value to read it. Whether Aurora loads its full live initialization prompt when that path is used."
     },
@@ -11323,7 +12465,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42541
+        "line": 43252
       },
       "summary": "Set runtime.live, or omit value to read it. Whether Aurora may send model requests and process model responses."
     },
@@ -11349,7 +12491,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43384
+        "line": 44165
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -11478,7 +12620,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37561
+        "line": 37932
       },
       "summary": "Set model.transport, or omit value to read it. Explicit live transport selection. Responses requires Astra/API-key auth and keeps provider history. An intervening Chat Completions turn requires an explicit Responses reset. Does not enable live mode."
     },
@@ -11608,7 +12750,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39043
+        "line": 39700
       },
       "summary": "Set inference.verbosity, or omit value to read it. Default response verbosity for model families that support it."
     },
@@ -11753,6 +12895,7 @@
               },
               "type": "object"
             },
+            "quoting": "Quote text values containing delimiters, e.g. note=\"inspect; then compare, with evidence\". Unquoted semicolons/newlines start another option.",
             "required": false,
             "separators": [
               "semicolon",
@@ -11778,7 +12921,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39671
+        "line": 40382
       },
       "summary": "Replace the queued one-turn model/effort/verbosity/image/temperature plan; omit arguments to inspect. Session defaults stay unchanged."
     },
@@ -11831,7 +12974,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39676
+        "line": 40387
       },
       "summary": "Replace the queued plan with one turn's reasoning effort and optional note; omit arguments to inspect. Model compatibility normalization still applies."
     },
@@ -11857,7 +13000,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42629
+        "line": 43340
       },
       "summary": "Configure or replace the external-operator passcode used for privileged raw bridge commands."
     },
@@ -11883,7 +13026,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42657
+        "line": 43368
       },
       "summary": "Require or relax passcode authorization for privileged external operator commands."
     },
@@ -11909,7 +13052,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42608
+        "line": 43319
       },
       "summary": "Show raw passcode-bearing commands in logs/history, or mask them as *******."
     },
@@ -11935,7 +13078,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39492
+        "line": 40203
       },
       "summary": "Set how newly queued pending commands behave by default in the pending planning lane."
     },
@@ -11961,7 +13104,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40856
+        "line": 41567
       },
       "summary": "Enable or disable reversible Prompt Inclusion after fresh review and offline proof."
     },
@@ -12090,7 +13233,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37939
+        "line": 38545
       },
       "summary": "Set scheduler.readback_scope, or omit value to read it. Discovery preserves history-based lookup delivery; reviewed additionally includes bounded task-correlated settings, goals, history and retrieval receipts."
     },
@@ -12225,7 +13368,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37948
+        "line": 38554
       },
       "summary": "Set scheduler.readback_wake_enabled, or omit value to read it. Wake a follow-up for eligible discovery or reviewed receipt data, according to readback scope. Requires bounded task mode."
     },
@@ -12361,7 +13504,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39069
+        "line": 39726
       },
       "summary": "Set inference.reasoning_effort, or omit value to read it. Default reasoning effort before model-specific compatibility normalization."
     },
@@ -12487,7 +13630,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39030
+        "line": 39687
       },
       "summary": "Set model.reasoning, or omit value to read it. Model selected when Aurora requests a reasoning-oriented turn."
     },
@@ -12513,7 +13656,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39056
+        "line": 39713
       },
       "summary": "Track the preferred reasoning summary mode."
     },
@@ -12539,7 +13682,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39114
+        "line": 39771
       },
       "summary": "Set reasoning effort for scheduled review turns."
     },
@@ -12565,7 +13708,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39205
+        "line": 39862
       },
       "summary": "Set how often Aurora performs a deliberate review turn."
     },
@@ -12591,7 +13734,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39140
+        "line": 39797
       },
       "summary": "Set verbosity for scheduled higher-attention review turns."
     },
@@ -12718,7 +13861,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39719
+        "line": 40430
       },
       "summary": "Set capture.screenshot_interval, or omit value to read it. Requested screenshot polling interval before idle floors and other effective cadence rules."
     },
@@ -12851,7 +13994,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39091
+        "line": 39748
       },
       "summary": "Set inference.service_tier, or omit value to read it. Requested service priority, independent of reasoning effort. Regular omits acceleration; subscription catalog must advertise other tiers."
     },
@@ -12987,7 +14130,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39087
+        "line": 39744
       },
       "summary": "Set inference.reasoning_effort, or omit value to read it. Default reasoning effort before model-specific compatibility normalization."
     },
@@ -13031,7 +14174,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39852
+        "line": 40563
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -13075,7 +14218,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39840
+        "line": 40551
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -13119,7 +14262,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39864
+        "line": 40575
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -13163,7 +14306,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39828
+        "line": 40539
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -13189,7 +14332,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39753
+        "line": 40464
       },
       "summary": "Enable or disable sound effects."
     },
@@ -13215,7 +14358,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40415
+        "line": 41126
       },
       "summary": "Select the visible stateful preset profile metadata; live transport remains unchanged until a later transport slice."
     },
@@ -13241,7 +14384,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42514
+        "line": 43225
       },
       "summary": "Toggle the top status text overlay."
     },
@@ -13370,7 +14513,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37981
+        "line": 38587
       },
       "summary": "Set auth.subscription_policy, or omit value to read it. Legacy retains the cooperative stream reader. Bounded uses one owned HTTP worker with 90s read idle and a 180s inference deadline, locally terminable on Cancel."
     },
@@ -13499,7 +14642,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37817
+        "line": 38357
       },
       "summary": "Set task.continuation_mode, or omit value to read it. Bounded limits all model slots/wake reasons in one task; legacy retains unrestricted scheduler behavior."
     },
@@ -13626,7 +14769,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37847
+        "line": 38387
       },
       "summary": "Set task.max_commands, or omit value to read it. Maximum expanded command bindings reserved for automatic admission in one bounded task. Zero disables this budget; latched at next task start."
     },
@@ -13753,7 +14896,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37827
+        "line": 38367
       },
       "summary": "Set task.max_model_turns, or omit value to read it. Maximum model-turn admissions, across primary/review slots. Latched at the next task start."
     },
@@ -13880,7 +15023,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37858
+        "line": 38398
       },
       "summary": "Set task.max_reported_tokens, or omit value to read it. Stop automatic continuation and response commands when provider-reported total tokens reach this threshold. Zero disables it; latched at next task start."
     },
@@ -14008,9 +15151,138 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37837
+        "line": 38377
       },
       "summary": "Set task.max_seconds, or omit value to read it. Elapsed-time admission limit; late model responses cannot launch new commands. Latched at next task start."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "SET_TASK_OBJECTIVE_MODE",
+      "contract": {
+        "apply_timing": "next_task",
+        "argument_style": "positional",
+        "effects": "Read task.objective_mode when omitted; otherwise set it in this runtime session. Retain queued operator messages outside ordinary chat decay and the recent-text window for a bounded task. Saved defaults are unchanged.",
+        "lock_key": "execution",
+        "max_arguments": 1,
+        "min_arguments": 0,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "enum": [
+              "legacy",
+              "operator"
+            ],
+            "name": "value",
+            "nullable": false,
+            "omitted": "read_current_value",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "related_effects": "See setting metadata for application timing.",
+        "result": {
+          "failure_policy": "Stop the remaining batch after failure; no automatic replay or rollback of raw setters.",
+          "protocol": "aurora_setting_command_result_v1",
+          "receipt_field": "setting_results",
+          "schema": {
+            "properties": {
+              "after_version": {
+                "type": "string"
+              },
+              "before_value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "before_version": {
+                "type": "string"
+              },
+              "command": {
+                "type": "string"
+              },
+              "effect_status": {
+                "enum": [
+                  "observed",
+                  "not_started",
+                  "uncertain"
+                ]
+              },
+              "key": {
+                "const": "task.objective_mode"
+              },
+              "operation": {
+                "enum": [
+                  "read",
+                  "set",
+                  "toggle"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              },
+              "requested_value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "schema_version": {
+                "const": "aurora_setting_command_result_v1"
+              },
+              "success": {
+                "type": "boolean"
+              },
+              "value": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "value_status": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "schema_version",
+              "command",
+              "key",
+              "operation",
+              "success",
+              "effect_status",
+              "requested_value",
+              "before_value",
+              "value",
+              "value_status",
+              "before_version",
+              "after_version",
+              "reason"
+            ],
+            "type": "object"
+          },
+          "verification": "Observed registered runtime value under the settings transaction lock; not proof of credentials, model availability or downstream application behavior."
+        },
+        "scope": "runtime_session",
+        "setting_key": "task.objective_mode",
+        "validation_owner": "aurora_settings_registry.coerce_setting_value"
+      },
+      "handler": "set_task_objective_mode_command",
+      "signature": "SET_TASK_OBJECTIVE_MODE([value])",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38432
+      },
+      "summary": "Set task.objective_mode, or omit value to read it. Retain queued operator messages outside ordinary chat decay and the recent-text window for a bounded task."
     },
     {
       "aliases": [],
@@ -14143,7 +15415,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37902
+        "line": 38476
       },
       "summary": "Set task.outcome_reporting, or omit value to read it. Allow a standalone declared done/wait/approval/error report to stop automatic continuation. Latched at next bounded task start."
     },
@@ -14273,7 +15545,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37880
+        "line": 38454
       },
       "summary": "Set task.pending_carry_policy, or omit value to read it. Carry, hold for operator review, or discard explicitly task-scoped unsubmitted proposals from previous tasks."
     },
@@ -14402,7 +15674,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37869
+        "line": 38443
       },
       "summary": "Set task.plan_carry_policy, or omit value to read it. Carry queued plans, or discard explicitly task-scoped plans from a previous task. Operator and unattributed plans are preserved."
     },
@@ -14531,7 +15803,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37891
+        "line": 38465
       },
       "summary": "Set task.unknown_usage_policy, or omit value to read it. Continue with explicit unknown coverage, or stop after an unmetered request when a reported-token threshold is enabled. Latched at next task start."
     },
@@ -14659,7 +15931,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39706
+        "line": 40417
       },
       "summary": "Set inference.temperature, or omit value to read it. Sampling temperature used by Aurora where the selected model accepts it."
     },
@@ -14785,7 +16057,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39004
+        "line": 39661
       },
       "summary": "Set model.text, or omit value to read it. Model used for text-oriented Aurora turns."
     },
@@ -14811,7 +16083,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42466
+        "line": 43177
       },
       "summary": "Toggle the colored tile grid overlay."
     },
@@ -14837,7 +16109,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39774
+        "line": 40485
       },
       "summary": "Toggle detailed timing/debug logging."
     },
@@ -14972,7 +16244,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39311
+        "line": 39968
       },
       "summary": "Set scheduler.capture_wake_enabled, or omit value to read it. Whether settled capture changes may wake a model turn in hybrid scheduler mode."
     },
@@ -15099,7 +16371,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39327
+        "line": 39984
       },
       "summary": "Set scheduler.capture_wake_debounce_seconds, or omit value to read it. Settle delay before a changed capture may wake a model turn."
     },
@@ -15226,7 +16498,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39285
+        "line": 39942
       },
       "summary": "Set scheduler.heartbeat_seconds, or omit value to read it. Maximum quiet interval before a heartbeat can wake a turn; zero explicitly disables periodic model turns."
     },
@@ -15353,7 +16625,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39298
+        "line": 39955
       },
       "summary": "Set scheduler.min_gap_seconds, or omit value to read it. Minimum spacing between model-turn submissions."
     },
@@ -15480,7 +16752,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39340
+        "line": 39997
       },
       "summary": "Set scheduler.post_action_settle_seconds, or omit value to read it. Delay after an action result before scheduler follow-up may proceed."
     },
@@ -15625,7 +16897,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39231
+        "line": 39888
       },
       "summary": "Set scheduler.mode, or omit value to read it. Wake strategy for capture-driven, event-driven, or hybrid turns."
     },
@@ -15764,7 +17036,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39248
+        "line": 39905
       },
       "summary": "Set scheduler.profile, or omit value to read it. Named bundle for Aurora turn wake and pacing thresholds."
     },
@@ -15808,7 +17080,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39924
+        "line": 40635
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -15852,7 +17124,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39876
+        "line": 40587
       },
       "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."
     },
@@ -15978,7 +17250,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39017
+        "line": 39674
       },
       "summary": "Set model.vision, or omit value to read it. Model selected for vision-oriented Aurora turns."
     },
@@ -16004,7 +17276,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41271
+        "line": 41982
       },
       "summary": "Display metadata-only Agent Registry / History ACL state."
     },
@@ -16030,7 +17302,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41001
+        "line": 41712
       },
       "summary": "Display Window 20 helper closure readiness, Pending cleanup status, manual-approval boundary, and guardrails."
     },
@@ -16056,7 +17328,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41281
+        "line": 41992
       },
       "summary": "Display per-agent private-history JSONL counts and parent-visible summaries."
     },
@@ -16082,7 +17354,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41276
+        "line": 41987
       },
       "summary": "Display per-agent history ACL preview rows and JSONL audit-log path readiness."
     },
@@ -16110,7 +17382,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41640
+        "line": 42351
       },
       "summary": "Display task/suggestion review links and the closed Pending Command gate preview."
     },
@@ -16138,7 +17410,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41647
+        "line": 42358
       },
       "summary": "Display the no-exec Pending insertion checklist/dry-run contract for review-linked suggestions."
     },
@@ -16166,7 +17438,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41647
+        "line": 42358
       },
       "summary": "Display the no-exec Pending insertion checklist/dry-run contract for review-linked suggestions."
     },
@@ -16194,7 +17466,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41640
+        "line": 42351
       },
       "summary": "Display task/suggestion review links and the closed Pending Command gate preview."
     },
@@ -16220,7 +17492,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41292
+        "line": 42003
       },
       "summary": "Display append-only sub-agent suggestion audit rows and policy outcomes."
     },
@@ -16246,7 +17518,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41287
+        "line": 41998
       },
       "summary": "Display metadata-only sub-agent suggestion route and policy-tag preview rows."
     },
@@ -16272,7 +17544,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41298
+        "line": 42009
       },
       "summary": "Display append-only sub-agent task packets and review/status outcomes."
     },
@@ -16298,7 +17570,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42593
+        "line": 43304
       },
       "summary": "Display the configured and last-resolved auth path."
     },
@@ -16324,7 +17596,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 38902
+        "line": 39559
       },
       "summary": "Display the current floating chat-head settings."
     },
@@ -16352,7 +17624,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41262
+        "line": 41973
       },
       "summary": "Display the read-only Window 18-21 checkpoint posture rollup; does not stage, commit, call models, spawn helpers, or approve Pending Commands."
     },
@@ -16378,7 +17650,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39548
+        "line": 40259
       },
       "summary": "Display the recent and near-future command tree. Lookahead lanes are candidate forecasts, not approved actions."
     },
@@ -16404,7 +17676,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41072
+        "line": 41783
       },
       "summary": "Display Window 21 companion contract closure readiness, parked companion status, and write-boundary guardrails."
     },
@@ -16430,7 +17702,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41057
+        "line": 41768
       },
       "summary": "Display the Window 21 read-only companion contract readiness surface for Control Panel, Browser, Portal/Chats, and AGB without opening integration writes."
     },
@@ -16456,7 +17728,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41062
+        "line": 41773
       },
       "summary": "Display the Window 21 read-only companion request/receipt/route protocol contract without enabling companion writes."
     },
@@ -16482,7 +17754,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41067
+        "line": 41778
       },
       "summary": "Display the Window 21 read-only companion receipt/audit readiness contract without creating or writing a receipt store."
     },
@@ -16508,7 +17780,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40757
+        "line": 41468
       },
       "summary": "Display writable metadata context-mark policy/store status for Prompt Pin, Operator/Local Pin, Search Pin, Retention Class, Importance Score, Retrieval Relevance Boost, and explicit drop/do-not-include semantics."
     },
@@ -16555,6 +17827,7 @@
           "turn_post_action_settle_seconds",
           "demand_capture_enabled",
           "capture_mode",
+          "capture_command_policy",
           "capture_geometry_policy",
           "capture_request_timeout_seconds",
           "capture_request_max_attempts",
@@ -16715,7 +17988,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39702
+        "line": 40413
       },
       "summary": "Inspect system/personal profiles and distinguish missing, invalid and unreadable saved files."
     },
@@ -16741,7 +18014,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40767
+        "line": 41478
       },
       "summary": "Display do-not-include/drop metadata rows and their non-erasing, non-model-visible status."
     },
@@ -16767,7 +18040,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40714
+        "line": 41425
       },
       "summary": "Display episodic snapshot status, last snapshot, and storage path."
     },
@@ -16793,7 +18066,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 38852
+        "line": 39509
       },
       "summary": "Display the current game profile, profile source, and the active save-state caveat."
     },
@@ -16821,7 +18094,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42789
+        "line": 43533
       },
       "summary": "Inspect Aurora-owned inputs, their request identity, frozen route and release uncertainty."
     },
@@ -16847,9 +18120,57 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41052
+        "line": 41763
       },
       "summary": "Display the Window 16 history/context service inventory, current store ownership, companion read/write contract preview, and cleanup candidates."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "SHOW_HORIZON_ENTRIES",
+      "contract": {
+        "argument_style": "positional",
+        "effects": "Inspect memory identity",
+        "max_arguments": 3,
+        "min_arguments": 0,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "default": "all",
+            "name": "view",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "default": 0,
+            "name": "offset",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "default": 50,
+            "name": "limit",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "result": {
+          "failure_policy": "Syntax validated before batch effects; stale identity fails without mutation and stops the tail. No automatic retry.",
+          "protocol": "aurora_memory_command_result_v1",
+          "receipt_field": "memory_command_results"
+        },
+        "semantics": "Inspect bounded entries or goals with stable IDs. Lazily creates metadata; does not change list text. Views: all, goals, immediate, short, medium, long; limit 1..200."
+      },
+      "handler": "show_horizon_entries_command",
+      "signature": "SHOW_HORIZON_ENTRIES([all|goals|immediate|short|medium|long[, offset, limit]])",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 43737
+      },
+      "summary": "Inspect bounded entries or goals with stable IDs. Lazily creates metadata; does not change list text. Views: all, goals, immediate, short, medium, long; limit 1..200."
     },
     {
       "aliases": [],
@@ -16873,7 +18194,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40295
+        "line": 41006
       },
       "summary": "Display Window 12 screenshot sidecar/index metadata for capture reason, prompt-context state, hashes, caption/OCR/tags, and embedding placeholders."
     },
@@ -16899,9 +18220,78 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40302
+        "line": 41013
       },
       "summary": "Display Window 18 screenshot/image-index cost posture, bounded scan/backfill/search limits, cache posture, and cheap-versus-expensive image-work guardrails without changing files or model context."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "SHOW_INPUT_RECOVERY",
+      "contract": {
+        "argument_style": "positional",
+        "effects": "Inspect durable input",
+        "max_arguments": 2,
+        "min_arguments": 0,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "name": "offset",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "result": {
+          "failure_policy": "Failures stop the batch tail. No automatic resend or rollback of earlier effects.",
+          "protocol": "aurora_memory_command_result_v1",
+          "receipt_field": "memory_command_results"
+        },
+        "semantics": "Durable mode only. Recovered input never auto-runs. Use fresh IDs/versions; active input requires Cancel work. Retry creates a fresh request; uncertain prior delivery needs allow_uncertain and idle model I/O."
+      },
+      "handler": "show_input_recovery_command",
+      "signature": "SHOW_INPUT_RECOVERY([offset, limit])",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38317
+      },
+      "summary": "Durable mode only. Recovered input never auto-runs. Use fresh IDs/versions; active input requires Cancel work. Retry creates a fresh request; uncertain prior delivery needs allow_uncertain and idle model I/O."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Runtime commands",
+      "command": "SHOW_INPUT_RECOVERY_STATUS",
+      "contract": {
+        "argument_style": "positional",
+        "effects": "Inspect recovery readiness without opening its store",
+        "max_arguments": 0,
+        "min_arguments": 0,
+        "parameter_validation": "pre_dispatch",
+        "parameters": [],
+        "result": {
+          "failure_policy": "Failures stop the batch tail; stale diagnostic versions change nothing.",
+          "protocol": "aurora_memory_command_result_v1",
+          "receipt_field": "memory_command_results"
+        },
+        "semantics": "Available in legacy and durable modes. Acknowledgement is operator-only and execution-unlocked; it never clears failures, changes records/settings, authorizes retries or proves disk health. Diagnostics are session-only; a new failure needs a new acknowledgement."
+      },
+      "handler": "show_input_recovery_status_command",
+      "signature": "SHOW_INPUT_RECOVERY_STATUS()",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38321
+      },
+      "summary": "Available in legacy and durable modes. Acknowledgement is operator-only and execution-unlocked; it never clears failures, changes records/settings, authorizes retries or proves disk health. Diagnostics are session-only; a new failure needs a new acknowledgement."
     },
     {
       "aliases": [],
@@ -16925,7 +18315,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40238
+        "line": 40949
       },
       "summary": "Display the Window 11 bounded live visual/reasoning harness contract, readiness warnings, expected image/context counts, escalation stages, and cleanup expectations."
     },
@@ -16951,7 +18341,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40289
+        "line": 41000
       },
       "summary": "Display the armed live probe contract and latest recorded result."
     },
@@ -16977,7 +18367,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40250
+        "line": 40961
       },
       "summary": "Display the latest recorded offline harness rehearsal result."
     },
@@ -17003,7 +18393,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42598
+        "line": 43309
       },
       "summary": "Display which runtime settings are currently locked."
     },
@@ -17029,7 +18419,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39965
+        "line": 40676
       },
       "summary": "Display built-in and custom models currently available to Aurora."
     },
@@ -17055,7 +18445,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39978
+        "line": 40689
       },
       "summary": "Display the active model trio, effort defaults, interval heuristics, stateful preset metadata, and capability notes."
     },
@@ -17081,7 +18471,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42567
+        "line": 43278
       },
       "summary": "Display bounded runtime health checks for process state, worker restarts, capture freshness, command wake state, pending queue posture, and gameplay input/foreground readiness."
     },
@@ -17113,7 +18503,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 39686
+        "line": 40397
       },
       "summary": "Read the queued one-turn plan and its content fingerprint without changing it."
     },
@@ -17139,7 +18529,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42584
+        "line": 43295
       },
       "summary": "Display the Window 18 read-only risk digest for cost/model spend, desktop/game actions, model-visible context, command insertion/execution, Responses/stateful transport, and operator access/auth without changing settings."
     },
@@ -17165,7 +18555,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40456
+        "line": 41167
       },
       "summary": "Display the current overlay/grid settings."
     },
@@ -17197,7 +18587,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42852
+        "line": 43596
       },
       "summary": "Inspect held command identities, queue version, state and recovery evidence."
     },
@@ -17229,7 +18619,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42852
+        "line": 43596
       },
       "summary": "Inspect held command identities, queue version, state and recovery evidence."
     },
@@ -17257,7 +18647,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41124
+        "line": 41835
       },
       "summary": "Display the Window 22 read-only Portal companion-intake viewer/registry surface without Portal calls, polling, receipt writes, source reads, or automation."
     },
@@ -17285,7 +18675,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41163
+        "line": 41874
       },
       "summary": "Alias for SHOW_PORTAL_INTAKE_AUDIT()."
     },
@@ -17313,7 +18703,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41251
+        "line": 41962
       },
       "summary": "Alias for SHOW_PORTAL_INTAKE_CLOSURE()."
     },
@@ -17341,7 +18731,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41174
+        "line": 41885
       },
       "summary": "Alias for SHOW_PORTAL_INTAKE_DOCKET()."
     },
@@ -17369,7 +18759,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41133
+        "line": 41844
       },
       "summary": "Alias for SHOW_PORTAL_INTAKE_GATES()."
     },
@@ -17397,7 +18787,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41185
+        "line": 41896
       },
       "summary": "Alias for SHOW_PORTAL_INTAKE_HANDOFFS()."
     },
@@ -17425,7 +18815,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41240
+        "line": 41951
       },
       "summary": "Alias for SHOW_PORTAL_INTAKE_PARKING()."
     },
@@ -17453,7 +18843,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41196
+        "line": 41907
       },
       "summary": "Alias for SHOW_PORTAL_INTAKE_PROOF()."
     },
@@ -17481,7 +18871,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41153
+        "line": 41864
       },
       "summary": "Alias for SHOW_PORTAL_INTAKE_REGISTRY()."
     },
@@ -17509,7 +18899,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41207
+        "line": 41918
       },
       "summary": "Alias for SHOW_PORTAL_INTAKE_REPORT()."
     },
@@ -17537,7 +18927,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41143
+        "line": 41854
       },
       "summary": "Alias for SHOW_PORTAL_INTAKE_REVIEW()."
     },
@@ -17565,7 +18955,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41218
+        "line": 41929
       },
       "summary": "Alias for SHOW_PORTAL_INTAKE_UNBLOCKERS()."
     },
@@ -17593,7 +18983,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41229
+        "line": 41940
       },
       "summary": "Alias for SHOW_PORTAL_INTAKE_WAITLIST()."
     },
@@ -17621,7 +19011,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41124
+        "line": 41835
       },
       "summary": "Alias for SHOW_PORTAL_COMPANION_INTAKE()."
     },
@@ -17649,7 +19039,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41163
+        "line": 41874
       },
       "summary": "Display the Window 22 local acceptance audit matrix: what is proved, waiting, missing, or blocked before live reads/proof/submission/mutation."
     },
@@ -17677,7 +19067,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41251
+        "line": 41962
       },
       "summary": "Display the Window 22 parked closure audit proving the local intake window is safely paused pending upstream evidence."
     },
@@ -17705,7 +19095,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41174
+        "line": 41885
       },
       "summary": "Display the Window 22 promotion evidence docket: who owns each missing proof item before later gates may move."
     },
@@ -17733,7 +19123,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41133
+        "line": 41844
       },
       "summary": "Display the Window 22 local intake gate board: what is ready, parked, or blocked before live reads, proof, receipt submission, or mutation."
     },
@@ -17761,7 +19151,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41185
+        "line": 41896
       },
       "summary": "Display copy-only external handoff packets for Mac Portal, AGB, Aurora Browser, and the operator without submitting or sending them."
     },
@@ -17789,7 +19179,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41240
+        "line": 41951
       },
       "summary": "Display the Window 22 parking/resume packet naming why Aurora can pause locally and what evidence would reopen later gates."
     },
@@ -17817,7 +19207,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41196
+        "line": 41907
       },
       "summary": "Display the Window 22 local proof ledger for recorded intake slice validations and the current validation target."
     },
@@ -17845,7 +19235,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41153
+        "line": 41864
       },
       "summary": "Display the local v0.90 envelope registry/cache contract Aurora needs before any live Portal read path."
     },
@@ -17873,7 +19263,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41207
+        "line": 41918
       },
       "summary": "Display the Window 22 copy-only operator report packets for the human operator, Mac Portal, AGB, and Aurora Browser."
     },
@@ -17901,7 +19291,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41143
+        "line": 41854
       },
       "summary": "Display copy-only readiness review packets for Mac Portal, AGB, Aurora Browser, and the human operator while live reads/proof/submission/mutation remain parked."
     },
@@ -17929,7 +19319,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41218
+        "line": 41929
       },
       "summary": "Display the Window 22 explicit unblocker checklist for later live-read, peer-card, cross-client proof, receipt, and mutation gates."
     },
@@ -17957,7 +19347,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41229
+        "line": 41940
       },
       "summary": "Display the Window 22 copy-only upstream waitlist for Mac Portal, AGB, Aurora Browser, and future gated work."
     },
@@ -17983,7 +19373,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42263
+        "line": 42974
       },
       "summary": "Display a mirrored runtime or control-panel map section. control_plane_skeleton is runtime-only."
     },
@@ -18009,7 +19399,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40954
+        "line": 41665
       },
       "summary": "Display current Prompt Inclusion activation state, offline proof, active Prompt Pin additions, and active do-not-include omissions."
     },
@@ -18035,7 +19425,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40802
+        "line": 41513
       },
       "summary": "Display the default-off Prompt Inclusion activation review checklist, rollback plan, and future command shape without enabling activation."
     },
@@ -18061,7 +19451,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40959
+        "line": 41670
       },
       "summary": "Display Window 19 closure readiness, parked-off posture, proof status, and next roadmap guardrails."
     },
@@ -18087,7 +19477,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40781
+        "line": 41492
       },
       "summary": "Display the Window 19 no-send activation-plan diff naming which approved Prompt Pins would be added and which approved drop marks would omit content if future activation were enabled."
     },
@@ -18113,7 +19503,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40772
+        "line": 41483
       },
       "summary": "Display the Window 19 preview-only gate for Prompt Pins, do-not-include marks, history writes, sub-agent suggestions, and transport guardrails before any model-visible inclusion is enabled."
     },
@@ -18139,7 +19529,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40796
+        "line": 41507
       },
       "summary": "Display the latest Prompt Inclusion preview rehearsal result."
     },
@@ -18165,7 +19555,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40762
+        "line": 41473
       },
       "summary": "Display Prompt Pin preview rows from the Prompt Ledger before any model-visible inclusion is enabled."
     },
@@ -18191,7 +19581,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40476
+        "line": 41187
       },
       "summary": "Display a mirrored Aurora reference pack such as pokemon, game_profiles, scheduler, runtime_troubleshooting, ui_troubleshooting, log_fields, memory_retrieval, rehydration, roadmap, codex_cli_windows, prime_agent_harness, codex_chat_continuity_refinement, codex_optionality_turn_controls, aurora_control_plane_cli, aurora_settings_registry, aurora_mcp_readonly, blender_readonly_mcp, or fl_studio_readonly_mcp."
     },
@@ -18217,7 +19607,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40468
+        "line": 41179
       },
       "summary": "Display the mirrored Aurora reference-map topics available to both Codex and Aurora."
     },
@@ -18243,7 +19633,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40749
+        "line": 41460
       },
       "summary": "Display continuity source counts, automatic planning-assist gates, last retrieval/promotion, chat-tail state, and reference-pack readiness."
     },
@@ -18269,7 +19659,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40196
+        "line": 40907
       },
       "summary": "Display the Window 17 closure/fallback readiness checklist."
     },
@@ -18295,7 +19685,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40083
+        "line": 40794
       },
       "summary": "Display the Window 17 offline token/cost/state posture for the no-send Responses preview."
     },
@@ -18321,7 +19711,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40047
+        "line": 40758
       },
       "summary": "Display the Window 17 no-send Responses payload preview derived from Prompt Ledger rows."
     },
@@ -18347,7 +19737,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40123
+        "line": 40834
       },
       "summary": "Display the Window 17 operator-armed Responses live-probe scaffold and its no-send guardrails."
     },
@@ -18373,7 +19763,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40041
+        "line": 40752
       },
       "summary": "Display the Window 17 read-only chat/completions vs Responses comparison contract, readiness blockers, and no-migration guardrails."
     },
@@ -18420,7 +19810,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42227
+        "line": 42938
       },
       "summary": "Inspect an immutable retained K-set without rescoring or a provider call."
     },
@@ -18448,7 +19838,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42562
+        "line": 43273
       },
       "summary": "Display the current runtime mode and key toggles."
     },
@@ -18474,7 +19864,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42575
+        "line": 43286
       },
       "summary": "Display the Window 18 operator health readout that summarizes monitor, state export, queue/bridge, capture, image-index cost, recovery/defaults, auth, and safety guardrail posture without changing settings."
     },
@@ -18500,7 +19890,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42603
+        "line": 43314
       },
       "summary": "Display the external-operator passcode/authorization state."
     },
@@ -18526,9 +19916,47 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40391
+        "line": 41102
       },
       "summary": "Display explicit stateful preset profiles and whether they are metadata-only or active."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Other Commands",
+      "command": "SHOW_TASK_CONTEXT",
+      "contract": {
+        "actor": "operator_only",
+        "batch_policy": "Standalone controller command only; no pending wrappers or mixed batches.",
+        "effects": "Operator-only: inspect the exact current task's retained operator messages and context version. Not the exact last request or full chat history.",
+        "max_arguments": 1,
+        "min_arguments": 1,
+        "mode": "bounded",
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "name": "task_id",
+            "pattern": "^task-[0-9a-f]{32}$",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "result": {
+          "failure_policy": "Reject stale task/version, stopped/expired task, model actor, disabled retention or capacity overflow without partial append. Never automatically retry.",
+          "protocol": "aurora_task_control_result_v1",
+          "receipt_field": "task_control_results",
+          "verification": "Context readback is current retained text, not provider delivery. Steering requires execution unlocked and active latched operator objective mode; creates no inference wake. Full text is explicit operator readback only."
+        }
+      },
+      "handler": "show_task_context_command",
+      "signature": "SHOW_TASK_CONTEXT(task_id)",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38519
+      },
+      "summary": "Operator-only: inspect the exact current task's retained operator messages and context version. Not the exact last request or full chat history."
     },
     {
       "aliases": [],
@@ -18555,7 +19983,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 37913
+        "line": 38487
       },
       "summary": "Inspect the controller's current bounded task, limits and declared outcome."
     },
@@ -18581,7 +20009,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39353
+        "line": 40010
       },
       "summary": "Display the current turn-scheduler mode, cadence, and last wake reason."
     },
@@ -18607,7 +20035,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 39268
+        "line": 39925
       },
       "summary": "Display the named scheduler profiles and their thresholds."
     },
@@ -18635,7 +20063,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41262
+        "line": 41973
       },
       "summary": "Alias for SHOW_CHECKPOINT_READINESS()."
     },
@@ -18663,7 +20091,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42760
+        "line": 43471
       },
       "summary": "Request shutdown, cancel work and release Aurora-owned inputs; report incomplete cleanup."
     },
@@ -18689,7 +20117,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41745
+        "line": 42456
       },
       "summary": "Silence a sub-agent registry row without deleting history or stopping a worker."
     },
@@ -18715,7 +20143,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41546
+        "line": 42257
       },
       "summary": "Create a visible Pending Command candidate object while leaving the executable Pending Commands queue untouched."
     },
@@ -18743,9 +20171,59 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 42562
+        "line": 43273
       },
       "summary": "Display the current runtime mode and key toggles."
+    },
+    {
+      "aliases": [],
+      "binding_kind": "runtime",
+      "callable": true,
+      "category": "Other Commands",
+      "command": "STEER_TASK",
+      "contract": {
+        "actor": "operator_only",
+        "batch_policy": "Standalone controller command only; no pending wrappers or mixed batches.",
+        "effects": "Operator-only: append literal operator context to an exact running task using its current context version. Applies at next normal preparation; no wake, new task, budget reset or interruption of in-flight requests.",
+        "max_arguments": 3,
+        "min_arguments": 3,
+        "mode": "bounded",
+        "parameter_validation": "pre_dispatch",
+        "parameters": [
+          {
+            "name": "task_id",
+            "pattern": "^task-[0-9a-f]{32}$",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "context_version",
+            "pattern": "^ctx1:[0-9a-f]{64}$",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "max_length": 270000,
+            "name": "text_json_base64url",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "result": {
+          "failure_policy": "Reject stale task/version, stopped/expired task, model actor, disabled retention or capacity overflow without partial append. Never automatically retry.",
+          "protocol": "aurora_task_control_result_v1",
+          "receipt_field": "task_control_results",
+          "verification": "Context readback is current retained text, not provider delivery. Steering requires execution unlocked and active latched operator objective mode; creates no inference wake. Full text is explicit operator readback only."
+        }
+      },
+      "handler": "steer_task_command",
+      "signature": "STEER_TASK(task_id, context_version, text_json_base64url)",
+      "signature_source": "reviewed_contract",
+      "source": {
+        "file": "aurora2.py",
+        "line": 38523
+      },
+      "summary": "Operator-only: append literal operator context to an exact running task using its current context version. Applies at next normal preparation; no wake, new task, budget reset or interruption of in-flight requests."
     },
     {
       "aliases": [],
@@ -18769,7 +20247,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41398
+        "line": 42109
       },
       "summary": "Record a policy-tagged suggestion audit row without Pending Command insertion or execution."
     },
@@ -18795,7 +20273,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 41690
+        "line": 42401
       },
       "summary": "Add or reactivate a sub-agent registry row without spawning a worker."
     },
@@ -18825,7 +20303,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43210
+        "line": 43991
       },
       "summary": "Unimplemented legacy placeholder: reports failure and stops the batch tail; does not start inference."
     },
@@ -18851,7 +20329,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43453
+        "line": 44234
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -18877,7 +20355,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43447
+        "line": 44228
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -18903,7 +20381,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43358
+        "line": 44139
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -18929,7 +20407,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43352
+        "line": 44133
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -18955,7 +20433,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 38888
+        "line": 39545
       },
       "summary": "Toggle the floating chat strip open/closed."
     },
@@ -19076,7 +20554,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43367
+        "line": 44148
       },
       "summary": "Switch low image detail to high; every other supported detail switches to low. Uses the same runtime setting lock and observed readback."
     },
@@ -19102,7 +20580,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43441
+        "line": 44222
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -19128,7 +20606,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43466
+        "line": 44247
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -19154,7 +20632,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43372
+        "line": 44153
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -19275,7 +20753,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42530
+        "line": 43241
       },
       "summary": "Flip live mode on/off. Uses the same runtime setting lock and observed readback."
     },
@@ -19301,7 +20779,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 37515
+        "line": 37886
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -19327,7 +20805,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43435
+        "line": 44216
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -19353,7 +20831,7 @@
       "signature_source": "placeholder",
       "source": {
         "file": "aurora2.py",
-        "line": 43460
+        "line": 44241
       },
       "summary": "Inspect the handler; detailed usage has not been reviewed."
     },
@@ -19508,7 +20986,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42709
+        "line": 43420
       },
       "summary": "Read locks when omitted; otherwise enable or disable the named runtime setting lock. Settings values are unchanged."
     },
@@ -19534,7 +21012,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43147
+        "line": 43928
       },
       "summary": "Set the fresh questions Aurora should keep on hand while uncertainty remains high."
     },
@@ -19560,7 +21038,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43183
+        "line": 43964
       },
       "summary": "Set alternative next actions or route ideas worth trying soon."
     },
@@ -19586,7 +21064,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43059
+        "line": 43840
       },
       "summary": "Update recent context and events; separate events with semicolons."
     },
@@ -19612,7 +21090,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43072
+        "line": 43853
       },
       "summary": "Set the current area, room, route, or stable location."
     },
@@ -19638,7 +21116,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 40329
+        "line": 41040
       },
       "summary": "Explicitly fill sidecar semantic metadata without making it model-visible."
     },
@@ -19664,7 +21142,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43041
+        "line": 43822
       },
       "summary": "Update your notable inventory; separate items with semicolons."
     },
@@ -19690,7 +21168,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43171
+        "line": 43952
       },
       "summary": "Set actions or plans that are currently known to be failing or blocked."
     },
@@ -19716,7 +21194,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43096
+        "line": 43877
       },
       "summary": "Record the most recent stable landmark."
     },
@@ -19742,7 +21220,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43112
+        "line": 43893
       },
       "summary": "Set the short-horizon path steps; separate with semicolons."
     },
@@ -19779,7 +21257,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43144
+        "line": 43925
       },
       "summary": "Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it."
     },
@@ -19832,7 +21310,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43325
+        "line": 44106
       },
       "summary": "Use the current conversation ID/revision and base64url-encoded JSON text. Stale/missing/ambiguous IDs fail without mutation. Managed protection cannot be changed. Existing timestamp EDIT_MSGS and PIN(text) remain available."
     },
@@ -19869,7 +21347,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43141
+        "line": 43922
       },
       "summary": "Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it."
     },
@@ -19906,7 +21384,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43195
+        "line": 43976
       },
       "summary": "Replace the semicolon-delimited notes list; explicit empty text clears it."
     },
@@ -19932,7 +21410,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43050
+        "line": 43831
       },
       "summary": "Update your current party status; provide details for each Pok\u00e9mon, separated by semicolons."
     },
@@ -19969,7 +21447,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43201
+        "line": 43982
       },
       "summary": "Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it."
     },
@@ -20006,7 +21484,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 43204
+        "line": 43985
       },
       "summary": "Replace this horizon's semicolon-delimited items. task_flow joins comma prose; legacy uses the first argument and discloses ignored arguments. Explicit empty text clears it."
     },
@@ -20032,7 +21510,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43128
+        "line": 43909
       },
       "summary": "Set recent movement outcomes; separate with semicolons."
     },
@@ -20058,7 +21536,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43120
+        "line": 43901
       },
       "summary": "Set route blockers or navigation constraints; separate with semicolons."
     },
@@ -20084,7 +21562,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43104
+        "line": 43885
       },
       "summary": "Set the current high-level route or destination intent; separate with semicolons."
     },
@@ -20110,7 +21588,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43159
+        "line": 43940
       },
       "summary": "Set assumptions that may be wrong, outdated, or worth re-checking."
     },
@@ -20136,7 +21614,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43080
+        "line": 43861
       },
       "summary": "Set the intended destination or target area."
     },
@@ -20162,7 +21640,7 @@
       "signature_source": "help_text",
       "source": {
         "file": "aurora2.py",
-        "line": 43088
+        "line": 43869
       },
       "summary": "Set the broader travel direction or movement mode."
     },
@@ -20198,7 +21676,7 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 36188
+        "line": 36542
       },
       "summary": "Wait for a finite, non-negative duration in seconds while servicing cancellation and controls."
     },
@@ -20236,29 +21714,34 @@
       "signature_source": "reviewed_contract",
       "source": {
         "file": "aurora2.py",
-        "line": 42085
+        "line": 42796
       },
       "summary": "Existing episodic snapshot write/list/lexical-search behavior with complete argument admission and correlated receipts; no inferred persistence or rollback guarantee."
     }
   ],
   "desktop_binding_count": 19,
-  "runtime_binding_count": 368,
+  "runtime_binding_count": 391,
   "schema_version": "aurora_command_catalog_v1",
   "source_hashes": {
-    "aurora2.py": "f2a5ad957ac26729855dd580b7a773b9aca3da35596dfac1721b173deca41423",
-    "aurora_command_catalog.py": "70bb6fe77437cc35c46fee2b6c91dc8669a736a844b305408ff8e169ed06bdbc",
-    "aurora_command_contracts.py": "89346fb7582a93c176c633c42a384b80b1ab312bdbceb511b396196a3f410c5e",
+    "aurora2.py": "4ccfd63d63e5f59bf2b2e80c0a22a15fbe57755ddcee3e7cdd8a3fa7cb43320b",
+    "aurora_command_catalog.py": "760c3598c64ab92bef06a2ab9df03a61e72c642e4dea426d1ef8b0286d652024",
+    "aurora_command_contracts.py": "bae0965fe8edf214f53122585b29681fd112ef7af0fba54eb9f36e101b534706",
     "aurora_episodic_retrieval.py": "36fb49fb0827869140965ff1012281c79841f558e16743f277444272683cff71",
-    "aurora_goal_store.py": "ce17f634754a369aa1d32cc6d8f1840554255b653c8e7fa0cdda76180421da48",
+    "aurora_goal_store.py": "65bd96957edfc2f97168a4fe70a4d0bb878cf5716701f1beb1adfa177f894ba6",
     "aurora_history_controls.py": "4ad5320f318d7d44a446b4c75cd5c881f3926b10bb40381b858056ddccd2cd6e",
+    "aurora_horizon_identity.py": "c710a085d5be8f15f881a611025655fe3f03f4199d9fb5a3e79e031b990bb4be",
+    "aurora_input_recovery.py": "18ae4f5cc5132bb26f59a4d0cd6436756e9f8d51232791ae9a672c46d672c10f",
+    "aurora_observation_wait.py": "46485905180f8489c74e497d7c4714e3bc1d6edb6d28cbfdbefc83d260216047",
+    "aurora_recovery_reconciliation.py": "cf4bc58794d42599c6c4416c71dd2f8606d544fa03d6728a8d37f41ef7eee9dc",
     "aurora_retrieval_commands.py": "5962961ac05121ef569b5d2bc543d7f45dbb7ef4e83f1cc05d3e2b8c1eacff88",
     "aurora_retrieval_results.py": "ce57c9e8faa4cfebc249a27927829d10ffd876265000f722aadc51d528261017",
     "aurora_search_query.py": "2d6e8b67e03531b9c28344c924dbf945f9213d9b2e6164502d59245bd8d3ecbf",
-    "aurora_settings_registry.py": "7c74bab0e015e395918b5e6d0ab368ac0036630666990a0b54b4b2a72fb5069a",
+    "aurora_settings_registry.py": "6208f21846a5e662505f548d9a7fee9fdeadc6dc7ba13213f98d548abb99e173",
     "aurora_settings_transactions.py": "e7ae2c1d1a715f9a33f000a3f0da805aee2c08a318bef6ae6c62730e95d4cb91",
-    "aurora_task_continuation.py": "6a092c258543fec533e4a7e10c093bc06e28ade5f56c977459b2e1b918337ffd"
+    "aurora_task_continuation.py": "d3db494fdc65aba10a6f47d37839da31a53d2e5275b6e5190808c730c2694eca",
+    "aurora_task_objective.py": "0181c04d426270030f20900afa483b4a13993796a1287089888769fde9638550"
   },
-  "source_sha256": "f2a5ad957ac26729855dd580b7a773b9aca3da35596dfac1721b173deca41423",
+  "source_sha256": "4ccfd63d63e5f59bf2b2e80c0a22a15fbe57755ddcee3e7cdd8a3fa7cb43320b",
   "syntax_notes": {
     "GB": "GB: is a game-input namespace handled by action normalization, not a standalone function.",
     "PYAG": "Use an explicit pyag: command; the namespace label itself is not callable."

@@ -217,6 +217,120 @@ check('date plus boolean filter uses no semantic scoring', receipt['backend']['b
 for unsupported in ['SEARCH_MESSAGES("key")', 'RETRIEVAL_PULL(person=alice,date_end=2026-11-05)']:
     run(unsupported, False)
 check('no message range-search binding is advertised', not any(name in runtime.command_dispatch for name in ('SEARCH_MESSAGES','DELETE_MSG_RANGE')))
+
+# Real memory projections and shared settings, still under native/network guards.
+runtime.agent_state.journal_entries[:] = ['journal-%s' % index for index in range(10)]
+runtime.agent_state.significant_past_tasks[:] = [dict(timestamp='2026-11-05 12:00:00', goal='Recorded milestone')]
+runtime.INCLUDE_AGENT_STATE_SNAPSHOT = True
+run('SET_JOURNAL_ORDER(legacy); SET_COMPLETED_GOAL_PROJECTION(legacy)')
+legacy_projection = runtime.build_agent_state_snapshot()
+check('legacy snapshot selects journal head without completion projection',
+      'first 5 of 10 retained entries' in legacy_projection and
+      'Recorded goal completions (historical;' not in legacy_projection)
+run('SET_JOURNAL_ORDER(recent); SET_COMPLETED_GOAL_PROJECTION(annotate)')
+recent_projection = runtime.build_agent_state_snapshot()
+runtime.update_pinned_information()
+pinned = next(row for row in runtime.get_chat_history_store() if row.get('Exemption') == 'PinnedInfo')
+pinned_text = runtime.get_history_entry_text(pinned)
+check('recent snapshot selects tail while PinnedInfo retains full journal',
+      'last 5 of 10 retained entries' in recent_projection and '- journal-0' not in recent_projection
+      and '- journal-9' in recent_projection and '- journal-0' in pinned_text and '- journal-9' in pinned_text)
+check('both views expose recorded completion without claiming verification',
+      all('Recorded goal completions (historical; not outcome verification):' in text
+          and '[2026-11-05 12:00:00] Recorded milestone' in text for text in (recent_projection, pinned_text)))
+settings = runtime.build_registered_settings_runtime_state()['modes']
+check('projection controls have effective shared readback',
+      settings['journal_order'] == 'recent' and settings['completed_projection'] == 'annotate')
+run('SET_JOURNAL_ORDER(legacy); SET_COMPLETED_GOAL_PROJECTION(legacy)')
+runtime.update_pinned_information()
+pinned = next(row for row in runtime.get_chat_history_store() if row.get('Exemption') == 'PinnedInfo')
+check('legacy restores view without erasing completion evidence',
+      'Recorded goal completions (historical;' not in runtime.get_history_entry_text(pinned)
+      and runtime.agent_state.significant_past_tasks[0]['goal'] == 'Recorded milestone'
+      and len(runtime.agent_state.journal_entries) == 10)
+# Explicit identity is optional and survives only identity-aware versioned saves.
+run('UPDATE_MID_TERM_CONTEXT("Retained plan;Different plan")')
+def entries(view='medium'):
+    return run('SHOW_HORIZON_ENTRIES(' + view + ')')['memory_command_results'][0]['readback']['entries']
+entry = entries()[0]
+goal = next(row for row in entries('goals') if row['id'] == child.id)
+link_command = 'LINK_HORIZON_GOAL(' + entry['entry_id'] + ',' + entry['version'] + ',' + goal['goal_uid'] + ')'
+linked = run(link_command, ingest=True)['memory_command_results'][0]
+check('explicit link has before/after versions and actual target', linked['changed'] and linked['after']['goal_uid'] == goal['goal_uid'])
+bad = run(link_command + '; UPDATE_NOTES("must not run")', False)
+check('stale link blocks dependent tail without mutation', bad['memory_command_results'][0]['effect_status'] == 'not_started' and bad['blocked_commands'])
+run('SET_COMPLETED_GOAL_PROJECTION(linked)')
+runtime.update_pinned_information()
+pinned = next(row for row in runtime.get_chat_history_store() if row.get('Exemption') == 'PinnedInfo')
+check('linked goal status appears coherently in both views', all('goal ID ' + str(child.id) + ': Complete; declared status' in text
+      for text in (runtime.build_agent_state_snapshot(), runtime.get_history_entry_text(pinned))))
+check('copied stale view does not borrow current identities', 'Identity unavailable' in runtime.project_horizon_entries(['old view'], 'mid_term_context')[0])
+run('SET_COMPLETED_GOAL_PROJECTION(legacy)')
+check('legacy hides links without deleting them', runtime.project_horizon_entries(runtime.mid_term_context, 'mid_term_context') == ['Retained plan', 'Different plan']
+      and entries()[0]['goal_uid'] == goal['goal_uid'])
+run('SET_GOAL_SAVE_FORMAT(versioned); SAVE_TASKS(identity.json)')
+old = entries()[0]
+run('LOAD_TASKS(identity.json)')
+fresh = entries()[0]
+check('v2 load retains IDs/link but changes edit epoch', fresh['entry_id'] == old['entry_id'] and fresh['goal_uid'] == old['goal_uid'] and fresh['version'] != old['version'])
+run('LINK_HORIZON_GOAL(' + old['entry_id'] + ',' + old['version'] + ',none)', False)
+model('LINK_HORIZON_GOAL(' + fresh['entry_id'] + ',' + fresh['version'] + ',none)')
+check('assistant explicitly unlinks through normal admission', entries()[0]['goal_uid'] is None)
+run('LOAD_TASKS(identity.json)')
+before_invalid = runtime.build_pinned_tasks_snapshot()
+damaged = json.loads(Path('identity.json').read_text(encoding='utf-8'))
+damaged['state']['horizon_identity']['rows']['mid_term_context'][0]['text'] = 'bad mismatch'
+Path('invalid-identity.json').write_text(json.dumps(damaged), encoding='utf-8')
+run('LOAD_TASKS(invalid-identity.json)', False)
+check('invalid sidecar load leaves all memory intact', runtime.build_pinned_tasks_snapshot() == before_invalid)
+saved = run('SET_GOAL_SAVE_FORMAT(legacy); SAVE_TASKS(identity-legacy.json)')['goal_file_results'][0]
+check('legacy save explicitly discloses omitted identities', saved['identity_omitted'])
+run('LOAD_TASKS(identity-legacy.json)')
+check('legacy load cannot resurrect previous links', entries()[0]['goal_uid'] is None and entries()[0]['entry_id'] != old['entry_id'])
+run('LOAD_TASKS(identity.json)')
+before_clear = entries()[0]
+run('UPDATE_MID_TERM_CONTEXT(""); UPDATE_MID_TERM_CONTEXT("Retained plan;Different plan")')
+check('clear/readd invalidates prior entry identity', entries()[0]['entry_id'] != before_clear['entry_id'] and entries()[0]['goal_uid'] is None)
+# Exercise stale-write serialization with simultaneous users of the same token.
+import threading
+from types import SimpleNamespace
+entry = entries()[0]
+targets = entries('goals')[:2]
+original_work = runtime.COMMAND_WORK
+def cancelled_check():
+    raise runtime.WorkCancelled('cancelled before linking')
+runtime.COMMAND_WORK = SimpleNamespace(current=lambda: SimpleNamespace(check=cancelled_check))
+try:
+    cancelled = runtime.execute_horizon_identity_command('LINK_HORIZON_GOAL', [entry['entry_id'], entry['version'], targets[0]['goal_uid']])
+finally:
+    runtime.COMMAND_WORK = original_work
+check('cancelled link leaves identity unchanged', cancelled['cancelled'] and not cancelled['changed'] and entries()[0] == entry)
+barrier, outcomes = threading.Barrier(3), []
+def competing_link(target):
+    barrier.wait(timeout=2)
+    outcomes.append(runtime.execute_horizon_identity_command('LINK_HORIZON_GOAL',
+        [entry['entry_id'], entry['version'], target['goal_uid']]))
+workers = [threading.Thread(target=competing_link, args=(target,), daemon=True) for target in targets]
+for worker in workers: worker.start()
+barrier.wait(timeout=2)
+for worker in workers: worker.join(2)
+check('concurrent stale-token writers apply exactly once', len(outcomes) == 2 and sum(result['success'] for result in outcomes) == 1
+      and all(not worker.is_alive() for worker in workers))
+# Enforce lock ordering on the two paths that nest goal and history access.
+real_history_lock = runtime.HISTORY_LOCK
+class OrderedHistoryLock:
+    def __enter__(self):
+        assert runtime.GOAL_LOCK._is_owned(), 'History acquired before goal lock'
+        return real_history_lock.__enter__()
+    def __exit__(self, *args):
+        return real_history_lock.__exit__(*args)
+runtime.HISTORY_LOCK = OrderedHistoryLock()
+try:
+    runtime.update_pinned_information()
+    result = runtime.execute_history_command('CLEAR_PIN', [], actor='fixture')
+    check('history clear and pinned refresh use goal-before-history locking', result['success'])
+finally:
+    runtime.HISTORY_LOCK = real_history_lock
 check('no native or network guard was touched', not Path('forbidden-native-input.txt').exists())
 check('inference stays offline', not runtime.SEND_TO_MODEL and not runtime.ENABLE_MODEL_RESPONSES)
 Path('proof.json').write_text(json.dumps(dict(status='passed', checks=checks, check_count=len(checks),

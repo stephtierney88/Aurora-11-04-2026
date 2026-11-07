@@ -1,6 +1,23 @@
 {
-  "date": "2026-11-05",
-  "source_revision": "b49f81db8afcf830ade608fa5dd0e38fcf730373",
+  "date": "2026-11-06",
+  "release": {
+    "family": "aurora2",
+    "channel": "preview",
+    "serial": 84,
+    "release_id": "preview-2026.11.06-r84",
+    "release_date": "2026-11-06",
+    "display_name": "Aurora 2 \u00b7 Preview 84 \u00b7 November 6, 2026",
+    "panel_title": "Aurora 2 Control Panel \u00b7 Preview 84 (2026-11-06)",
+    "built_at_utc": "2026-11-07T01:18:39Z",
+    "release_timezone": "America/Los_Angeles",
+    "settings_schema": "aurora_settings_registry_v1",
+    "recovery_schemas": [
+      "aurora_input_recovery_v1",
+      "aurora_input_recovery_v2"
+    ],
+    "recovery_archive": "preview_only"
+  },
+  "source_revision": "2fd712ceb15f7de267e315f24b46ec60a4653f75",
   "files": [
     {
       "file": ".gitattributes",
@@ -12,7 +29,7 @@
     },
     {
       "file": "AGENTS.md",
-      "sha256": "fff59e976c7b62533c49637d2145104249f191f2c14ddbc22891d8e31926d773"
+      "sha256": "62d5a4283c7574aad568f08a29a6c8da9d1c17a696f17dcce228d56dc8727b2d"
     },
     {
       "file": "aurora-mcp.cmd",
@@ -24,15 +41,15 @@
     },
     {
       "file": "aurora2.py",
-      "sha256": "f2a5ad957ac26729855dd580b7a773b9aca3da35596dfac1721b173deca41423"
+      "sha256": "4ccfd63d63e5f59bf2b2e80c0a22a15fbe57755ddcee3e7cdd8a3fa7cb43320b"
     },
     {
       "file": "aurora2_control_panel.py",
-      "sha256": "ce2d87e1ecb764c8fdc755f358b36a6b8ab7bd090715213e0d783e94b5ab3985"
+      "sha256": "0f4a953be777d890feb7da62226c2ba3b8595d9010c24a0813315e35dee7f2d6"
     },
     {
       "file": "aurora2_init.txt",
-      "sha256": "2534d432eab85df169988080e9c8fb7b300307751828737c266af609517b2e6c"
+      "sha256": "d0c9d0e8d57ff2223d816f0c6b0f343eca7a1567c52c9157a55b182c4317682b"
     },
     {
       "file": "aurora2_init_legacy.txt",
@@ -40,7 +57,11 @@
     },
     {
       "file": "aurora_agent_controls.py",
-      "sha256": "5f607b43ce599bf93291236e6217e638f8430ff258672a8b8e4f1f0cea35fe93"
+      "sha256": "5eea33a829c5215ef53eacbfd43994ab2621ce52f72b3caa09d504f7ffa68335"
+    },
+    {
+      "file": "aurora_capture_artifacts.py",
+      "sha256": "c57ff1ddc861ba9f12a726418ac6e93d9397cbbc7ec2809f5221fba2f2342195"
     },
     {
       "file": "aurora_capture_geometry.py",
@@ -48,7 +69,7 @@
     },
     {
       "file": "aurora_capture_provenance.py",
-      "sha256": "b907800cdedceb4f904d91a37b1d49e4152fd9a13032a1edf20f0c9f36f19354"
+      "sha256": "d8a7dc01119f68d02c015641bacae468c7fb836b346c77d3ee744cc25ccebb63"
     },
     {
       "file": "aurora_capture_store.py",
@@ -64,7 +85,7 @@
     },
     {
       "file": "aurora_chatgpt_transport.py",
-      "sha256": "8c16116f483dfa6abed6562da00cfa3f95e1e99ef2b4f50f065838088f53c9a6"
+      "sha256": "ac77fcb14c80a059695cad5f02863f6f461757f4d99a93332e198594d59f0ce6"
     },
     {
       "file": "aurora_cli.py",
@@ -76,11 +97,11 @@
     },
     {
       "file": "aurora_command_catalog.py",
-      "sha256": "70bb6fe77437cc35c46fee2b6c91dc8669a736a844b305408ff8e169ed06bdbc"
+      "sha256": "760c3598c64ab92bef06a2ab9df03a61e72c642e4dea426d1ef8b0286d652024"
     },
     {
       "file": "aurora_command_contracts.py",
-      "sha256": "89346fb7582a93c176c633c42a384b80b1ab312bdbceb511b396196a3f410c5e"
+      "sha256": "bae0965fe8edf214f53122585b29681fd112ef7af0fba54eb9f36e101b534706"
     },
     {
       "file": "aurora_command_protocol.py",
@@ -92,7 +113,7 @@
     },
     {
       "file": "aurora_control_plane.py",
-      "sha256": "0388bd3140191b57b1d54ee26aae72c4f1f1772eb3ce3f8471e1c152b67f0846"
+      "sha256": "bdd04e8cae7ec8d74e4e803373560e9fec198bd16dc33e17143baa75cb31cf2c"
     },
     {
       "file": "aurora_conversation.py",
@@ -100,7 +121,7 @@
     },
     {
       "file": "aurora_conversation_delivery.py",
-      "sha256": "e68f387954f432a26a06715f36a5b6348c4c0a63c7fedf2154ca8b06c1c4e950"
+      "sha256": "c9d7d8d643e1f0fb71da34de2181c4de4e83b7e1def1e676b7b969a4104e88d1"
     },
     {
       "file": "aurora_conversation_navigator.py",
@@ -108,15 +129,39 @@
     },
     {
       "file": "aurora_default_profiles.py",
-      "sha256": "debfe33a3e752247838d6756bb522f77e185362d4eaa31a1cb3ce99bfe55906f"
+      "sha256": "480f6b68f1cebb7b3543ba59d977ce3850230408cc5c82c35545870145dba199"
     },
     {
       "file": "aurora_delivery_receipts.py",
-      "sha256": "81ca7e131eda9be919ea1109d08d50e0ac5b12a2c5c7c03ba94f9cfe7b9dbc56"
+      "sha256": "57292cf248a43a0a2d8ce356179ae1686ea7ace82d3017a8fb38ec9246c10614"
     },
     {
       "file": "aurora_episodic_retrieval.py",
       "sha256": "36fb49fb0827869140965ff1012281c79841f558e16743f277444272683cff71"
+    },
+    {
+      "file": "aurora_execution_evidence.py",
+      "sha256": "8b5f376a1f5bfa022a22b648479d138f4f823671af8a6f2f0a3191a4ad02c7c3"
+    },
+    {
+      "file": "aurora_execution_history.py",
+      "sha256": "adaf2cced5398757c4bc02bbe63ec9acb7e3f10c7890dddb5d00e4f02f0d919e"
+    },
+    {
+      "file": "aurora_execution_history_job.py",
+      "sha256": "844de3a9e4e4511c3c519f72135e2235bcb804209b9bad0150d79bd1de2a1591"
+    },
+    {
+      "file": "aurora_execution_inspector.py",
+      "sha256": "a78292efbe1779b16060f0dd0f893cda8d73a5791322dbb80e3ddcc9e1c7722b"
+    },
+    {
+      "file": "aurora_execution_projection.py",
+      "sha256": "171bbcf6007e8a813e8971ab5f43a4fb0e2362b4201b7715ac7496cfec314c1e"
+    },
+    {
+      "file": "aurora_execution_recording.py",
+      "sha256": "c68c85455f6f5467f0f199b99042c34c0e7a5fe4b529bb69f507ecc3ab0c200a"
     },
     {
       "file": "aurora_flow_emblem.png",
@@ -128,19 +173,31 @@
     },
     {
       "file": "aurora_goal_store.py",
-      "sha256": "ce17f634754a369aa1d32cc6d8f1840554255b653c8e7fa0cdda76180421da48"
+      "sha256": "65bd96957edfc2f97168a4fe70a4d0bb878cf5716701f1beb1adfa177f894ba6"
     },
     {
       "file": "aurora_history_controls.py",
       "sha256": "4ad5320f318d7d44a446b4c75cd5c881f3926b10bb40381b858056ddccd2cd6e"
     },
     {
+      "file": "aurora_horizon_identity.py",
+      "sha256": "c710a085d5be8f15f881a611025655fe3f03f4199d9fb5a3e79e031b990bb4be"
+    },
+    {
       "file": "aurora_input_ownership.py",
       "sha256": "aac4c6f8d59360544d26a203ce2e791361a489935e5b8f09a1e374c80ac1f7da"
     },
     {
+      "file": "aurora_input_recovery.py",
+      "sha256": "18ae4f5cc5132bb26f59a4d0cd6436756e9f8d51232791ae9a672c46d672c10f"
+    },
+    {
       "file": "aurora_mcp_server.py",
       "sha256": "5fb2c0d3379c731fc7d7bb3428ed615b90bda8bde3f38404c9bd7874d7569cae"
+    },
+    {
+      "file": "aurora_observation_wait.py",
+      "sha256": "46485905180f8489c74e497d7c4714e3bc1d6edb6d28cbfdbefc83d260216047"
     },
     {
       "file": "aurora_openai_signin_reference.png",
@@ -171,28 +228,56 @@
       "sha256": "056381f17e5740bb711d7df704d3e8490d7666fe5e832f9ae61632cd0c6fc5ce"
     },
     {
+      "file": "aurora_recording_browser.py",
+      "sha256": "fae38c400001371d5cd4ec6f00878d4c451fdb39b9ee2441147fe04b5625ba84"
+    },
+    {
+      "file": "aurora_recording_gate.py",
+      "sha256": "0e503997517d9b6db0b1e31656f36c8363da4910813d91710dd721d823232833"
+    },
+    {
+      "file": "aurora_recording_retention.py",
+      "sha256": "38a80768f7121de28d9ee7fc3e75790fd4eea0e9838ec2e042d04ee29e9c69ff"
+    },
+    {
+      "file": "aurora_recording_service.py",
+      "sha256": "fdb2462d3c34af15872f9f0f94a3c4deebba5775808b1791dfb88c4aff5f3d4b"
+    },
+    {
+      "file": "aurora_recording_store.py",
+      "sha256": "5e26bd74eff24a6872d6f8ec7cba15ab9e235d47e568584faafeac742f920864"
+    },
+    {
+      "file": "aurora_recovery_panel.py",
+      "sha256": "0f71405368b14120503394a838d22ef9a19a35c23d892c0648a36656922afd45"
+    },
+    {
+      "file": "aurora_recovery_reconciliation.py",
+      "sha256": "cf4bc58794d42599c6c4416c71dd2f8606d544fa03d6728a8d37f41ef7eee9dc"
+    },
+    {
       "file": "aurora_reference_maps/commands/commands-high.md",
-      "sha256": "306aa34d13d84d7b179bd1c7c1747ff19adaa313b576eb5b8d5a9953eca2e3df"
+      "sha256": "19923c48fc5a03c9085b58786c4e6bbdb24966bb7852de3a5f221c4aa8ae6f44"
     },
     {
       "file": "aurora_reference_maps/commands/commands-index.tsv",
-      "sha256": "7f59315b2a694ec01340679e1ddf0d29947db32ebbc2f91750588511befef5f9"
+      "sha256": "43671ccfb886be6d9d6544c85d1cf037e35e0ac286d0342b7ecb6c47fc21e238"
     },
     {
       "file": "aurora_reference_maps/commands/commands-low.md",
-      "sha256": "55916efb834feabb13d02fb2a00f1f92c2f4ef6f9d72309edc53a257ba80e014"
+      "sha256": "50612e9a4d011f5913eab241fc5a4c08f214e2f2ed501073f32a4c32194b1f4f"
     },
     {
       "file": "aurora_reference_maps/commands/commands-medium.md",
-      "sha256": "d4aa17775a5374bb4424ca5a1c95f8a9299e74e62e257a3eafc2d9fb5a648036"
+      "sha256": "4401b2f4ff9c7ab633a1b711c0bf3d0d8d460581844ecba1b4183d899eaffa70"
     },
     {
       "file": "aurora_reference_maps/commands/commands.json",
-      "sha256": "10594f5c027ac45c9a3c6dfc33982e13ced47e71d68c0eaf98714fbfa854852e"
+      "sha256": "1451c4027d53f458c3bdf5a0488a4269e392fb0863c16af7dc74d53b8547512d"
     },
     {
       "file": "aurora_reference_maps/manifest.json",
-      "sha256": "15eb52b664d3301db8c79ba02262ad0677a42731f5b63d2cef5df199420ff0c7"
+      "sha256": "130a4717c0c9569cd0dcf1f2e933b64057c47faecaebaddb14b730ffeca838eb"
     },
     {
       "file": "aurora_reference_maps/reference_packs/adaptive-reasoning-reference.md",
@@ -236,7 +321,7 @@
     },
     {
       "file": "aurora_reference_maps/reference_packs/held-input-reference.md",
-      "sha256": "2629b89704b82f62a9bbd6b30b809c556a439d33a43292e319435b42ae99bdeb"
+      "sha256": "5ce4b12ff3e377925cd448c05e0057f4e3efb9cc17658207079ab2759753c8e9"
     },
     {
       "file": "aurora_reference_maps/reference_packs/log-field-reference.md",
@@ -264,7 +349,7 @@
     },
     {
       "file": "aurora_reference_maps/reference_packs/roadmap-reference.md",
-      "sha256": "1f38f1efa06322afc73f310d6d4c115338d6d3c5f41135b5d749f294e2c8624c"
+      "sha256": "f72608265373b8644e8e102aa9a44b29924b96bf87fe48070f9a18799adf764f"
     },
     {
       "file": "aurora_reference_maps/reference_packs/runtime-troubleshooting-map.md",
@@ -280,27 +365,27 @@
     },
     {
       "file": "aurora_reference_maps/runtime/control-plane-function-skeleton.jsonl",
-      "sha256": "6eb4c913dbf48e7bd6907468b4fb03d0f02368fe5e02ee7c70cd30537da025ec"
+      "sha256": "30fba61b72f145c0db922c9a49759c1126b4adcd35072cbbf90a20fc166e59b0"
     },
     {
       "file": "aurora_reference_maps/runtime/overview.md",
-      "sha256": "bc76275b85e5214d649df2977557589994fef2d7e28d9d6fda0abf928b96f616"
+      "sha256": "5424b4a99eae2a2b1b75a51db36ff8f54486819e5d5937dd087efd9eee686c1f"
     },
     {
       "file": "aurora_reference_maps/runtime/runtime-domains.md",
-      "sha256": "ad466a81d7681ad32220afd233520b634efbed6a7f00c52dfea7dd35a06ef5f9"
+      "sha256": "1ca94ed0812abbaa2bdc67a4a27eeaab36f0afc75ef9a1893a90dcac8e318eb5"
     },
     {
       "file": "aurora_reference_maps/runtime/runtime-function-skeleton.jsonl",
-      "sha256": "1fd14888b5a27f4791e1203bc03c8b639eda6402a6a793f0a47181190444d8bb"
+      "sha256": "de0037502b6f03262d5893d2d4b653e97225de6fa640f27ae5b74fa84934675d"
     },
     {
       "file": "aurora_reference_maps/runtime/runtime-generated-call-tree.md",
-      "sha256": "9389982483d3e9b7b4bbf3698b39f4a6c48182206dcb90c61f8eafa915815e62"
+      "sha256": "2ec0f4459a5d58606f5a0de839553474ca9e80a3a46401849cc33efbbfdae09c"
     },
     {
       "file": "aurora_reference_maps/runtime/runtime-generated-map.md",
-      "sha256": "d30ce8d50b24ad3cad7200d1075d072496e2a8e588559df330aa29c3173b6a7f"
+      "sha256": "f20b25ed8685ab1ad5bafd0b67e30a24f88a46098ea9579c534406dced5e2a2a"
     },
     {
       "file": "aurora_reference_maps/runtime/runtime-interaction-tree.md",
@@ -308,7 +393,7 @@
     },
     {
       "file": "aurora_reference_maps/runtime/runtime-symbol-index.tsv",
-      "sha256": "3c0f38deac325206d8ba6e545af7d9a7713ca9cb32a625703ba799ffb5282625"
+      "sha256": "71d92e3fd46f8956ba7fde99046bfd5a7c608d62e2f151db19eaf041bb3be3f2"
     },
     {
       "file": "aurora_reference_maps/runtime/search-guide.md",
@@ -316,23 +401,23 @@
     },
     {
       "file": "aurora_reference_maps/ui/ui-deep.md",
-      "sha256": "390f99193a541f1251943c80bb5021cf72a50b3faf2b3ed1685a9e54b9c470f4"
+      "sha256": "e89c4b88c3e8655280751b2667b8b5647655d6cfa1255548e73aae5e9cd787f3"
     },
     {
       "file": "aurora_reference_maps/ui/ui-function-skeleton.jsonl",
-      "sha256": "34e23967f18b96dace11bcce3bcc6a1fd7052f9d4e9e8c702cc175c0fb5733e2"
+      "sha256": "44fb5a528d1813f18375d59927c479f92e77c6b5fca2abb347e8d2214c487dd2"
     },
     {
       "file": "aurora_reference_maps/ui/ui-generated-call-tree.md",
-      "sha256": "3a2a12b61dba428a72e40ea6b6005d768cacaf0366579366122a9a29e427df5d"
+      "sha256": "983da67d5dfa880600195d5f73470773308dba7da6bbcd8fc3593e36be2b7e52"
     },
     {
       "file": "aurora_reference_maps/ui/ui-generated-map.md",
-      "sha256": "1a286dd6f0e2c34029651de4ad28e8664a13b1a5dbac680cedeb8c388fb881d4"
+      "sha256": "9a9b843802ef039ef49045486c69a6616a67b37bb003e340058ffe0d846315f0"
     },
     {
       "file": "aurora_reference_maps/ui/ui-lite.md",
-      "sha256": "3ebf732272dc455779dbe2f7dc4347b0bfb37e83771648acbaa6cd233b6b86b5"
+      "sha256": "97fb637f33d4fb72aac889ece3b0c198f82a3e046ca80fa52c90acfb8f106bdc"
     },
     {
       "file": "aurora_reference_maps/ui/ui-search-guide.md",
@@ -340,7 +425,7 @@
     },
     {
       "file": "aurora_reference_maps/ui/ui-symbol-index.tsv",
-      "sha256": "512f0f17c29023cccd1141513c05e4a2b01fbde560f84af4e4fef451fa99d23f"
+      "sha256": "378609b83133c1c4668b26a7328765d3b8517d93178122ee54f1ca0bf0d77c58"
     },
     {
       "file": "aurora_responses_reasoning.py",
@@ -368,7 +453,7 @@
     },
     {
       "file": "aurora_settings_registry.py",
-      "sha256": "7c74bab0e015e395918b5e6d0ab368ac0036630666990a0b54b4b2a72fb5069a"
+      "sha256": "6208f21846a5e662505f548d9a7fee9fdeadc6dc7ba13213f98d548abb99e173"
     },
     {
       "file": "aurora_settings_transactions.py",
@@ -380,15 +465,19 @@
     },
     {
       "file": "aurora_subscription_worker.py",
-      "sha256": "279b83af6f02ee24faac7acbda05e0a8fd9e6578c7300e59469cabf21a0f0c95"
+      "sha256": "649bdfc8e95f286bab5a0c89cca099a7577884b67e8dab995f7899a260ad62b2"
     },
     {
       "file": "aurora_switchboard.py",
-      "sha256": "98f41db1d3111b1b8595133fa985f164e0d2f27ebcf8b2e2d28605fc82045499"
+      "sha256": "79a7b0e42f5c256ba0855d9f6c57c6302f411bd35228f90062e224bd027e22b9"
     },
     {
       "file": "aurora_task_continuation.py",
-      "sha256": "6a092c258543fec533e4a7e10c093bc06e28ade5f56c977459b2e1b918337ffd"
+      "sha256": "d3db494fdc65aba10a6f47d37839da31a53d2e5275b6e5190808c730c2694eca"
+    },
+    {
+      "file": "aurora_task_objective.py",
+      "sha256": "0181c04d426270030f20900afa483b4a13993796a1287089888769fde9638550"
     },
     {
       "file": "aurora_validation_console.py",
@@ -436,7 +525,7 @@
     },
     {
       "file": "docs/notes/aurora_runtime_roadmap.md",
-      "sha256": "1f38f1efa06322afc73f310d6d4c115338d6d3c5f41135b5d749f294e2c8624c"
+      "sha256": "f72608265373b8644e8e102aa9a44b29924b96bf87fe48070f9a18799adf764f"
     },
     {
       "file": "docs/reference-packs/adaptive-reasoning-reference.md",
@@ -480,7 +569,7 @@
     },
     {
       "file": "docs/reference-packs/held-input-reference.md",
-      "sha256": "2629b89704b82f62a9bbd6b30b809c556a439d33a43292e319435b42ae99bdeb"
+      "sha256": "5ce4b12ff3e377925cd448c05e0057f4e3efb9cc17658207079ab2759753c8e9"
     },
     {
       "file": "docs/reference-packs/log-field-reference.md",
@@ -508,7 +597,7 @@
     },
     {
       "file": "docs/reference-packs/roadmap-reference.md",
-      "sha256": "1f38f1efa06322afc73f310d6d4c115338d6d3c5f41135b5d749f294e2c8624c"
+      "sha256": "f72608265373b8644e8e102aa9a44b29924b96bf87fe48070f9a18799adf764f"
     },
     {
       "file": "docs/reference-packs/runtime-troubleshooting-map.md",
@@ -572,15 +661,15 @@
     },
     {
       "file": "README.md",
-      "sha256": "b3cf5a38ec2f380deeff5ee7459ac4ae4410cefc4f317ad9f4174b9eebe1b49f"
+      "sha256": "37b7087e02ad00a6e82f4561eb9dc2a0777c66031db90997908baa660bdde21a"
     },
     {
       "file": "README_FOR_AI.md",
-      "sha256": "bd2adb87a42dfbe02fc6d0c46090d4482644851edc189c5a3df889427200c87f"
+      "sha256": "cd9506ec867f5566c60e4daab19b32986cabda816d4cb93980b781edfb7111f0"
     },
     {
       "file": "README_FOR_HUMANS.md",
-      "sha256": "486ff5781b63fdf83596fd2137c79eff74618f33f62c7a236332eb438dfacb7d"
+      "sha256": "49a885759f67e72eb5ddd8ff1c61f3ba4a89487ca13878ccd185cb00b088c95d"
     },
     {
       "file": "regenerate_aurora_skill_refs.ps1",
@@ -588,7 +677,7 @@
     },
     {
       "file": "RELEASE_NOTES.md",
-      "sha256": "554ea66f1a665a9652e8bcaeffd9e7f4dab45cade796914525de1d0eeb03353a"
+      "sha256": "bdce5cbaa1fa714be2bbfed06a67daebe192775ffcaa0159fc456069e2d93fc2"
     },
     {
       "file": "requirements-preview.txt",
@@ -600,11 +689,15 @@
     },
     {
       "file": "tests/analyze_horizons_trial.py",
-      "sha256": "c2fb9db87e24f8d163fb4198a4fd1d4bd9fde353332f28959d28643b253a04b6"
+      "sha256": "68542b1f855a8961fbc16cb4a5a3674b2fc0f78c201e02cb305bc5b537f23155"
     },
     {
       "file": "tests/offline_basic_commands_smoke.py",
-      "sha256": "ca5c41556d70f5f813e06a78b8f4e7495d7bfaf9a430d41b3d313113b186eb54"
+      "sha256": "57c0464b82c263e1d9b7debff266ad7a44b13f27e794b627ea7a4be4d5df131f"
+    },
+    {
+      "file": "tests/offline_batch_capture_smoke.py",
+      "sha256": "76cbadfeeedb4c885d781fe9d7a8fff59cc2577cfc449791dfcc30d33067785c"
     },
     {
       "file": "tests/offline_capture_limits_smoke.py",
@@ -616,15 +709,43 @@
     },
     {
       "file": "tests/offline_continuation_smoke.py",
-      "sha256": "ede8b1acf700022e26c53d9f61da5204a09a4d2386e7475cfad4b09f1dc6786e"
+      "sha256": "8078530f682dc35e7a21026b6461981f77431153041ccf41f74f3fd7d6606530"
     },
     {
       "file": "tests/offline_delivery_smoke.py",
       "sha256": "1fb19735b0ab8483f2534b0808720cf30f5736e5c84a83515e7894e01bb663e2"
     },
     {
+      "file": "tests/offline_execution_evidence_smoke.py",
+      "sha256": "2becccac166178912353c9e3da4218b72188ac6b43a41c27d8d5928bfaceba15"
+    },
+    {
+      "file": "tests/offline_execution_history_smoke.py",
+      "sha256": "c8185e118d6255c09267b7cf26507d8ebbe903bd07ad2f198ed7e398d222ca5f"
+    },
+    {
+      "file": "tests/offline_execution_inspector_smoke.py",
+      "sha256": "9375d25fa239b07b9bbe41a7ff88c1d32500642b572290ea28027ec14942c594"
+    },
+    {
+      "file": "tests/offline_execution_recording_smoke.py",
+      "sha256": "92cb3f5193a4d3da1550cb19d33f8db18a18cd62026d43d4c7144524fa78e134"
+    },
+    {
+      "file": "tests/offline_execution_retention_smoke.py",
+      "sha256": "4505decc98835338c4e4cd9e2c8d9543da90c32ca317b0e5d66d0ed6eb10021b"
+    },
+    {
+      "file": "tests/offline_input_recovery_smoke.py",
+      "sha256": "76f232b69485b1de60ac562be86131eaae7e3dac4d7945b3ce003c227537b462"
+    },
+    {
       "file": "tests/offline_input_smoke.py",
       "sha256": "d399500a6ec53c838bb1213f4e9390ce068e4f05f12b46cb5792881dc361392c"
+    },
+    {
+      "file": "tests/offline_observation_wait_smoke.py",
+      "sha256": "57e560b33cf83ab5d6719526f2fc6f1ab182e311ce1747a221f11fa2c4a54dd2"
     },
     {
       "file": "tests/offline_operator_scenarios.py",
@@ -632,11 +753,51 @@
     },
     {
       "file": "tests/offline_panel_smoke.py",
-      "sha256": "717717d6bda5da7967e37dff0691fddb4e658c71b39338c7b314503c0ead97b8"
+      "sha256": "4d7592238311f260a091f4b89d5e35a1f91f2f3e95c8dfc7dc1d7103285132b3"
     },
     {
       "file": "tests/offline_readback_smoke.py",
       "sha256": "e90b3c79de7845ae968aef5567bfb22ef90d402c41d6f50640fc765cb26788a9"
+    },
+    {
+      "file": "tests/offline_recording_browser_smoke.py",
+      "sha256": "f26ea240ce1afd6ad2dd0d4461a3b3dd77e1d0f59eb78c10251341ea5f0a5ae8"
+    },
+    {
+      "file": "tests/offline_recording_retention_smoke.py",
+      "sha256": "010bd876d217ff0bc0e33bcffb20970332b8fc6ce1843305ba4516898ffe816a"
+    },
+    {
+      "file": "tests/offline_recording_writer_smoke.py",
+      "sha256": "35e1f1b03b7f3d985616cc2dbe61fd486f0815ccc5c251815143ef76185a9449"
+    },
+    {
+      "file": "tests/offline_recovery_archive_smoke.py",
+      "sha256": "aedb64c8dbae6bfb4053799fd7632150e927a76ce4df1c5e4bb220ba3aac1111"
+    },
+    {
+      "file": "tests/offline_recovery_capacity_smoke.py",
+      "sha256": "849bec2e439f8a68245bf41a58850bffcb154a9da3b0e64e1092599cea94479f"
+    },
+    {
+      "file": "tests/offline_recovery_panel_smoke.py",
+      "sha256": "facf3c1d45a1e844c74584169152a14fb14b105e74c552768131879ee664cd48"
+    },
+    {
+      "file": "tests/offline_recovery_readiness_smoke.py",
+      "sha256": "095c373ad12a34f4ed0aec8b9cdec713293038ccaac4ac864af378cadf5d384c"
+    },
+    {
+      "file": "tests/offline_recovery_reconciliation_smoke.py",
+      "sha256": "a92f8a01f4af44218c6ba2a7717982dd87354c9d3b1b3830a410a16f54019684"
+    },
+    {
+      "file": "tests/offline_recovery_restart_smoke.py",
+      "sha256": "1cabaff518c4229f3e21abc500d230618454dcb000cfe9e15e648b5dc642f497"
+    },
+    {
+      "file": "tests/offline_recovery_startup_smoke.py",
+      "sha256": "bead45c4130ba180e2548f0d8f254baaba25d435ef5dcdc8b608d324171a9150"
     },
     {
       "file": "tests/offline_responses_smoke.py",
@@ -644,7 +805,7 @@
     },
     {
       "file": "tests/offline_runtime_smoke.py",
-      "sha256": "6a1d8ce9e81834c8a251a5bdb2cab7787b12859e94a1575d9c27b4017c03f75f"
+      "sha256": "e899363cbbbf045c2f90f49a28aec715e36cb27e1371191ea2c2cffef5f9bff6"
     },
     {
       "file": "tests/offline_scene_goal_smoke.py",
@@ -655,8 +816,16 @@
       "sha256": "aae1e2f2f07c4c5eab448daadb2b56c1a3290a16b4a8b1e3ba1c986089613480"
     },
     {
+      "file": "tests/offline_task_cancellation_smoke.py",
+      "sha256": "1b267396caabbb2b9181263ef98592a42a0bc3b66074e909c4f998358d591a3f"
+    },
+    {
       "file": "tests/offline_task_flow_smoke.py",
       "sha256": "f79e226f614f0b7feddd3756d3dce212b3aa7be7ab3bffd368922fcbf1920ad4"
+    },
+    {
+      "file": "tests/offline_task_objective_smoke.py",
+      "sha256": "37cec832c77449737fa18931d73c7caaedb9eb7d6d25e4c20dc073c6c0ce907e"
     },
     {
       "file": "tests/offline_task_outcomes_smoke.py",
@@ -668,7 +837,11 @@
     },
     {
       "file": "tests/offline_task_progress_smoke.py",
-      "sha256": "e5567bf6014ecc484ce439a0e72983b79b89b8f3cc5e247cfc07772b16b31017"
+      "sha256": "85dce32f6a76e351e6b4e9507cfe96ca913fcbd10bc68bb6b75f3065e78b1496"
+    },
+    {
+      "file": "tests/offline_task_steering_smoke.py",
+      "sha256": "d68fa380009713c48c9a3baa1ccd7d8f92f357fbfc9c7869e6c7a252b6789e80"
     },
     {
       "file": "tests/offline_turn_flow_smoke.py",
@@ -677,6 +850,14 @@
     {
       "file": "tests/offline_validation_smoke.py",
       "sha256": "7f73f4640ad29dbd8fbbfbb83f768c846a949d7d3947521aa3cfbfa8dc01fd0d"
+    },
+    {
+      "file": "tests/probe_smoke_watchdog.py",
+      "sha256": "4e40d54b3224c2372d98de24902ba835305d7e1573de260c303f348c350f2084"
+    },
+    {
+      "file": "tests/smoke_watchdog.py",
+      "sha256": "61eccd1c4eecc193e3a263d1ce0240adb71c2445a345b8a8b669a8c8321f19a9"
     },
     {
       "file": "tests/subscription_worker_fixture.py",
@@ -695,6 +876,14 @@
       "sha256": "739fb38af7bf009aff2ea90ccd7ab604125ac1daea3cd8b04126e72715af160d"
     },
     {
+      "file": "tests/test_aurora_batch_capture.py",
+      "sha256": "6fdc60dac71574c1374bfc2bab23aa3f37aa1b105d2bd2e5e6c87b9df22a7715"
+    },
+    {
+      "file": "tests/test_aurora_capture_artifacts.py",
+      "sha256": "44a1328f7f1ad9472fa446aa67dc3f8bdc8b1eab7adc448f97c0ddba3b29d4ec"
+    },
+    {
       "file": "tests/test_aurora_capture_geometry.py",
       "sha256": "58ce22c0efb18e1697b1773ac752a4ad1dccd576d38c9021f7b9d5be3b30336d"
     },
@@ -704,19 +893,19 @@
     },
     {
       "file": "tests/test_aurora_chatgpt.py",
-      "sha256": "80448847667a63cf7b278d5fa5cdc2c6e38c33a3c57c1a67b59f1070c1f260ca"
+      "sha256": "b4b7ff68f0c0686a463ccd21233b9f534a5785c97f3edcef2366e660ab702d40"
     },
     {
       "file": "tests/test_aurora_cli_shell.py",
-      "sha256": "b3f5eb7addcdc61bde4a02058a50cbdc97562e3d4b5bf6f3784b932abb3a4fb2"
+      "sha256": "e046b0ad3795d3e8fad56a874a1354b6a7bf72996c6f156a57f069c7f3c51a72"
     },
     {
       "file": "tests/test_aurora_command_catalog.py",
-      "sha256": "23bc2e07992718fcb8359a35b4a342a87cf1cdc70b7eb2b24c5c3894d0da02d4"
+      "sha256": "3db16eebca0af73eb7058ed2ea3bb5032d6c99052b760a2f8f7ad8f827806ee7"
     },
     {
       "file": "tests/test_aurora_command_ingress.py",
-      "sha256": "599416fe5e44eb9a6b0ef24b6cca088934a8207dd4bd33847ed8f9e9495bbb1f"
+      "sha256": "5231a415e7067ff51d684b0a8e3eeceaa946a3a856ab84ae497e44df4cbdb709"
     },
     {
       "file": "tests/test_aurora_control_panel_settings_client.py",
@@ -724,7 +913,7 @@
     },
     {
       "file": "tests/test_aurora_control_plane.py",
-      "sha256": "baeafad803c0ba64ee97d9c25c0c760b99df11fe53bf2f0ca79c6f947de6f2aa"
+      "sha256": "83e7864471cd9a78f819c92f1aee277a39c4da9ba1712a4e528bfe612de66bc4"
     },
     {
       "file": "tests/test_aurora_conversation.py",
@@ -744,11 +933,11 @@
     },
     {
       "file": "tests/test_aurora_default_profiles.py",
-      "sha256": "d4903ba494d0261e3d12b8f003392b02a89b80c3aef3141232a2c7de962d4cbc"
+      "sha256": "64d0d64f80ce35cf6ee33fcc3114a28e04926288e958dba64f77900360019ca9"
     },
     {
       "file": "tests/test_aurora_delivery_receipts.py",
-      "sha256": "cfcabc0622af7178ddb2cb3281cb92a59870e6bd5f4720c5253899cfcab2b94b"
+      "sha256": "f2a1ecc764a240f7fa2509c2fb3343d4a78cdfd7491a84f7cd344c86e5476d30"
     },
     {
       "file": "tests/test_aurora_desktop_contracts.py",
@@ -757,6 +946,26 @@
     {
       "file": "tests/test_aurora_episodic_retrieval.py",
       "sha256": "4d741473368ae7b17792cc98621bd046877714dcb39a65bd30e9e1ec72abd0c6"
+    },
+    {
+      "file": "tests/test_aurora_execution_evidence.py",
+      "sha256": "e63131da48105aa8a50a8f9751b24273473e7e585a6e91f9e21e743a85f74426"
+    },
+    {
+      "file": "tests/test_aurora_execution_history.py",
+      "sha256": "fb3e8fb87cd4cc9c696aec9b662b8f590c39c2e95217f4998ea0c94cf9ee4f7c"
+    },
+    {
+      "file": "tests/test_aurora_execution_inspector.py",
+      "sha256": "977fa86484453c01d79e8f617f48bb141cb2a0973ef05c029ca68e3a100a0f9f"
+    },
+    {
+      "file": "tests/test_aurora_execution_recording.py",
+      "sha256": "88c0026f08159c794aa24743aaa96dd5e8fd692e04c2d3e38298db679bb0a0a1"
+    },
+    {
+      "file": "tests/test_aurora_execution_retention.py",
+      "sha256": "509bfd10e50c583d0180fa12cfc65bd3e0a99cf2c84960af6c72ccaa3612b225"
     },
     {
       "file": "tests/test_aurora_gameplay_scene.py",
@@ -768,27 +977,47 @@
     },
     {
       "file": "tests/test_aurora_history_controls.py",
-      "sha256": "c41498a24a629380af27e7ca6032fcf60fde04d1e45c234cbdd324f8d755845e"
+      "sha256": "84e6d8f35e0f802c0e57517589d398eb632d6f5a891000eda4a3d1751a10e44b"
     },
     {
       "file": "tests/test_aurora_horizon_controls.py",
-      "sha256": "d91822ae463d2aae386edf3ffb4509c8e15351d83da702bd8f5b662a07281459"
+      "sha256": "9d0d560d52495d0e419432b7f40e29edf85571223f078955a825b749dba9eb01"
+    },
+    {
+      "file": "tests/test_aurora_horizon_identity.py",
+      "sha256": "be2b1faf74c6f18178e420149a1fe7d581aa88ef420118bbe1cea527ad40fb2a"
     },
     {
       "file": "tests/test_aurora_inference_plan.py",
-      "sha256": "32ab45804486ab698b0f58e79b65c33d678c14a141d5084ca0cc755a87d4e4ab"
+      "sha256": "41b4b227c0594bce42a30cc86a2fc354303a05985977d8da73eb5bd750371220"
     },
     {
       "file": "tests/test_aurora_input_ownership.py",
       "sha256": "92f7d221afde4299e4249bcbd351d7236e0dc089906153640fab68b1ebdec42a"
     },
     {
+      "file": "tests/test_aurora_input_recovery.py",
+      "sha256": "8675be0ae301251dcda73c7c1ac518c5230c44461adbc15aebe52431a0975cc4"
+    },
+    {
+      "file": "tests/test_aurora_journal_projection.py",
+      "sha256": "c7c1595a6a1e44be8903d2e8e6cf9c53ce40acbb33352c77bbc105c2d332ad77"
+    },
+    {
       "file": "tests/test_aurora_mcp_server.py",
-      "sha256": "9d56231c980402e41bd6aa3a41efd0a344858456d56211dab9570f0582dd8923"
+      "sha256": "4000698f7f9f9353af861ff2dd178f1a125a002559a427bd5e4000227b8737b7"
+    },
+    {
+      "file": "tests/test_aurora_memory_projection_controls.py",
+      "sha256": "6f237bb5db265df5ac63e301d55ef187b81d811d7432d74087778560d8aacc3c"
     },
     {
       "file": "tests/test_aurora_mutation_commands.py",
       "sha256": "815360e3550b651168581e0939a30739fef2e71201a4cd21256770cb98876bfe"
+    },
+    {
+      "file": "tests/test_aurora_observation_wait.py",
+      "sha256": "c608be34fd81cbe63b7885168369933572c659bd664a3e9bf36c36b3b8a9d2f0"
     },
     {
       "file": "tests/test_aurora_panel_layout.py",
@@ -807,12 +1036,44 @@
       "sha256": "e310cb38e4012639045f37e88b3baf57e2f97d0b7e30c174765596cdd7795f0a"
     },
     {
+      "file": "tests/test_aurora_recording_retention.py",
+      "sha256": "f859b44beff4100174b354f4520ec08caf9c98f7d72f41ac12f6da1ee8960c23"
+    },
+    {
+      "file": "tests/test_aurora_recording_store.py",
+      "sha256": "4960b17d6fe7fe89740ffce19a2f9d47cf25d1dee798429c2c723a1a71c4971d"
+    },
+    {
+      "file": "tests/test_aurora_recording_timeline.py",
+      "sha256": "398a8b90b129f5d002ba6215e82260607969c5713de523969864087cb3019dcb"
+    },
+    {
+      "file": "tests/test_aurora_recovery_archive.py",
+      "sha256": "4e0cce3b18eca20a53850601bb1a21dac904694fbaf37b6326ee6f137e568ad1"
+    },
+    {
+      "file": "tests/test_aurora_recovery_capacity.py",
+      "sha256": "aa1553628c71a278f446dcb04a9cc559e715ab5fd276817a1af6bb380d59baf7"
+    },
+    {
+      "file": "tests/test_aurora_recovery_panel.py",
+      "sha256": "b7d9bc8d452e52009e3c442b4483a040398a3277ce7ce3523dbd9f5257e1444d"
+    },
+    {
+      "file": "tests/test_aurora_recovery_readiness.py",
+      "sha256": "ef508d10d2b8d52239be8679094b08bb26ebafc465d573eb4ddd18d8aa002251"
+    },
+    {
+      "file": "tests/test_aurora_recovery_reconciliation.py",
+      "sha256": "1ba2842cb63c5a8006d0ba38a556dcf9e092184a1af8470a4cda64433d1d8b2f"
+    },
+    {
       "file": "tests/test_aurora_reference_generation.py",
-      "sha256": "3b938bd5584c70b6bdae97014bb8ba6652fd161c26f4dd2faa3d385fc919eae4"
+      "sha256": "c1c8fcd950bdfd0ffd90a845281568bd53fa9215d898ae0304837c3785c0ca29"
     },
     {
       "file": "tests/test_aurora_responses_reasoning.py",
-      "sha256": "c02c50cc6428302f93e4b2e1056e404bd88c417f4dc89e61e521947d03842541"
+      "sha256": "20f2fdf7962f87ac9944fa1caed27ed478e716d7fc6042b8adf168f9a9f8e69e"
     },
     {
       "file": "tests/test_aurora_retrieval_commands.py",
@@ -824,7 +1085,7 @@
     },
     {
       "file": "tests/test_aurora_runtime_work.py",
-      "sha256": "a6e3eb6fc092a86aec431f415c7db35381a4c7ed33491047e828024119d7cff8"
+      "sha256": "2def0ba53d3e6072cdaa4b0b2544c00d87e39f079d14b5f3a1bbb06c3ae4b745"
     },
     {
       "file": "tests/test_aurora_search_dates.py",
@@ -836,11 +1097,11 @@
     },
     {
       "file": "tests/test_aurora_setting_commands.py",
-      "sha256": "1f58a0923ec8fee2569f08759927a7e2c627840bf272691ba45167ba9fb65a97"
+      "sha256": "e7039e186e7edadc735b3464c848a11ae9e3052a10eda7961045a0b5ab9acf80"
     },
     {
       "file": "tests/test_aurora_settings_registry.py",
-      "sha256": "71f5b60da3ac5c3706be7717988ded15efc158c35a47a1b2aebcb53601c3be8d"
+      "sha256": "d374f5d26dd05d34dfcb4a3b16c8319dce794bb982890098e647f6f090703a0e"
     },
     {
       "file": "tests/test_aurora_settings_transactions.py",
@@ -848,27 +1109,39 @@
     },
     {
       "file": "tests/test_aurora_subscription_worker.py",
-      "sha256": "97a66c6707d0f8e93bd70b7983bff155b837a64789591673efa757ecd26d1079"
+      "sha256": "85d0f09252166fd09035f126ba181a7d7eb44d9b523a41c4cc5fb2e6dc4f3efc"
     },
     {
       "file": "tests/test_aurora_switchboard.py",
-      "sha256": "a2ed43195c6a942c3261c34f34f4b7815601ab137f478e09ecf7509b77c4435a"
+      "sha256": "fd66fb01ab26daa83dfe905372447315112d18e5f570b33537a1cc9b3b6a5317"
+    },
+    {
+      "file": "tests/test_aurora_task_cancellation.py",
+      "sha256": "b04a524ee702eba44ca134f0b2cd3f70b7d63e8cf81ab000f175fe009ea4cfc5"
     },
     {
       "file": "tests/test_aurora_task_continuation.py",
-      "sha256": "2b4c8138e1c7863dc16dd1c82ac786bbf2556b137085ea8afb2282418b26d8ad"
+      "sha256": "1ecf2103da104a8a3b72bb9e76d3ba9a26e5499641c15bfd8b0dba5fedb652dc"
+    },
+    {
+      "file": "tests/test_aurora_task_objective.py",
+      "sha256": "c76f757fe1dae3a9c90298c5c7d10bbfd88a41a6e4aad4c3ec2d174ad405d007"
     },
     {
       "file": "tests/test_aurora_task_ownership.py",
-      "sha256": "6a3fa502c786d481375dd7986b1fe4fcf9592ceef1445cb1d898fd2c6c5582b5"
+      "sha256": "1eee2091276dca3cf6985e6db9eb810316662be8177f1c86b21370213c5addb0"
     },
     {
       "file": "tests/test_aurora_task_progress.py",
       "sha256": "4a2332d68c1018125e0cab3d515c0f7855c6fa6b1b890c24292417f45a610e38"
     },
     {
+      "file": "tests/test_aurora_task_steering.py",
+      "sha256": "de06913b846169696a78de21b82774d33fee0d076e5adf2f3e355746e1427cfe"
+    },
+    {
       "file": "tests/test_aurora_turn_flow.py",
-      "sha256": "302d0a508c006921e5749336a13e90d7a41d5422228678b63cb068488513cfbc"
+      "sha256": "79f7d7493566024c7886827a40f57160a8878833b0bde0a0d139b78639f55014"
     },
     {
       "file": "tests/test_aurora_validation_console.py",
@@ -877,6 +1150,10 @@
     {
       "file": "tests/test_blender_readonly_mcp_server.py",
       "sha256": "aa219cab418d7ff163e70efaa208d5f3bb343cf4611c23beaffc1e5e9f67b76b"
+    },
+    {
+      "file": "tests/test_dynamic_flow_summary.py",
+      "sha256": "e1ea22bf9a3225e349f9de3b485b35a3d60a29648a1a3dc6021504ca7943decd"
     },
     {
       "file": "tests/test_fl_studio_readonly_mcp_server.py",
@@ -891,12 +1168,16 @@
       "sha256": "2cd6aaaf7da27649c4219964426abda1c319f6e5da8e4a4a863383ddddfc19f7"
     },
     {
+      "file": "tests/test_smoke_watchdog.py",
+      "sha256": "b18361e1bab37a8ac7f33920414e263e8ac9bdfbd7f2ed4543afa0dc1738dd7d"
+    },
+    {
       "file": "tests/test_validation_web.cjs",
       "sha256": "af648e7886d0bc17f10bf66c64eb6f0b56c60df99707f58c1894ac6ac831ffac"
     },
     {
       "file": "tools/aurora_maps/generate_maps.py",
-      "sha256": "e90f5aaeefc2eb0f7901d4cfae06e9690bcdcbbce3ea8c98ad7581c452f9f317"
+      "sha256": "466005a6accbc007773df1d25e940cae67e21880bb6bde780264aafc7244af83"
     },
     {
       "file": "tools/aurora_maps/PROVENANCE.md",
@@ -912,15 +1193,19 @@
     },
     {
       "file": "UPGRADING.md",
-      "sha256": "34e265cb637f8a404080b9060e423cf4f6fd6a627566bafa93935cf404edc0d6"
+      "sha256": "6755c0fc7bcc0219078991047676bd74eb1bd93ec46dcc8f808f839c57c7d70c"
+    },
+    {
+      "file": "VERSIONING.md",
+      "sha256": "7dd8d90183058d22efd375985a08beeea2ae42a40658e757726638f95e7ac1f9"
     }
   ],
   "privacy_check": {
-    "files_checked": 228,
+    "files_checked": 295,
     "findings": [],
     "scope": "Allowlisted new source tree; no private Git history, state, logs, captures, auth caches or personal profiles. Pattern and configured-secret checks are not a formal security audit."
   },
-  "omitted_development_links": 29,
+  "omitted_development_links": 62,
   "reference_generation": {
     "changed": [
       "manifest.json",
@@ -932,7 +1217,7 @@
     ],
     "checked_files": 43,
     "desktop_bindings": 19,
-    "runtime_bindings": 368,
+    "runtime_bindings": 391,
     "status": "generated"
   }
 }

@@ -2,380 +2,381 @@
 
 ## Command Sink / Actions
 
-- `build_queue_next_action_cue` [function] `L1313`: No docstring summary.
-- `format_queue_bridge_monitor_summary` [function] `L1392`: No docstring summary.
-- `AuroraControlPanel._queue_runtime_orb_click` [method (AuroraControlPanel)] `L2359`: No docstring summary.
-- `AuroraControlPanel._apply_header_layout` [method (AuroraControlPanel)] `L2444`: Presentation preference only; keep the full header and every control reachable.
-- `AuroraControlPanel._apply_settings_mode` [method (AuroraControlPanel)] `L2743`: No docstring summary.
-- `AuroraControlPanel.send_raw` [method (AuroraControlPanel)] `L5234`: No docstring summary.
-- `AuroraControlPanel.confirm_and_send_raw` [method (AuroraControlPanel)] `L5699`: No docstring summary.
-- `AuroraControlPanel.apply_chat_head_window_settings` [method (AuroraControlPanel)] `L5923`: No docstring summary.
-- `AuroraControlPanel.apply_episodic_memory_settings` [method (AuroraControlPanel)] `L6228`: No docstring summary.
-- `AuroraControlPanel.apply_operator_security_requirement` [method (AuroraControlPanel)] `L6558`: No docstring summary.
-- `AuroraControlPanel.apply_passcode_command_visibility` [method (AuroraControlPanel)] `L6561`: No docstring summary.
-- `AuroraControlPanel.clear_operator_passcode` [method (AuroraControlPanel)] `L6581`: No docstring summary.
-- `AuroraControlPanel.apply_turn_scheduler_profile_to_controls` [method (AuroraControlPanel)] `L6678`: No docstring summary.
-- `AuroraControlPanel.apply_model_preset` [method (AuroraControlPanel)] `L6710`: No docstring summary.
-- `AuroraControlPanel.apply_overlay_preset` [method (AuroraControlPanel)] `L6757`: No docstring summary.
-- `AuroraControlPanel.apply_operator_profile` [method (AuroraControlPanel)] `L6776`: No docstring summary.
-- `AuroraControlPanel.apply_advanced_settings` [method (AuroraControlPanel)] `L7041`: No docstring summary.
-- `AuroraControlPanel.apply_chat_head_settings` [method (AuroraControlPanel)] `L7050`: No docstring summary.
-- `AuroraControlPanel.apply_additional_settings` [method (AuroraControlPanel)] `L7069`: No docstring summary.
-- `AuroraControlPanel.apply_settings` [method (AuroraControlPanel)] `L7081`: No docstring summary.
-- `AuroraControlPanel.queue_next_inference_plan` [method (AuroraControlPanel)] `L7105`: No docstring summary.
-- `AuroraControlPanel.apply_runtime_locks` [method (AuroraControlPanel)] `L7134`: No docstring summary.
-- `AuroraControlPanel.reload_observed_settings` [method (AuroraControlPanel)] `L7638`: No docstring summary.
+- `build_queue_next_action_cue` [function] `L1314`: No docstring summary.
+- `format_queue_bridge_monitor_summary` [function] `L1393`: No docstring summary.
+- `AuroraControlPanel._queue_runtime_orb_click` [method (AuroraControlPanel)] `L2360`: No docstring summary.
+- `AuroraControlPanel._apply_header_layout` [method (AuroraControlPanel)] `L2445`: Presentation preference only; keep the full header and every control reachable.
+- `AuroraControlPanel._apply_settings_mode` [method (AuroraControlPanel)] `L2744`: No docstring summary.
+- `AuroraControlPanel.send_raw` [method (AuroraControlPanel)] `L5243`: No docstring summary.
+- `AuroraControlPanel.confirm_and_send_raw` [method (AuroraControlPanel)] `L5708`: No docstring summary.
+- `AuroraControlPanel.apply_chat_head_window_settings` [method (AuroraControlPanel)] `L5932`: No docstring summary.
+- `AuroraControlPanel.apply_episodic_memory_settings` [method (AuroraControlPanel)] `L6237`: No docstring summary.
+- `AuroraControlPanel.apply_operator_security_requirement` [method (AuroraControlPanel)] `L6567`: No docstring summary.
+- `AuroraControlPanel.apply_passcode_command_visibility` [method (AuroraControlPanel)] `L6570`: No docstring summary.
+- `AuroraControlPanel.clear_operator_passcode` [method (AuroraControlPanel)] `L6590`: No docstring summary.
+- `AuroraControlPanel.apply_turn_scheduler_profile_to_controls` [method (AuroraControlPanel)] `L6687`: No docstring summary.
+- `AuroraControlPanel.apply_model_preset` [method (AuroraControlPanel)] `L6719`: No docstring summary.
+- `AuroraControlPanel.apply_overlay_preset` [method (AuroraControlPanel)] `L6766`: No docstring summary.
+- `AuroraControlPanel.apply_operator_profile` [method (AuroraControlPanel)] `L6785`: No docstring summary.
+- `AuroraControlPanel.apply_advanced_settings` [method (AuroraControlPanel)] `L7050`: No docstring summary.
+- `AuroraControlPanel.apply_chat_head_settings` [method (AuroraControlPanel)] `L7059`: No docstring summary.
+- `AuroraControlPanel.apply_additional_settings` [method (AuroraControlPanel)] `L7078`: No docstring summary.
+- `AuroraControlPanel.apply_settings` [method (AuroraControlPanel)] `L7090`: No docstring summary.
+- `AuroraControlPanel.queue_next_inference_plan` [method (AuroraControlPanel)] `L7114`: No docstring summary.
+- `AuroraControlPanel.apply_runtime_locks` [method (AuroraControlPanel)] `L7143`: No docstring summary.
+- `AuroraControlPanel.reload_observed_settings` [method (AuroraControlPanel)] `L7647`: No docstring summary.
 
 ## Dialogs / Popouts
 
-- `AuroraControlPanel.open_conversation_popout` [method (AuroraControlPanel)] `L4342`: No docstring summary.
-- `AuroraControlPanel._is_dashboard_popout_open` [method (AuroraControlPanel)] `L5048`: No docstring summary.
-- `AuroraControlPanel.toggle_dashboard_popout` [method (AuroraControlPanel)] `L5054`: No docstring summary.
-- `AuroraControlPanel.open_dashboard_popout` [method (AuroraControlPanel)] `L5060`: No docstring summary.
-- `AuroraControlPanel.close_dashboard_popout` [method (AuroraControlPanel)] `L5128`: No docstring summary.
-- `AuroraControlPanel._open_settings_text_dialog` [method (AuroraControlPanel)] `L5599`: No docstring summary.
-- `AuroraControlPanel.open_banner_dialog` [method (AuroraControlPanel)] `L6658`: No docstring summary.
-- `AuroraControlPanel.add_model_dialog` [method (AuroraControlPanel)] `L6987`: No docstring summary.
-- `AuroraControlPanel.remove_selected_model_dialog` [method (AuroraControlPanel)] `L7012`: No docstring summary.
+- `AuroraControlPanel.open_conversation_popout` [method (AuroraControlPanel)] `L4348`: No docstring summary.
+- `AuroraControlPanel._is_dashboard_popout_open` [method (AuroraControlPanel)] `L5057`: No docstring summary.
+- `AuroraControlPanel.toggle_dashboard_popout` [method (AuroraControlPanel)] `L5063`: No docstring summary.
+- `AuroraControlPanel.open_dashboard_popout` [method (AuroraControlPanel)] `L5069`: No docstring summary.
+- `AuroraControlPanel.close_dashboard_popout` [method (AuroraControlPanel)] `L5137`: No docstring summary.
+- `AuroraControlPanel._open_settings_text_dialog` [method (AuroraControlPanel)] `L5608`: No docstring summary.
+- `AuroraControlPanel.open_banner_dialog` [method (AuroraControlPanel)] `L6667`: No docstring summary.
+- `AuroraControlPanel.add_model_dialog` [method (AuroraControlPanel)] `L6996`: No docstring summary.
+- `AuroraControlPanel.remove_selected_model_dialog` [method (AuroraControlPanel)] `L7021`: No docstring summary.
 
 ## Image Memory Viewer
 
-- `AuroraControlPanel._build_image_memory_tab` [method (AuroraControlPanel)] `L4990`: No docstring summary.
-- `AuroraControlPanel.set_image_memory_index` [method (AuroraControlPanel)] `L7458`: No docstring summary.
-- `AuroraControlPanel.step_image_memory` [method (AuroraControlPanel)] `L7483`: No docstring summary.
-- `AuroraControlPanel.jump_to_latest_image_memory` [method (AuroraControlPanel)] `L7489`: No docstring summary.
-- `AuroraControlPanel.invalidate_image_memory_preview` [method (AuroraControlPanel)] `L9069`: No docstring summary.
-- `AuroraControlPanel._is_image_memory_popout_open` [method (AuroraControlPanel)] `L9079`: No docstring summary.
-- `AuroraControlPanel.refresh_image_memory_list` [method (AuroraControlPanel)] `L9120`: No docstring summary.
-- `AuroraControlPanel.open_image_memory_popout` [method (AuroraControlPanel)] `L9337`: No docstring summary.
-- `AuroraControlPanel.close_image_memory_popout` [method (AuroraControlPanel)] `L9383`: No docstring summary.
-- `AuroraControlPanel.set_image_memory_popout_mode` [method (AuroraControlPanel)] `L9396`: No docstring summary.
-- `AuroraControlPanel.toggle_image_memory_popout_mode` [method (AuroraControlPanel)] `L9400`: No docstring summary.
-- `AuroraControlPanel.refresh_image_memory_popout` [method (AuroraControlPanel)] `L9403`: No docstring summary.
-- `AuroraControlPanel.render_image_memory` [method (AuroraControlPanel)] `L9438`: No docstring summary.
-- `AuroraControlPanel.render_image_memory_thumbnail_strip` [method (AuroraControlPanel)] `L9530`: No docstring summary.
-- `AuroraControlPanel.on_image_memory_preview_click` [method (AuroraControlPanel)] `L14296`: No docstring summary.
+- `AuroraControlPanel._build_image_memory_tab` [method (AuroraControlPanel)] `L4999`: No docstring summary.
+- `AuroraControlPanel.set_image_memory_index` [method (AuroraControlPanel)] `L7467`: No docstring summary.
+- `AuroraControlPanel.step_image_memory` [method (AuroraControlPanel)] `L7492`: No docstring summary.
+- `AuroraControlPanel.jump_to_latest_image_memory` [method (AuroraControlPanel)] `L7498`: No docstring summary.
+- `AuroraControlPanel.invalidate_image_memory_preview` [method (AuroraControlPanel)] `L9078`: No docstring summary.
+- `AuroraControlPanel._is_image_memory_popout_open` [method (AuroraControlPanel)] `L9088`: No docstring summary.
+- `AuroraControlPanel.refresh_image_memory_list` [method (AuroraControlPanel)] `L9129`: No docstring summary.
+- `AuroraControlPanel.open_image_memory_popout` [method (AuroraControlPanel)] `L9346`: No docstring summary.
+- `AuroraControlPanel.close_image_memory_popout` [method (AuroraControlPanel)] `L9392`: No docstring summary.
+- `AuroraControlPanel.set_image_memory_popout_mode` [method (AuroraControlPanel)] `L9405`: No docstring summary.
+- `AuroraControlPanel.toggle_image_memory_popout_mode` [method (AuroraControlPanel)] `L9409`: No docstring summary.
+- `AuroraControlPanel.refresh_image_memory_popout` [method (AuroraControlPanel)] `L9412`: No docstring summary.
+- `AuroraControlPanel.render_image_memory` [method (AuroraControlPanel)] `L9447`: No docstring summary.
+- `AuroraControlPanel.render_image_memory_thumbnail_strip` [method (AuroraControlPanel)] `L9539`: No docstring summary.
+- `AuroraControlPanel.on_image_memory_preview_click` [method (AuroraControlPanel)] `L14305`: No docstring summary.
 
 ## Layout / Tabs
 
-- `AuroraControlPanel._build_styles` [method (AuroraControlPanel)] `L2253`: No docstring summary.
-- `AuroraControlPanel._build_runtime_status_strip` [method (AuroraControlPanel)] `L2410`: No docstring summary.
-- `AuroraControlPanel._build_ui` [method (AuroraControlPanel)] `L2467`: No docstring summary.
-- `AuroraControlPanel._build_sidebar_runtime_details` [method (AuroraControlPanel)] `L2623`: No docstring summary.
-- `AuroraControlPanel._build_quick_controls` [method (AuroraControlPanel)] `L2640`: No docstring summary.
-- `AuroraControlPanel._build_settings_card` [method (AuroraControlPanel)] `L2808`: No docstring summary.
-- `AuroraControlPanel._build_feedback_card` [method (AuroraControlPanel)] `L3686`: No docstring summary.
-- `AuroraControlPanel._build_overview_tab` [method (AuroraControlPanel)] `L3707`: No docstring summary.
-- `AuroraControlPanel._build_dashboard_tab` [method (AuroraControlPanel)] `L3744`: No docstring summary.
-- `AuroraControlPanel._layout_dashboard_cards` [method (AuroraControlPanel)] `L3857`: No docstring summary.
-- `AuroraControlPanel._build_memory_tab` [method (AuroraControlPanel)] `L3925`: No docstring summary.
-- `AuroraControlPanel._build_episodic_tab` [method (AuroraControlPanel)] `L3938`: No docstring summary.
-- `AuroraControlPanel._build_command_drip_tab` [method (AuroraControlPanel)] `L4212`: No docstring summary.
-- `AuroraControlPanel._build_chat_tab` [method (AuroraControlPanel)] `L4232`: No docstring summary.
-- `AuroraControlPanel._build_conversation_tab` [method (AuroraControlPanel)] `L4244`: No docstring summary.
-- `AuroraControlPanel._build_switchboard_tab` [method (AuroraControlPanel)] `L4423`: No docstring summary.
-- `AuroraControlPanel._build_command_tab` [method (AuroraControlPanel)] `L4428`: No docstring summary.
-- `AuroraControlPanel._build_prompt_ledger_tab` [method (AuroraControlPanel)] `L4440`: No docstring summary.
-- `AuroraControlPanel._build_agents_tab` [method (AuroraControlPanel)] `L4527`: No docstring summary.
-- `AuroraControlPanel._build_history_context_tab` [method (AuroraControlPanel)] `L4646`: No docstring summary.
-- `AuroraControlPanel._build_portal_intake_tab` [method (AuroraControlPanel)] `L4675`: No docstring summary.
-- `AuroraControlPanel._build_visual_context_tab` [method (AuroraControlPanel)] `L4701`: No docstring summary.
-- `AuroraControlPanel._build_image_context_index_tab` [method (AuroraControlPanel)] `L4722`: No docstring summary.
-- `AuroraControlPanel._build_live_harness_tab` [method (AuroraControlPanel)] `L4751`: No docstring summary.
-- `AuroraControlPanel._build_responses_shadow_tab` [method (AuroraControlPanel)] `L4785`: No docstring summary.
-- `AuroraControlPanel._build_context_files_tab` [method (AuroraControlPanel)] `L4827`: No docstring summary.
-- `AuroraControlPanel._build_settings_safety_tab` [method (AuroraControlPanel)] `L4848`: No docstring summary.
-- `AuroraControlPanel._build_help_tab` [method (AuroraControlPanel)] `L5028`: No docstring summary.
-- `AuroraControlPanel._build_raw_tab` [method (AuroraControlPanel)] `L5039`: No docstring summary.
-- `AuroraControlPanel._build_additional_settings_commands` [method (AuroraControlPanel)] `L5271`: No docstring summary.
-- `AuroraControlPanel._build_advanced_context_commands` [method (AuroraControlPanel)] `L5297`: No docstring summary.
-- `AuroraControlPanel._build_chat_head_history_text` [method (AuroraControlPanel)] `L5785`: No docstring summary.
-- `AuroraControlPanel._build_episodic_memory_commands` [method (AuroraControlPanel)] `L6215`: No docstring summary.
-- `AuroraControlPanel._build_episodic_search_filters` [method (AuroraControlPanel)] `L6257`: No docstring summary.
-- `AuroraControlPanel._build_episodic_visual_search` [method (AuroraControlPanel)] `L6300`: No docstring summary.
-- `AuroraControlPanel.build_episodic_tab_planning_status` [method (AuroraControlPanel)] `L8790`: No docstring summary.
-- `AuroraControlPanel.show_tab` [method (AuroraControlPanel)] `L14200`: No docstring summary.
-- `AuroraControlPanel.show_help_tab` [method (AuroraControlPanel)] `L14231`: No docstring summary.
-- `AuroraControlPanel.show_episodic_tab` [method (AuroraControlPanel)] `L14238`: No docstring summary.
-- `AuroraControlPanel._get_active_tab_name` [method (AuroraControlPanel)] `L14286`: No docstring summary.
+- `AuroraControlPanel._build_styles` [method (AuroraControlPanel)] `L2254`: No docstring summary.
+- `AuroraControlPanel._build_runtime_status_strip` [method (AuroraControlPanel)] `L2411`: No docstring summary.
+- `AuroraControlPanel._build_ui` [method (AuroraControlPanel)] `L2468`: No docstring summary.
+- `AuroraControlPanel._build_sidebar_runtime_details` [method (AuroraControlPanel)] `L2624`: No docstring summary.
+- `AuroraControlPanel._build_quick_controls` [method (AuroraControlPanel)] `L2641`: No docstring summary.
+- `AuroraControlPanel._build_settings_card` [method (AuroraControlPanel)] `L2809`: No docstring summary.
+- `AuroraControlPanel._build_feedback_card` [method (AuroraControlPanel)] `L3687`: No docstring summary.
+- `AuroraControlPanel._build_overview_tab` [method (AuroraControlPanel)] `L3708`: No docstring summary.
+- `AuroraControlPanel._build_dashboard_tab` [method (AuroraControlPanel)] `L3745`: No docstring summary.
+- `AuroraControlPanel._layout_dashboard_cards` [method (AuroraControlPanel)] `L3863`: No docstring summary.
+- `AuroraControlPanel._build_memory_tab` [method (AuroraControlPanel)] `L3931`: No docstring summary.
+- `AuroraControlPanel._build_episodic_tab` [method (AuroraControlPanel)] `L3944`: No docstring summary.
+- `AuroraControlPanel._build_command_drip_tab` [method (AuroraControlPanel)] `L4218`: No docstring summary.
+- `AuroraControlPanel._build_chat_tab` [method (AuroraControlPanel)] `L4238`: No docstring summary.
+- `AuroraControlPanel._build_conversation_tab` [method (AuroraControlPanel)] `L4250`: No docstring summary.
+- `AuroraControlPanel._build_switchboard_tab` [method (AuroraControlPanel)] `L4432`: No docstring summary.
+- `AuroraControlPanel._build_command_tab` [method (AuroraControlPanel)] `L4437`: No docstring summary.
+- `AuroraControlPanel._build_prompt_ledger_tab` [method (AuroraControlPanel)] `L4449`: No docstring summary.
+- `AuroraControlPanel._build_agents_tab` [method (AuroraControlPanel)] `L4536`: No docstring summary.
+- `AuroraControlPanel._build_history_context_tab` [method (AuroraControlPanel)] `L4655`: No docstring summary.
+- `AuroraControlPanel._build_portal_intake_tab` [method (AuroraControlPanel)] `L4684`: No docstring summary.
+- `AuroraControlPanel._build_visual_context_tab` [method (AuroraControlPanel)] `L4710`: No docstring summary.
+- `AuroraControlPanel._build_image_context_index_tab` [method (AuroraControlPanel)] `L4731`: No docstring summary.
+- `AuroraControlPanel._build_live_harness_tab` [method (AuroraControlPanel)] `L4760`: No docstring summary.
+- `AuroraControlPanel._build_responses_shadow_tab` [method (AuroraControlPanel)] `L4794`: No docstring summary.
+- `AuroraControlPanel._build_context_files_tab` [method (AuroraControlPanel)] `L4836`: No docstring summary.
+- `AuroraControlPanel._build_settings_safety_tab` [method (AuroraControlPanel)] `L4857`: No docstring summary.
+- `AuroraControlPanel._build_help_tab` [method (AuroraControlPanel)] `L5037`: No docstring summary.
+- `AuroraControlPanel._build_raw_tab` [method (AuroraControlPanel)] `L5048`: No docstring summary.
+- `AuroraControlPanel._build_additional_settings_commands` [method (AuroraControlPanel)] `L5280`: No docstring summary.
+- `AuroraControlPanel._build_advanced_context_commands` [method (AuroraControlPanel)] `L5306`: No docstring summary.
+- `AuroraControlPanel._build_chat_head_history_text` [method (AuroraControlPanel)] `L5794`: No docstring summary.
+- `AuroraControlPanel._build_episodic_memory_commands` [method (AuroraControlPanel)] `L6224`: No docstring summary.
+- `AuroraControlPanel._build_episodic_search_filters` [method (AuroraControlPanel)] `L6266`: No docstring summary.
+- `AuroraControlPanel._build_episodic_visual_search` [method (AuroraControlPanel)] `L6309`: No docstring summary.
+- `AuroraControlPanel.build_episodic_tab_planning_status` [method (AuroraControlPanel)] `L8799`: No docstring summary.
+- `AuroraControlPanel.show_tab` [method (AuroraControlPanel)] `L14209`: No docstring summary.
+- `AuroraControlPanel.show_help_tab` [method (AuroraControlPanel)] `L14240`: No docstring summary.
+- `AuroraControlPanel.show_episodic_tab` [method (AuroraControlPanel)] `L14247`: No docstring summary.
+- `AuroraControlPanel._get_active_tab_name` [method (AuroraControlPanel)] `L14295`: No docstring summary.
 
 ## Other
 
-- `short` [function] `L1267`: No docstring summary.
-- `format_source_mix` [function] `L1272`: No docstring summary.
-- `has_effective_next_inference_plan` [function] `L1292`: No docstring summary.
-- `format_monitor_summary` [function] `L1352`: No docstring summary.
-- `format_gameplay_monitor_summary` [function] `L1363`: No docstring summary.
-- `format_mutation_admission_summary` [function] `L1412`: No docstring summary.
-- `format_age_seconds` [function] `L1426`: No docstring summary.
-- `format_timestamp_age_text` [function] `L1478`: No docstring summary.
-- `format_file_age_text` [function] `L1486`: No docstring summary.
-- `format_price_value` [function] `L1499`: No docstring summary.
-- `format_model_pricing_compact` [function] `L1508`: No docstring summary.
-- `read_json` [function] `L1519`: No docstring summary.
-- `acquire_windows_single_instance_mutex` [function] `L1526`: No docstring summary.
-- `release_windows_single_instance_mutex` [function] `L1538`: No docstring summary.
-- `is_windows_pid_running` [function] `L1544`: No docstring summary.
-- `read_pid_file` [function] `L1564`: No docstring summary.
-- `write_pid_file` [function] `L1571`: No docstring summary.
-- `remove_pid_file` [function] `L1576`: No docstring summary.
-- `show_duplicate_instance_notice` [function] `L1612`: No docstring summary.
-- `format_runtime_seconds` [function] `L1622`: No docstring summary.
-- `get_runtime_activation_plan` [function] `L1636`: No docstring summary.
-- `build_runtime_mode_spec` [function] `L1665`: No docstring summary.
-- `build_runtime_model_spec` [function] `L1674`: No docstring summary.
-- `launch_runtime_process` [function] `L1697`: No docstring summary.
-- `tail_lines` [function] `L1720`: No docstring summary.
-- `read_jsonl_records` [function] `L1732`: No docstring summary.
-- `read_model_catalog` [function] `L1755`: No docstring summary.
-- `build_model_choices` [function] `L1769`: No docstring summary.
-- `append_external_message` [function] `L1774`: No docstring summary.
-- `build_control_panel_registered_changes` [function] `L1789`: No docstring summary.
-- `filter_changed_control_panel_settings` [function] `L1808`: No docstring summary.
-- `_format_control_panel_setting_value` [function] `L1823`: No docstring summary.
-- `format_control_panel_settings_snapshot` [function] `L1833`: No docstring summary.
-- `format_control_panel_settings_receipt` [function] `L1862`: No docstring summary.
-- `_sort_recent_paths` [function] `L1924`: No docstring summary.
-- `AuroraControlPanel` [class] `L2047`: No docstring summary.
-- `AuroraControlPanel.__init__` [method (AuroraControlPanel)] `L2048`: No docstring summary.
-- `AuroraControlPanel._configure_initial_window_geometry` [method (AuroraControlPanel)] `L2207`: No docstring summary.
-- `AuroraControlPanel._restore_window_position` [method (AuroraControlPanel)] `L2219`: No docstring summary.
-- `AuroraControlPanel._remember_window_geometry` [method (AuroraControlPanel)] `L2234`: No docstring summary.
-- `AuroraControlPanel.toggle_maximized` [method (AuroraControlPanel)] `L2243`: No docstring summary.
-- `AuroraControlPanel._register_widget_locks` [method (AuroraControlPanel)] `L2247`: No docstring summary.
-- `AuroraControlPanel._configure_window_icon` [method (AuroraControlPanel)] `L2298`: No docstring summary.
-- `AuroraControlPanel._load_runtime_orb_assets` [method (AuroraControlPanel)] `L2302`: No docstring summary.
-- `AuroraControlPanel._stop_runtime_orb_animation` [method (AuroraControlPanel)] `L2322`: No docstring summary.
-- `AuroraControlPanel._tick_runtime_orb_animation` [method (AuroraControlPanel)] `L2329`: No docstring summary.
-- `AuroraControlPanel._start_runtime_orb_animation` [method (AuroraControlPanel)] `L2337`: No docstring summary.
-- `AuroraControlPanel._cancel_runtime_orb_click` [method (AuroraControlPanel)] `L2345`: No docstring summary.
-- `AuroraControlPanel._handle_runtime_orb_single_click` [method (AuroraControlPanel)] `L2350`: No docstring summary.
-- `AuroraControlPanel._handle_runtime_orb_double_click` [method (AuroraControlPanel)] `L2366`: No docstring summary.
-- `AuroraControlPanel.start_or_enable_runtime` [method (AuroraControlPanel)] `L2395`: Start paused from the primary button; preserve the legacy orb profile path.
-- `AuroraControlPanel._new_work_page` [method (AuroraControlPanel)] `L2584`: No docstring summary.
-- `AuroraControlPanel._new_settings_section` [method (AuroraControlPanel)] `L2590`: No docstring summary.
-- `AuroraControlPanel._remember_section` [method (AuroraControlPanel)] `L2598`: No docstring summary.
-- `AuroraControlPanel._expand_all_settings` [method (AuroraControlPanel)] `L2604`: No docstring summary.
-- `AuroraControlPanel._filter_settings_sections` [method (AuroraControlPanel)] `L2609`: No docstring summary.
-- `AuroraControlPanel._on_main_mousewheel` [method (AuroraControlPanel)] `L2710`: No docstring summary.
-- `AuroraControlPanel._scroll_ancestor` [method (AuroraControlPanel)] `L2719`: No docstring summary.
-- `AuroraControlPanel._protect_unfocused_combobox_wheel` [method (AuroraControlPanel)] `L2733`: No docstring summary.
-- `AuroraControlPanel._on_combobox_mousewheel` [method (AuroraControlPanel)] `L2739`: No docstring summary.
-- `AuroraControlPanel.toggle_settings_pane` [method (AuroraControlPanel)] `L2758`: No docstring summary.
-- `AuroraControlPanel.toggle_expanded_settings` [method (AuroraControlPanel)] `L2762`: No docstring summary.
-- `AuroraControlPanel._schedule_sash_clamp` [method (AuroraControlPanel)] `L2765`: No docstring summary.
-- `AuroraControlPanel._clamp_settings_sash` [method (AuroraControlPanel)] `L2769`: No docstring summary.
-- `AuroraControlPanel._remember_sash` [method (AuroraControlPanel)] `L2782`: No docstring summary.
-- `AuroraControlPanel._navigate_from_selector` [method (AuroraControlPanel)] `L2787`: No docstring summary.
-- `AuroraControlPanel._filter_view_choices` [method (AuroraControlPanel)] `L2796`: No docstring summary.
-- `AuroraControlPanel._focus_view_selector` [method (AuroraControlPanel)] `L2802`: No docstring summary.
-- `AuroraControlPanel._dashboard_detail_widget` [method (AuroraControlPanel)] `L3842`: No docstring summary.
-- `AuroraControlPanel._update_dashboard_wrap` [method (AuroraControlPanel)] `L3867`: No docstring summary.
-- `AuroraControlPanel._show_dashboard_receipt` [method (AuroraControlPanel)] `L3872`: No docstring summary.
-- `AuroraControlPanel.open_dashboard_receipt` [method (AuroraControlPanel)] `L3878`: No docstring summary.
-- `AuroraControlPanel._add_workflow_status_strip` [method (AuroraControlPanel)] `L3910`: No docstring summary.
-- `AuroraControlPanel.edit_conversation_message` [method (AuroraControlPanel)] `L4298`: No docstring summary.
-- `AuroraControlPanel.send_conversation_message` [method (AuroraControlPanel)] `L4311`: No docstring summary.
-- `AuroraControlPanel.open_conversation_outbox` [method (AuroraControlPanel)] `L4333`: No docstring summary.
-- `AuroraControlPanel.show_conversation_quick_start` [method (AuroraControlPanel)] `L4373`: No docstring summary.
-- `AuroraControlPanel.render_conversation` [method (AuroraControlPanel)] `L4385`: No docstring summary.
-- `AuroraControlPanel.sanitize_operator_activity_command` [method (AuroraControlPanel)] `L5221`: No docstring summary.
-- `AuroraControlPanel.mark_operator_activity` [method (AuroraControlPanel)] `L5230`: No docstring summary.
-- `AuroraControlPanel._collect_registered_settings_form_values` [method (AuroraControlPanel)] `L5244`: No docstring summary.
-- `AuroraControlPanel._get_control_panel_settings_snapshot` [method (AuroraControlPanel)] `L5327`: No docstring summary.
-- `AuroraControlPanel._update_settings_transaction_surface` [method (AuroraControlPanel)] `L5375`: No docstring summary.
-- `AuroraControlPanel._submit_settings_transaction` [method (AuroraControlPanel)] `L5393`: No docstring summary.
-- `AuroraControlPanel._wait_for_settings_transaction_receipt` [method (AuroraControlPanel)] `L5495`: No docstring summary.
-- `AuroraControlPanel._drain_settings_transaction_results` [method (AuroraControlPanel)] `L5513`: No docstring summary.
-- `AuroraControlPanel._handle_settings_transaction_result` [method (AuroraControlPanel)] `L5521`: No docstring summary.
-- `AuroraControlPanel.show_settings_details` [method (AuroraControlPanel)] `L5621`: No docstring summary.
-- `AuroraControlPanel.preview_settings` [method (AuroraControlPanel)] `L5632`: No docstring summary.
-- `AuroraControlPanel.rollback_settings` [method (AuroraControlPanel)] `L5639`: No docstring summary.
-- `AuroraControlPanel.search_image_context_index` [method (AuroraControlPanel)] `L5692`: No docstring summary.
-- `AuroraControlPanel._draw_chat_head_toggle_button` [method (AuroraControlPanel)] `L5703`: No docstring summary.
-- `AuroraControlPanel._set_panel_chat_head_requested` [method (AuroraControlPanel)] `L5729`: No docstring summary.
-- `AuroraControlPanel._is_chat_head_strip_open` [method (AuroraControlPanel)] `L5739`: No docstring summary.
-- `AuroraControlPanel._is_chat_head_history_open` [method (AuroraControlPanel)] `L5742`: No docstring summary.
-- `AuroraControlPanel.toggle_chat_head_request` [method (AuroraControlPanel)] `L5745`: No docstring summary.
-- `AuroraControlPanel.request_close_chat_head` [method (AuroraControlPanel)] `L5755`: No docstring summary.
-- `AuroraControlPanel.sync_chat_head_visibility` [method (AuroraControlPanel)] `L5760`: No docstring summary.
-- `AuroraControlPanel.get_panel_chat_head_settings` [method (AuroraControlPanel)] `L5771`: No docstring summary.
-- `AuroraControlPanel._draw_chat_head_expand_button` [method (AuroraControlPanel)] `L5798`: No docstring summary.
-- `AuroraControlPanel._blend_chat_head_color` [method (AuroraControlPanel)] `L5821`: No docstring summary.
-- `AuroraControlPanel._restore_chat_head_strip_visual` [method (AuroraControlPanel)] `L5830`: No docstring summary.
-- `AuroraControlPanel._run_chat_head_send_animation_step` [method (AuroraControlPanel)] `L5842`: No docstring summary.
-- `AuroraControlPanel.start_chat_head_send_animation` [method (AuroraControlPanel)] `L5870`: No docstring summary.
-- `AuroraControlPanel.submit_chat_head_message` [method (AuroraControlPanel)] `L5890`: No docstring summary.
-- `AuroraControlPanel._position_chat_head_strip` [method (AuroraControlPanel)] `L5910`: No docstring summary.
-- `AuroraControlPanel.open_chat_head_strip` [method (AuroraControlPanel)] `L5963`: No docstring summary.
-- `AuroraControlPanel.open_chat_head_history` [method (AuroraControlPanel)] `L6050`: No docstring summary.
-- `AuroraControlPanel.toggle_chat_head_history` [method (AuroraControlPanel)] `L6122`: No docstring summary.
-- `AuroraControlPanel.close_chat_head_history` [method (AuroraControlPanel)] `L6128`: No docstring summary.
-- `AuroraControlPanel.close_chat_head_windows` [method (AuroraControlPanel)] `L6136`: No docstring summary.
-- `AuroraControlPanel.reposition_chat_head_history_window` [method (AuroraControlPanel)] `L6161`: No docstring summary.
-- `AuroraControlPanel.send_command_entry` [method (AuroraControlPanel)] `L6198`: No docstring summary.
-- `AuroraControlPanel.send_note_entry` [method (AuroraControlPanel)] `L6205`: No docstring summary.
-- `AuroraControlPanel.send_episodic_snapshot` [method (AuroraControlPanel)] `L6239`: No docstring summary.
-- `AuroraControlPanel.send_episodic_list_recent` [method (AuroraControlPanel)] `L6251`: No docstring summary.
-- `AuroraControlPanel._change_episodic_weight` [method (AuroraControlPanel)] `L6338`: No docstring summary.
-- `AuroraControlPanel._set_episodic_weight_preset` [method (AuroraControlPanel)] `L6354`: No docstring summary.
-- `AuroraControlPanel._draw_episodic_score_results` [method (AuroraControlPanel)] `L6401`: No docstring summary.
-- `AuroraControlPanel._episodic_retrieval_segments` [method (AuroraControlPanel)] `L6432`: No docstring summary.
-- `AuroraControlPanel._update_episodic_feedback_token` [method (AuroraControlPanel)] `L6486`: No docstring summary.
-- `AuroraControlPanel.send_episodic_feedback` [method (AuroraControlPanel)] `L6491`: No docstring summary.
-- `AuroraControlPanel.send_episodic_retrieval` [method (AuroraControlPanel)] `L6495`: No docstring summary.
-- `AuroraControlPanel.send_episodic_recall_shorthand` [method (AuroraControlPanel)] `L6506`: No docstring summary.
-- `AuroraControlPanel.use_displayed_retrieval_handle` [method (AuroraControlPanel)] `L6517`: No docstring summary.
-- `AuroraControlPanel.inspect_retained_retrieval` [method (AuroraControlPanel)] `L6520`: No docstring summary.
-- `AuroraControlPanel.send_episodic_promotion` [method (AuroraControlPanel)] `L6529`: No docstring summary.
-- `AuroraControlPanel.set_operator_passcode` [method (AuroraControlPanel)] `L6549`: No docstring summary.
-- `AuroraControlPanel.authorize_operator_access` [method (AuroraControlPanel)] `L6573`: No docstring summary.
-- `AuroraControlPanel._on_banner_autoscroll_toggle` [method (AuroraControlPanel)] `L6587`: No docstring summary.
-- `AuroraControlPanel._adjust_banner_offset` [method (AuroraControlPanel)] `L6592`: No docstring summary.
-- `AuroraControlPanel._set_runtime_banner_text` [method (AuroraControlPanel)] `L6600`: No docstring summary.
-- `AuroraControlPanel._render_runtime_banner` [method (AuroraControlPanel)] `L6608`: No docstring summary.
-- `AuroraControlPanel._banner_tick` [method (AuroraControlPanel)] `L6648`: No docstring summary.
-- `AuroraControlPanel.on_turn_scheduler_profile_selected` [method (AuroraControlPanel)] `L6694`: No docstring summary.
-- `AuroraControlPanel.on_turn_scheduler_leaf_changed` [method (AuroraControlPanel)] `L6703`: No docstring summary.
-- `AuroraControlPanel._run_model_catalog_cli` [method (AuroraControlPanel)] `L6957`: No docstring summary.
-- `AuroraControlPanel.send_save_handoff` [method (AuroraControlPanel)] `L7089`: No docstring summary.
-- `AuroraControlPanel.send_retrieve_handoff` [method (AuroraControlPanel)] `L7097`: No docstring summary.
-- `AuroraControlPanel._resize_thumbnail_window` [method (AuroraControlPanel)] `L7429`: No docstring summary.
-- `AuroraControlPanel._resize_memory_thumbnail_window` [method (AuroraControlPanel)] `L7443`: No docstring summary.
-- `AuroraControlPanel._sync_setting_var` [method (AuroraControlPanel)] `L7630`: No docstring summary.
-- `AuroraControlPanel.on_close` [method (AuroraControlPanel)] `L7642`: No docstring summary.
-- `AuroraControlPanel.render_memory` [method (AuroraControlPanel)] `L8697`: No docstring summary.
-- `AuroraControlPanel.build_episodic_control_status` [method (AuroraControlPanel)] `L8761`: No docstring summary.
-- `AuroraControlPanel.build_episodic_retrieval_status` [method (AuroraControlPanel)] `L8810`: No docstring summary.
-- `AuroraControlPanel.build_episodic_promotion_status` [method (AuroraControlPanel)] `L8822`: No docstring summary.
-- `AuroraControlPanel.render_episodic` [method (AuroraControlPanel)] `L8832`: No docstring summary.
-- `AuroraControlPanel.render_logs` [method (AuroraControlPanel)] `L8992`: No docstring summary.
-- `AuroraControlPanel._render_log_widget` [method (AuroraControlPanel)] `L9001`: No docstring summary.
-- `AuroraControlPanel.set_log_limit` [method (AuroraControlPanel)] `L9012`: No docstring summary.
-- `AuroraControlPanel._path_render_signature` [method (AuroraControlPanel)] `L9020`: No docstring summary.
-- `AuroraControlPanel._get_thumbnail_photo` [method (AuroraControlPanel)] `L9027`: No docstring summary.
-- `AuroraControlPanel._get_inline_preview_bounds` [method (AuroraControlPanel)] `L9050`: No docstring summary.
-- `AuroraControlPanel.render_thumbnail_strip` [method (AuroraControlPanel)] `L9197`: No docstring summary.
-- `AuroraControlPanel.highlight_active_thumbnail` [method (AuroraControlPanel)] `L9231`: No docstring summary.
-- `AuroraControlPanel.get_image_size` [method (AuroraControlPanel)] `L9483`: No docstring summary.
-- `AuroraControlPanel.find_latest_renderable_index` [method (AuroraControlPanel)] `L9492`: No docstring summary.
-- `AuroraControlPanel._get_canvas_bounds` [method (AuroraControlPanel)] `L9501`: No docstring summary.
-- `AuroraControlPanel._render_image_on_canvas` [method (AuroraControlPanel)] `L9508`: No docstring summary.
-- `AuroraControlPanel.highlight_active_memory_thumbnail` [method (AuroraControlPanel)] `L9565`: No docstring summary.
-- `AuroraControlPanel.build_model_cost_status` [method (AuroraControlPanel)] `L9575`: No docstring summary.
-- `AuroraControlPanel.build_next_turn_status` [method (AuroraControlPanel)] `L9608`: No docstring summary.
-- `AuroraControlPanel.build_advanced_context_status` [method (AuroraControlPanel)] `L9620`: No docstring summary.
-- `AuroraControlPanel.format_settings_safety_value` [method (AuroraControlPanel)] `L9661`: No docstring summary.
-- `AuroraControlPanel.format_settings_safety_item_value` [method (AuroraControlPanel)] `L9675`: No docstring summary.
-- `AuroraControlPanel.count_settings_safety_classes` [method (AuroraControlPanel)] `L9688`: No docstring summary.
-- `AuroraControlPanel.get_baseline_diff_totals` [method (AuroraControlPanel)] `L9695`: No docstring summary.
-- `AuroraControlPanel.build_recovery_home_snapshot` [method (AuroraControlPanel)] `L9713`: No docstring summary.
-- `AuroraControlPanel.build_recovery_home_text` [method (AuroraControlPanel)] `L9897`: No docstring summary.
-- `AuroraControlPanel.build_operator_risk_summary_text` [method (AuroraControlPanel)] `L9929`: No docstring summary.
-- `AuroraControlPanel.build_settings_safety_summary` [method (AuroraControlPanel)] `L9977`: No docstring summary.
-- `AuroraControlPanel.collect_recovery_diagnostics` [method (AuroraControlPanel)] `L10015`: No docstring summary.
-- `AuroraControlPanel.build_recovery_diagnostics_text` [method (AuroraControlPanel)] `L10165`: No docstring summary.
-- `AuroraControlPanel.normalize_preference_value` [method (AuroraControlPanel)] `L10175`: No docstring summary.
-- `AuroraControlPanel.flatten_preferences` [method (AuroraControlPanel)] `L10201`: No docstring summary.
-- `AuroraControlPanel.diff_preferences_against_baseline` [method (AuroraControlPanel)] `L10293`: No docstring summary.
-- `AuroraControlPanel.build_baseline_diff_text` [method (AuroraControlPanel)] `L10304`: No docstring summary.
-- `AuroraControlPanel.build_settings_safety_text` [method (AuroraControlPanel)] `L10339`: No docstring summary.
-- `AuroraControlPanel.build_cadence_status_lines` [method (AuroraControlPanel)] `L10379`: No docstring summary.
-- `AuroraControlPanel.build_model_status_text` [method (AuroraControlPanel)] `L10427`: No docstring summary.
-- `AuroraControlPanel._format_next_inference` [method (AuroraControlPanel)] `L10538`: No docstring summary.
-- `AuroraControlPanel.build_prompt_inclusion_readiness_text` [method (AuroraControlPanel)] `L10553`: No docstring summary.
-- `AuroraControlPanel.build_prompt_inclusion_preview_text` [method (AuroraControlPanel)] `L10616`: No docstring summary.
-- `AuroraControlPanel.build_prompt_inclusion_rehearsal_text` [method (AuroraControlPanel)] `L10679`: No docstring summary.
-- `AuroraControlPanel.build_prompt_inclusion_activation_checklist_text` [method (AuroraControlPanel)] `L10732`: No docstring summary.
-- `AuroraControlPanel.build_prompt_inclusion_activation_text` [method (AuroraControlPanel)] `L10790`: No docstring summary.
-- `AuroraControlPanel.build_prompt_inclusion_closure_text` [method (AuroraControlPanel)] `L10850`: No docstring summary.
-- `AuroraControlPanel.build_prompt_ledger_text` [method (AuroraControlPanel)] `L10905`: No docstring summary.
-- `AuroraControlPanel.build_agent_registry_text` [method (AuroraControlPanel)] `L11127`: No docstring summary.
-- `AuroraControlPanel.build_portal_intake_text` [method (AuroraControlPanel)] `L11596`: No docstring summary.
-- `AuroraControlPanel.build_history_context_text` [method (AuroraControlPanel)] `L12205`: No docstring summary.
-- `AuroraControlPanel.build_visual_context_text` [method (AuroraControlPanel)] `L12737`: No docstring summary.
-- `AuroraControlPanel.build_image_context_index_text` [method (AuroraControlPanel)] `L12799`: No docstring summary.
-- `AuroraControlPanel.build_live_harness_text` [method (AuroraControlPanel)] `L12950`: No docstring summary.
-- `AuroraControlPanel.build_responses_shadow_text` [method (AuroraControlPanel)] `L13091`: No docstring summary.
-- `AuroraControlPanel.build_context_files_text` [method (AuroraControlPanel)] `L13423`: No docstring summary.
-- `AuroraControlPanel.build_overview_text` [method (AuroraControlPanel)] `L13479`: No docstring summary.
-- `AuroraControlPanel._command_drip_lane_totals` [method (AuroraControlPanel)] `L14048`: No docstring summary.
-- `AuroraControlPanel._format_command_drip_summary` [method (AuroraControlPanel)] `L14080`: No docstring summary.
-- `AuroraControlPanel._summarize_command_drip_bucket` [method (AuroraControlPanel)] `L14090`: No docstring summary.
-- `AuroraControlPanel.build_command_drip_text` [method (AuroraControlPanel)] `L14099`: No docstring summary.
-- `AuroraControlPanel._write_text` [method (AuroraControlPanel)] `L14175`: No docstring summary.
-- `AuroraControlPanel.show_command_list` [method (AuroraControlPanel)] `L14246`: No docstring summary.
-- `AuroraControlPanel._bind_navigation_shortcuts` [method (AuroraControlPanel)] `L14255`: No docstring summary.
-- `AuroraControlPanel._handle_global_navigation` [method (AuroraControlPanel)] `L14262`: No docstring summary.
-- `AuroraControlPanel._focused_widget_blocks_navigation` [method (AuroraControlPanel)] `L14277`: No docstring summary.
-- `AuroraControlPanel._handle_preview_edge_navigation` [method (AuroraControlPanel)] `L14299`: No docstring summary.
-- `main` [function] `L14317`: No docstring summary.
+- `short` [function] `L1268`: No docstring summary.
+- `format_source_mix` [function] `L1273`: No docstring summary.
+- `has_effective_next_inference_plan` [function] `L1293`: No docstring summary.
+- `format_monitor_summary` [function] `L1353`: No docstring summary.
+- `format_gameplay_monitor_summary` [function] `L1364`: No docstring summary.
+- `format_mutation_admission_summary` [function] `L1413`: No docstring summary.
+- `format_age_seconds` [function] `L1427`: No docstring summary.
+- `format_timestamp_age_text` [function] `L1479`: No docstring summary.
+- `format_file_age_text` [function] `L1487`: No docstring summary.
+- `format_price_value` [function] `L1500`: No docstring summary.
+- `format_model_pricing_compact` [function] `L1509`: No docstring summary.
+- `read_json` [function] `L1520`: No docstring summary.
+- `acquire_windows_single_instance_mutex` [function] `L1527`: No docstring summary.
+- `release_windows_single_instance_mutex` [function] `L1539`: No docstring summary.
+- `is_windows_pid_running` [function] `L1545`: No docstring summary.
+- `read_pid_file` [function] `L1565`: No docstring summary.
+- `write_pid_file` [function] `L1572`: No docstring summary.
+- `remove_pid_file` [function] `L1577`: No docstring summary.
+- `show_duplicate_instance_notice` [function] `L1613`: No docstring summary.
+- `format_runtime_seconds` [function] `L1623`: No docstring summary.
+- `get_runtime_activation_plan` [function] `L1637`: No docstring summary.
+- `build_runtime_mode_spec` [function] `L1666`: No docstring summary.
+- `build_runtime_model_spec` [function] `L1675`: No docstring summary.
+- `launch_runtime_process` [function] `L1698`: No docstring summary.
+- `tail_lines` [function] `L1721`: No docstring summary.
+- `read_jsonl_records` [function] `L1733`: No docstring summary.
+- `read_model_catalog` [function] `L1756`: No docstring summary.
+- `build_model_choices` [function] `L1770`: No docstring summary.
+- `append_external_message` [function] `L1775`: No docstring summary.
+- `build_control_panel_registered_changes` [function] `L1790`: No docstring summary.
+- `filter_changed_control_panel_settings` [function] `L1809`: No docstring summary.
+- `_format_control_panel_setting_value` [function] `L1824`: No docstring summary.
+- `format_control_panel_settings_snapshot` [function] `L1834`: No docstring summary.
+- `format_control_panel_settings_receipt` [function] `L1863`: No docstring summary.
+- `_sort_recent_paths` [function] `L1925`: No docstring summary.
+- `AuroraControlPanel` [class] `L2048`: No docstring summary.
+- `AuroraControlPanel.__init__` [method (AuroraControlPanel)] `L2049`: No docstring summary.
+- `AuroraControlPanel._configure_initial_window_geometry` [method (AuroraControlPanel)] `L2208`: No docstring summary.
+- `AuroraControlPanel._restore_window_position` [method (AuroraControlPanel)] `L2220`: No docstring summary.
+- `AuroraControlPanel._remember_window_geometry` [method (AuroraControlPanel)] `L2235`: No docstring summary.
+- `AuroraControlPanel.toggle_maximized` [method (AuroraControlPanel)] `L2244`: No docstring summary.
+- `AuroraControlPanel._register_widget_locks` [method (AuroraControlPanel)] `L2248`: No docstring summary.
+- `AuroraControlPanel._configure_window_icon` [method (AuroraControlPanel)] `L2299`: No docstring summary.
+- `AuroraControlPanel._load_runtime_orb_assets` [method (AuroraControlPanel)] `L2303`: No docstring summary.
+- `AuroraControlPanel._stop_runtime_orb_animation` [method (AuroraControlPanel)] `L2323`: No docstring summary.
+- `AuroraControlPanel._tick_runtime_orb_animation` [method (AuroraControlPanel)] `L2330`: No docstring summary.
+- `AuroraControlPanel._start_runtime_orb_animation` [method (AuroraControlPanel)] `L2338`: No docstring summary.
+- `AuroraControlPanel._cancel_runtime_orb_click` [method (AuroraControlPanel)] `L2346`: No docstring summary.
+- `AuroraControlPanel._handle_runtime_orb_single_click` [method (AuroraControlPanel)] `L2351`: No docstring summary.
+- `AuroraControlPanel._handle_runtime_orb_double_click` [method (AuroraControlPanel)] `L2367`: No docstring summary.
+- `AuroraControlPanel.start_or_enable_runtime` [method (AuroraControlPanel)] `L2396`: Start paused from the primary button; preserve the legacy orb profile path.
+- `AuroraControlPanel._new_work_page` [method (AuroraControlPanel)] `L2585`: No docstring summary.
+- `AuroraControlPanel._new_settings_section` [method (AuroraControlPanel)] `L2591`: No docstring summary.
+- `AuroraControlPanel._remember_section` [method (AuroraControlPanel)] `L2599`: No docstring summary.
+- `AuroraControlPanel._expand_all_settings` [method (AuroraControlPanel)] `L2605`: No docstring summary.
+- `AuroraControlPanel._filter_settings_sections` [method (AuroraControlPanel)] `L2610`: No docstring summary.
+- `AuroraControlPanel._on_main_mousewheel` [method (AuroraControlPanel)] `L2711`: No docstring summary.
+- `AuroraControlPanel._scroll_ancestor` [method (AuroraControlPanel)] `L2720`: No docstring summary.
+- `AuroraControlPanel._protect_unfocused_combobox_wheel` [method (AuroraControlPanel)] `L2734`: No docstring summary.
+- `AuroraControlPanel._on_combobox_mousewheel` [method (AuroraControlPanel)] `L2740`: No docstring summary.
+- `AuroraControlPanel.toggle_settings_pane` [method (AuroraControlPanel)] `L2759`: No docstring summary.
+- `AuroraControlPanel.toggle_expanded_settings` [method (AuroraControlPanel)] `L2763`: No docstring summary.
+- `AuroraControlPanel._schedule_sash_clamp` [method (AuroraControlPanel)] `L2766`: No docstring summary.
+- `AuroraControlPanel._clamp_settings_sash` [method (AuroraControlPanel)] `L2770`: No docstring summary.
+- `AuroraControlPanel._remember_sash` [method (AuroraControlPanel)] `L2783`: No docstring summary.
+- `AuroraControlPanel._navigate_from_selector` [method (AuroraControlPanel)] `L2788`: No docstring summary.
+- `AuroraControlPanel._filter_view_choices` [method (AuroraControlPanel)] `L2797`: No docstring summary.
+- `AuroraControlPanel._focus_view_selector` [method (AuroraControlPanel)] `L2803`: No docstring summary.
+- `AuroraControlPanel.open_execution_inspector` [method (AuroraControlPanel)] `L3844`: No docstring summary.
+- `AuroraControlPanel._dashboard_detail_widget` [method (AuroraControlPanel)] `L3848`: No docstring summary.
+- `AuroraControlPanel._update_dashboard_wrap` [method (AuroraControlPanel)] `L3873`: No docstring summary.
+- `AuroraControlPanel._show_dashboard_receipt` [method (AuroraControlPanel)] `L3878`: No docstring summary.
+- `AuroraControlPanel.open_dashboard_receipt` [method (AuroraControlPanel)] `L3884`: No docstring summary.
+- `AuroraControlPanel._add_workflow_status_strip` [method (AuroraControlPanel)] `L3916`: No docstring summary.
+- `AuroraControlPanel.edit_conversation_message` [method (AuroraControlPanel)] `L4304`: No docstring summary.
+- `AuroraControlPanel.send_conversation_message` [method (AuroraControlPanel)] `L4317`: No docstring summary.
+- `AuroraControlPanel.open_conversation_outbox` [method (AuroraControlPanel)] `L4339`: No docstring summary.
+- `AuroraControlPanel.show_conversation_quick_start` [method (AuroraControlPanel)] `L4382`: No docstring summary.
+- `AuroraControlPanel.render_conversation` [method (AuroraControlPanel)] `L4394`: No docstring summary.
+- `AuroraControlPanel.sanitize_operator_activity_command` [method (AuroraControlPanel)] `L5230`: No docstring summary.
+- `AuroraControlPanel.mark_operator_activity` [method (AuroraControlPanel)] `L5239`: No docstring summary.
+- `AuroraControlPanel._collect_registered_settings_form_values` [method (AuroraControlPanel)] `L5253`: No docstring summary.
+- `AuroraControlPanel._get_control_panel_settings_snapshot` [method (AuroraControlPanel)] `L5336`: No docstring summary.
+- `AuroraControlPanel._update_settings_transaction_surface` [method (AuroraControlPanel)] `L5384`: No docstring summary.
+- `AuroraControlPanel._submit_settings_transaction` [method (AuroraControlPanel)] `L5402`: No docstring summary.
+- `AuroraControlPanel._wait_for_settings_transaction_receipt` [method (AuroraControlPanel)] `L5504`: No docstring summary.
+- `AuroraControlPanel._drain_settings_transaction_results` [method (AuroraControlPanel)] `L5522`: No docstring summary.
+- `AuroraControlPanel._handle_settings_transaction_result` [method (AuroraControlPanel)] `L5530`: No docstring summary.
+- `AuroraControlPanel.show_settings_details` [method (AuroraControlPanel)] `L5630`: No docstring summary.
+- `AuroraControlPanel.preview_settings` [method (AuroraControlPanel)] `L5641`: No docstring summary.
+- `AuroraControlPanel.rollback_settings` [method (AuroraControlPanel)] `L5648`: No docstring summary.
+- `AuroraControlPanel.search_image_context_index` [method (AuroraControlPanel)] `L5701`: No docstring summary.
+- `AuroraControlPanel._draw_chat_head_toggle_button` [method (AuroraControlPanel)] `L5712`: No docstring summary.
+- `AuroraControlPanel._set_panel_chat_head_requested` [method (AuroraControlPanel)] `L5738`: No docstring summary.
+- `AuroraControlPanel._is_chat_head_strip_open` [method (AuroraControlPanel)] `L5748`: No docstring summary.
+- `AuroraControlPanel._is_chat_head_history_open` [method (AuroraControlPanel)] `L5751`: No docstring summary.
+- `AuroraControlPanel.toggle_chat_head_request` [method (AuroraControlPanel)] `L5754`: No docstring summary.
+- `AuroraControlPanel.request_close_chat_head` [method (AuroraControlPanel)] `L5764`: No docstring summary.
+- `AuroraControlPanel.sync_chat_head_visibility` [method (AuroraControlPanel)] `L5769`: No docstring summary.
+- `AuroraControlPanel.get_panel_chat_head_settings` [method (AuroraControlPanel)] `L5780`: No docstring summary.
+- `AuroraControlPanel._draw_chat_head_expand_button` [method (AuroraControlPanel)] `L5807`: No docstring summary.
+- `AuroraControlPanel._blend_chat_head_color` [method (AuroraControlPanel)] `L5830`: No docstring summary.
+- `AuroraControlPanel._restore_chat_head_strip_visual` [method (AuroraControlPanel)] `L5839`: No docstring summary.
+- `AuroraControlPanel._run_chat_head_send_animation_step` [method (AuroraControlPanel)] `L5851`: No docstring summary.
+- `AuroraControlPanel.start_chat_head_send_animation` [method (AuroraControlPanel)] `L5879`: No docstring summary.
+- `AuroraControlPanel.submit_chat_head_message` [method (AuroraControlPanel)] `L5899`: No docstring summary.
+- `AuroraControlPanel._position_chat_head_strip` [method (AuroraControlPanel)] `L5919`: No docstring summary.
+- `AuroraControlPanel.open_chat_head_strip` [method (AuroraControlPanel)] `L5972`: No docstring summary.
+- `AuroraControlPanel.open_chat_head_history` [method (AuroraControlPanel)] `L6059`: No docstring summary.
+- `AuroraControlPanel.toggle_chat_head_history` [method (AuroraControlPanel)] `L6131`: No docstring summary.
+- `AuroraControlPanel.close_chat_head_history` [method (AuroraControlPanel)] `L6137`: No docstring summary.
+- `AuroraControlPanel.close_chat_head_windows` [method (AuroraControlPanel)] `L6145`: No docstring summary.
+- `AuroraControlPanel.reposition_chat_head_history_window` [method (AuroraControlPanel)] `L6170`: No docstring summary.
+- `AuroraControlPanel.send_command_entry` [method (AuroraControlPanel)] `L6207`: No docstring summary.
+- `AuroraControlPanel.send_note_entry` [method (AuroraControlPanel)] `L6214`: No docstring summary.
+- `AuroraControlPanel.send_episodic_snapshot` [method (AuroraControlPanel)] `L6248`: No docstring summary.
+- `AuroraControlPanel.send_episodic_list_recent` [method (AuroraControlPanel)] `L6260`: No docstring summary.
+- `AuroraControlPanel._change_episodic_weight` [method (AuroraControlPanel)] `L6347`: No docstring summary.
+- `AuroraControlPanel._set_episodic_weight_preset` [method (AuroraControlPanel)] `L6363`: No docstring summary.
+- `AuroraControlPanel._draw_episodic_score_results` [method (AuroraControlPanel)] `L6410`: No docstring summary.
+- `AuroraControlPanel._episodic_retrieval_segments` [method (AuroraControlPanel)] `L6441`: No docstring summary.
+- `AuroraControlPanel._update_episodic_feedback_token` [method (AuroraControlPanel)] `L6495`: No docstring summary.
+- `AuroraControlPanel.send_episodic_feedback` [method (AuroraControlPanel)] `L6500`: No docstring summary.
+- `AuroraControlPanel.send_episodic_retrieval` [method (AuroraControlPanel)] `L6504`: No docstring summary.
+- `AuroraControlPanel.send_episodic_recall_shorthand` [method (AuroraControlPanel)] `L6515`: No docstring summary.
+- `AuroraControlPanel.use_displayed_retrieval_handle` [method (AuroraControlPanel)] `L6526`: No docstring summary.
+- `AuroraControlPanel.inspect_retained_retrieval` [method (AuroraControlPanel)] `L6529`: No docstring summary.
+- `AuroraControlPanel.send_episodic_promotion` [method (AuroraControlPanel)] `L6538`: No docstring summary.
+- `AuroraControlPanel.set_operator_passcode` [method (AuroraControlPanel)] `L6558`: No docstring summary.
+- `AuroraControlPanel.authorize_operator_access` [method (AuroraControlPanel)] `L6582`: No docstring summary.
+- `AuroraControlPanel._on_banner_autoscroll_toggle` [method (AuroraControlPanel)] `L6596`: No docstring summary.
+- `AuroraControlPanel._adjust_banner_offset` [method (AuroraControlPanel)] `L6601`: No docstring summary.
+- `AuroraControlPanel._set_runtime_banner_text` [method (AuroraControlPanel)] `L6609`: No docstring summary.
+- `AuroraControlPanel._render_runtime_banner` [method (AuroraControlPanel)] `L6617`: No docstring summary.
+- `AuroraControlPanel._banner_tick` [method (AuroraControlPanel)] `L6657`: No docstring summary.
+- `AuroraControlPanel.on_turn_scheduler_profile_selected` [method (AuroraControlPanel)] `L6703`: No docstring summary.
+- `AuroraControlPanel.on_turn_scheduler_leaf_changed` [method (AuroraControlPanel)] `L6712`: No docstring summary.
+- `AuroraControlPanel._run_model_catalog_cli` [method (AuroraControlPanel)] `L6966`: No docstring summary.
+- `AuroraControlPanel.send_save_handoff` [method (AuroraControlPanel)] `L7098`: No docstring summary.
+- `AuroraControlPanel.send_retrieve_handoff` [method (AuroraControlPanel)] `L7106`: No docstring summary.
+- `AuroraControlPanel._resize_thumbnail_window` [method (AuroraControlPanel)] `L7438`: No docstring summary.
+- `AuroraControlPanel._resize_memory_thumbnail_window` [method (AuroraControlPanel)] `L7452`: No docstring summary.
+- `AuroraControlPanel._sync_setting_var` [method (AuroraControlPanel)] `L7639`: No docstring summary.
+- `AuroraControlPanel.on_close` [method (AuroraControlPanel)] `L7651`: No docstring summary.
+- `AuroraControlPanel.render_memory` [method (AuroraControlPanel)] `L8706`: No docstring summary.
+- `AuroraControlPanel.build_episodic_control_status` [method (AuroraControlPanel)] `L8770`: No docstring summary.
+- `AuroraControlPanel.build_episodic_retrieval_status` [method (AuroraControlPanel)] `L8819`: No docstring summary.
+- `AuroraControlPanel.build_episodic_promotion_status` [method (AuroraControlPanel)] `L8831`: No docstring summary.
+- `AuroraControlPanel.render_episodic` [method (AuroraControlPanel)] `L8841`: No docstring summary.
+- `AuroraControlPanel.render_logs` [method (AuroraControlPanel)] `L9001`: No docstring summary.
+- `AuroraControlPanel._render_log_widget` [method (AuroraControlPanel)] `L9010`: No docstring summary.
+- `AuroraControlPanel.set_log_limit` [method (AuroraControlPanel)] `L9021`: No docstring summary.
+- `AuroraControlPanel._path_render_signature` [method (AuroraControlPanel)] `L9029`: No docstring summary.
+- `AuroraControlPanel._get_thumbnail_photo` [method (AuroraControlPanel)] `L9036`: No docstring summary.
+- `AuroraControlPanel._get_inline_preview_bounds` [method (AuroraControlPanel)] `L9059`: No docstring summary.
+- `AuroraControlPanel.render_thumbnail_strip` [method (AuroraControlPanel)] `L9206`: No docstring summary.
+- `AuroraControlPanel.highlight_active_thumbnail` [method (AuroraControlPanel)] `L9240`: No docstring summary.
+- `AuroraControlPanel.get_image_size` [method (AuroraControlPanel)] `L9492`: No docstring summary.
+- `AuroraControlPanel.find_latest_renderable_index` [method (AuroraControlPanel)] `L9501`: No docstring summary.
+- `AuroraControlPanel._get_canvas_bounds` [method (AuroraControlPanel)] `L9510`: No docstring summary.
+- `AuroraControlPanel._render_image_on_canvas` [method (AuroraControlPanel)] `L9517`: No docstring summary.
+- `AuroraControlPanel.highlight_active_memory_thumbnail` [method (AuroraControlPanel)] `L9574`: No docstring summary.
+- `AuroraControlPanel.build_model_cost_status` [method (AuroraControlPanel)] `L9584`: No docstring summary.
+- `AuroraControlPanel.build_next_turn_status` [method (AuroraControlPanel)] `L9617`: No docstring summary.
+- `AuroraControlPanel.build_advanced_context_status` [method (AuroraControlPanel)] `L9629`: No docstring summary.
+- `AuroraControlPanel.format_settings_safety_value` [method (AuroraControlPanel)] `L9670`: No docstring summary.
+- `AuroraControlPanel.format_settings_safety_item_value` [method (AuroraControlPanel)] `L9684`: No docstring summary.
+- `AuroraControlPanel.count_settings_safety_classes` [method (AuroraControlPanel)] `L9697`: No docstring summary.
+- `AuroraControlPanel.get_baseline_diff_totals` [method (AuroraControlPanel)] `L9704`: No docstring summary.
+- `AuroraControlPanel.build_recovery_home_snapshot` [method (AuroraControlPanel)] `L9722`: No docstring summary.
+- `AuroraControlPanel.build_recovery_home_text` [method (AuroraControlPanel)] `L9906`: No docstring summary.
+- `AuroraControlPanel.build_operator_risk_summary_text` [method (AuroraControlPanel)] `L9938`: No docstring summary.
+- `AuroraControlPanel.build_settings_safety_summary` [method (AuroraControlPanel)] `L9986`: No docstring summary.
+- `AuroraControlPanel.collect_recovery_diagnostics` [method (AuroraControlPanel)] `L10024`: No docstring summary.
+- `AuroraControlPanel.build_recovery_diagnostics_text` [method (AuroraControlPanel)] `L10174`: No docstring summary.
+- `AuroraControlPanel.normalize_preference_value` [method (AuroraControlPanel)] `L10184`: No docstring summary.
+- `AuroraControlPanel.flatten_preferences` [method (AuroraControlPanel)] `L10210`: No docstring summary.
+- `AuroraControlPanel.diff_preferences_against_baseline` [method (AuroraControlPanel)] `L10302`: No docstring summary.
+- `AuroraControlPanel.build_baseline_diff_text` [method (AuroraControlPanel)] `L10313`: No docstring summary.
+- `AuroraControlPanel.build_settings_safety_text` [method (AuroraControlPanel)] `L10348`: No docstring summary.
+- `AuroraControlPanel.build_cadence_status_lines` [method (AuroraControlPanel)] `L10388`: No docstring summary.
+- `AuroraControlPanel.build_model_status_text` [method (AuroraControlPanel)] `L10436`: No docstring summary.
+- `AuroraControlPanel._format_next_inference` [method (AuroraControlPanel)] `L10547`: No docstring summary.
+- `AuroraControlPanel.build_prompt_inclusion_readiness_text` [method (AuroraControlPanel)] `L10562`: No docstring summary.
+- `AuroraControlPanel.build_prompt_inclusion_preview_text` [method (AuroraControlPanel)] `L10625`: No docstring summary.
+- `AuroraControlPanel.build_prompt_inclusion_rehearsal_text` [method (AuroraControlPanel)] `L10688`: No docstring summary.
+- `AuroraControlPanel.build_prompt_inclusion_activation_checklist_text` [method (AuroraControlPanel)] `L10741`: No docstring summary.
+- `AuroraControlPanel.build_prompt_inclusion_activation_text` [method (AuroraControlPanel)] `L10799`: No docstring summary.
+- `AuroraControlPanel.build_prompt_inclusion_closure_text` [method (AuroraControlPanel)] `L10859`: No docstring summary.
+- `AuroraControlPanel.build_prompt_ledger_text` [method (AuroraControlPanel)] `L10914`: No docstring summary.
+- `AuroraControlPanel.build_agent_registry_text` [method (AuroraControlPanel)] `L11136`: No docstring summary.
+- `AuroraControlPanel.build_portal_intake_text` [method (AuroraControlPanel)] `L11605`: No docstring summary.
+- `AuroraControlPanel.build_history_context_text` [method (AuroraControlPanel)] `L12214`: No docstring summary.
+- `AuroraControlPanel.build_visual_context_text` [method (AuroraControlPanel)] `L12746`: No docstring summary.
+- `AuroraControlPanel.build_image_context_index_text` [method (AuroraControlPanel)] `L12808`: No docstring summary.
+- `AuroraControlPanel.build_live_harness_text` [method (AuroraControlPanel)] `L12959`: No docstring summary.
+- `AuroraControlPanel.build_responses_shadow_text` [method (AuroraControlPanel)] `L13100`: No docstring summary.
+- `AuroraControlPanel.build_context_files_text` [method (AuroraControlPanel)] `L13432`: No docstring summary.
+- `AuroraControlPanel.build_overview_text` [method (AuroraControlPanel)] `L13488`: No docstring summary.
+- `AuroraControlPanel._command_drip_lane_totals` [method (AuroraControlPanel)] `L14057`: No docstring summary.
+- `AuroraControlPanel._format_command_drip_summary` [method (AuroraControlPanel)] `L14089`: No docstring summary.
+- `AuroraControlPanel._summarize_command_drip_bucket` [method (AuroraControlPanel)] `L14099`: No docstring summary.
+- `AuroraControlPanel.build_command_drip_text` [method (AuroraControlPanel)] `L14108`: No docstring summary.
+- `AuroraControlPanel._write_text` [method (AuroraControlPanel)] `L14184`: No docstring summary.
+- `AuroraControlPanel.show_command_list` [method (AuroraControlPanel)] `L14255`: No docstring summary.
+- `AuroraControlPanel._bind_navigation_shortcuts` [method (AuroraControlPanel)] `L14264`: No docstring summary.
+- `AuroraControlPanel._handle_global_navigation` [method (AuroraControlPanel)] `L14271`: No docstring summary.
+- `AuroraControlPanel._focused_widget_blocks_navigation` [method (AuroraControlPanel)] `L14286`: No docstring summary.
+- `AuroraControlPanel._handle_preview_edge_navigation` [method (AuroraControlPanel)] `L14308`: No docstring summary.
+- `main` [function] `L14326`: No docstring summary.
 
 ## Pending Queue UI
 
-- `format_pending_queue_mode_semantics` [function] `L1282`: No docstring summary.
-- `AuroraControlPanel._build_pending_tab` [method (AuroraControlPanel)] `L4141`: No docstring summary.
-- `AuroraControlPanel.insert_latest_agent_pending_dry_run` [method (AuroraControlPanel)] `L5657`: No docstring summary.
-- `AuroraControlPanel.approve_selected_pending` [method (AuroraControlPanel)] `L7150`: No docstring summary.
-- `AuroraControlPanel.clear_selected_pending` [method (AuroraControlPanel)] `L7161`: No docstring summary.
-- `AuroraControlPanel.pending_selection_arguments` [method (AuroraControlPanel)] `L7172`: No docstring summary.
-- `AuroraControlPanel.reset_pending_filters` [method (AuroraControlPanel)] `L7180`: No docstring summary.
-- `AuroraControlPanel.filter_pending_rows` [method (AuroraControlPanel)] `L7186`: No docstring summary.
-- `AuroraControlPanel.render_pending_current` [method (AuroraControlPanel)] `L7205`: No docstring summary.
-- `AuroraControlPanel.build_pending_candidate_text` [method (AuroraControlPanel)] `L7231`: No docstring summary.
-- `AuroraControlPanel.get_pending_scope_summary` [method (AuroraControlPanel)] `L7371`: No docstring summary.
-- `AuroraControlPanel.update_pending_selection_status` [method (AuroraControlPanel)] `L7398`: No docstring summary.
-- `AuroraControlPanel.render_pending` [method (AuroraControlPanel)] `L8689`: No docstring summary.
+- `format_pending_queue_mode_semantics` [function] `L1283`: No docstring summary.
+- `AuroraControlPanel._build_pending_tab` [method (AuroraControlPanel)] `L4147`: No docstring summary.
+- `AuroraControlPanel.insert_latest_agent_pending_dry_run` [method (AuroraControlPanel)] `L5666`: No docstring summary.
+- `AuroraControlPanel.approve_selected_pending` [method (AuroraControlPanel)] `L7159`: No docstring summary.
+- `AuroraControlPanel.clear_selected_pending` [method (AuroraControlPanel)] `L7170`: No docstring summary.
+- `AuroraControlPanel.pending_selection_arguments` [method (AuroraControlPanel)] `L7181`: No docstring summary.
+- `AuroraControlPanel.reset_pending_filters` [method (AuroraControlPanel)] `L7189`: No docstring summary.
+- `AuroraControlPanel.filter_pending_rows` [method (AuroraControlPanel)] `L7195`: No docstring summary.
+- `AuroraControlPanel.render_pending_current` [method (AuroraControlPanel)] `L7214`: No docstring summary.
+- `AuroraControlPanel.build_pending_candidate_text` [method (AuroraControlPanel)] `L7240`: No docstring summary.
+- `AuroraControlPanel.get_pending_scope_summary` [method (AuroraControlPanel)] `L7380`: No docstring summary.
+- `AuroraControlPanel.update_pending_selection_status` [method (AuroraControlPanel)] `L7407`: No docstring summary.
+- `AuroraControlPanel.render_pending` [method (AuroraControlPanel)] `L8698`: No docstring summary.
 
 ## Refresh / State Load
 
-- `format_state_export_monitor_summary` [function] `L1375`: No docstring summary.
-- `parse_state_timestamp` [function] `L1442`: No docstring summary.
-- `build_state_freshness_text` [function] `L1454`: No docstring summary.
-- `decorate_state_processes` [function] `L1589`: No docstring summary.
-- `AuroraControlPanel._sync_refresh_health_visibility` [method (AuroraControlPanel)] `L2460`: No docstring summary.
-- `AuroraControlPanel.refresh_conversation_feedback` [method (AuroraControlPanel)] `L4353`: No docstring summary.
-- `AuroraControlPanel.refresh_dashboard` [method (AuroraControlPanel)] `L5137`: No docstring summary.
-- `AuroraControlPanel._set_settings_transaction_button_states` [method (AuroraControlPanel)] `L5355`: No docstring summary.
-- `AuroraControlPanel.refresh_chat_head_content` [method (AuroraControlPanel)] `L6178`: No docstring summary.
-- `AuroraControlPanel._refresh_episodic_visuals` [method (AuroraControlPanel)] `L6366`: No docstring summary.
-- `AuroraControlPanel.apply_stateful_model_preset` [method (AuroraControlPanel)] `L6744`: No docstring summary.
-- `AuroraControlPanel.refresh_model_choice_widgets` [method (AuroraControlPanel)] `L6935`: No docstring summary.
-- `AuroraControlPanel.refresh_model_catalog` [method (AuroraControlPanel)] `L6953`: No docstring summary.
-- `AuroraControlPanel._refresh_thumbnail_region` [method (AuroraControlPanel)] `L7423`: No docstring summary.
-- `AuroraControlPanel._refresh_memory_thumbnail_region` [method (AuroraControlPanel)] `L7437`: No docstring summary.
-- `AuroraControlPanel._refresh_runtime_status_strip` [method (AuroraControlPanel)] `L7495`: No docstring summary.
-- `AuroraControlPanel.refresh_loop` [method (AuroraControlPanel)] `L7564`: No docstring summary.
-- `AuroraControlPanel.refresh_now` [method (AuroraControlPanel)] `L7578`: No docstring summary.
-- `AuroraControlPanel.refresh_overview_summary` [method (AuroraControlPanel)] `L7670`: No docstring summary.
-- `AuroraControlPanel.refresh_workflow_status` [method (AuroraControlPanel)] `L8054`: No docstring summary.
-- `AuroraControlPanel.render_state` [method (AuroraControlPanel)] `L8440`: No docstring summary.
-- `AuroraControlPanel.refresh_popout_image` [method (AuroraControlPanel)] `L9307`: No docstring summary.
-- `AuroraControlPanel.get_state_path_value` [method (AuroraControlPanel)] `L9652`: No docstring summary.
-- `AuroraControlPanel.refresh_recovery_home_vars` [method (AuroraControlPanel)] `L9870`: No docstring summary.
-- `AuroraControlPanel.build_current_preferences_snapshot_from_state` [method (AuroraControlPanel)] `L10213`: No docstring summary.
-- `AuroraControlPanel._sync_focus_nav_state` [method (AuroraControlPanel)] `L14215`: No docstring summary.
+- `format_state_export_monitor_summary` [function] `L1376`: No docstring summary.
+- `parse_state_timestamp` [function] `L1443`: No docstring summary.
+- `build_state_freshness_text` [function] `L1455`: No docstring summary.
+- `decorate_state_processes` [function] `L1590`: No docstring summary.
+- `AuroraControlPanel._sync_refresh_health_visibility` [method (AuroraControlPanel)] `L2461`: No docstring summary.
+- `AuroraControlPanel.refresh_conversation_feedback` [method (AuroraControlPanel)] `L4359`: No docstring summary.
+- `AuroraControlPanel.refresh_dashboard` [method (AuroraControlPanel)] `L5146`: No docstring summary.
+- `AuroraControlPanel._set_settings_transaction_button_states` [method (AuroraControlPanel)] `L5364`: No docstring summary.
+- `AuroraControlPanel.refresh_chat_head_content` [method (AuroraControlPanel)] `L6187`: No docstring summary.
+- `AuroraControlPanel._refresh_episodic_visuals` [method (AuroraControlPanel)] `L6375`: No docstring summary.
+- `AuroraControlPanel.apply_stateful_model_preset` [method (AuroraControlPanel)] `L6753`: No docstring summary.
+- `AuroraControlPanel.refresh_model_choice_widgets` [method (AuroraControlPanel)] `L6944`: No docstring summary.
+- `AuroraControlPanel.refresh_model_catalog` [method (AuroraControlPanel)] `L6962`: No docstring summary.
+- `AuroraControlPanel._refresh_thumbnail_region` [method (AuroraControlPanel)] `L7432`: No docstring summary.
+- `AuroraControlPanel._refresh_memory_thumbnail_region` [method (AuroraControlPanel)] `L7446`: No docstring summary.
+- `AuroraControlPanel._refresh_runtime_status_strip` [method (AuroraControlPanel)] `L7504`: No docstring summary.
+- `AuroraControlPanel.refresh_loop` [method (AuroraControlPanel)] `L7573`: No docstring summary.
+- `AuroraControlPanel.refresh_now` [method (AuroraControlPanel)] `L7587`: No docstring summary.
+- `AuroraControlPanel.refresh_overview_summary` [method (AuroraControlPanel)] `L7679`: No docstring summary.
+- `AuroraControlPanel.refresh_workflow_status` [method (AuroraControlPanel)] `L8063`: No docstring summary.
+- `AuroraControlPanel.render_state` [method (AuroraControlPanel)] `L8449`: No docstring summary.
+- `AuroraControlPanel.refresh_popout_image` [method (AuroraControlPanel)] `L9316`: No docstring summary.
+- `AuroraControlPanel.get_state_path_value` [method (AuroraControlPanel)] `L9661`: No docstring summary.
+- `AuroraControlPanel.refresh_recovery_home_vars` [method (AuroraControlPanel)] `L9879`: No docstring summary.
+- `AuroraControlPanel.build_current_preferences_snapshot_from_state` [method (AuroraControlPanel)] `L10222`: No docstring summary.
+- `AuroraControlPanel._sync_focus_nav_state` [method (AuroraControlPanel)] `L14224`: No docstring summary.
 
 ## Screenshot Viewer
 
-- `_normalize_screenshot_limit` [function] `L1913`: No docstring summary.
-- `_recent_screenshot_cache_key` [function] `L1920`: No docstring summary.
-- `_merge_forced_screenshot` [function] `L1937`: No docstring summary.
-- `_scan_recent_screenshots` [function] `L1954`: No docstring summary.
-- `safe_list_screenshots` [function] `L1981`: No docstring summary.
-- `get_screenshot_list_cache_stats` [function] `L2035`: No docstring summary.
-- `AuroraControlPanel._build_screenshots_tab` [method (AuroraControlPanel)] `L4951`: No docstring summary.
-- `AuroraControlPanel.set_screenshot_index` [method (AuroraControlPanel)] `L7451`: No docstring summary.
-- `AuroraControlPanel.step_screenshot` [method (AuroraControlPanel)] `L7464`: No docstring summary.
-- `AuroraControlPanel.jump_to_latest_screenshot` [method (AuroraControlPanel)] `L7471`: No docstring summary.
-- `AuroraControlPanel.pause_screenshot_follow_latest` [method (AuroraControlPanel)] `L7478`: No docstring summary.
-- `AuroraControlPanel.invalidate_screenshot_preview` [method (AuroraControlPanel)] `L9065`: No docstring summary.
-- `AuroraControlPanel._is_screenshot_popout_open` [method (AuroraControlPanel)] `L9073`: No docstring summary.
-- `AuroraControlPanel.refresh_screenshot_list` [method (AuroraControlPanel)] `L9085`: No docstring summary.
-- `AuroraControlPanel.render_screenshot` [method (AuroraControlPanel)] `L9157`: No docstring summary.
-- `AuroraControlPanel.open_screenshot_popout` [method (AuroraControlPanel)] `L9241`: No docstring summary.
-- `AuroraControlPanel.close_screenshot_popout` [method (AuroraControlPanel)] `L9287`: No docstring summary.
-- `AuroraControlPanel.set_screenshot_popout_mode` [method (AuroraControlPanel)] `L9300`: No docstring summary.
-- `AuroraControlPanel.toggle_screenshot_popout_mode` [method (AuroraControlPanel)] `L9304`: No docstring summary.
-- `AuroraControlPanel.on_screenshot_preview_click` [method (AuroraControlPanel)] `L14293`: No docstring summary.
+- `_normalize_screenshot_limit` [function] `L1914`: No docstring summary.
+- `_recent_screenshot_cache_key` [function] `L1921`: No docstring summary.
+- `_merge_forced_screenshot` [function] `L1938`: No docstring summary.
+- `_scan_recent_screenshots` [function] `L1955`: No docstring summary.
+- `safe_list_screenshots` [function] `L1982`: No docstring summary.
+- `get_screenshot_list_cache_stats` [function] `L2036`: No docstring summary.
+- `AuroraControlPanel._build_screenshots_tab` [method (AuroraControlPanel)] `L4960`: No docstring summary.
+- `AuroraControlPanel.set_screenshot_index` [method (AuroraControlPanel)] `L7460`: No docstring summary.
+- `AuroraControlPanel.step_screenshot` [method (AuroraControlPanel)] `L7473`: No docstring summary.
+- `AuroraControlPanel.jump_to_latest_screenshot` [method (AuroraControlPanel)] `L7480`: No docstring summary.
+- `AuroraControlPanel.pause_screenshot_follow_latest` [method (AuroraControlPanel)] `L7487`: No docstring summary.
+- `AuroraControlPanel.invalidate_screenshot_preview` [method (AuroraControlPanel)] `L9074`: No docstring summary.
+- `AuroraControlPanel._is_screenshot_popout_open` [method (AuroraControlPanel)] `L9082`: No docstring summary.
+- `AuroraControlPanel.refresh_screenshot_list` [method (AuroraControlPanel)] `L9094`: No docstring summary.
+- `AuroraControlPanel.render_screenshot` [method (AuroraControlPanel)] `L9166`: No docstring summary.
+- `AuroraControlPanel.open_screenshot_popout` [method (AuroraControlPanel)] `L9250`: No docstring summary.
+- `AuroraControlPanel.close_screenshot_popout` [method (AuroraControlPanel)] `L9296`: No docstring summary.
+- `AuroraControlPanel.set_screenshot_popout_mode` [method (AuroraControlPanel)] `L9309`: No docstring summary.
+- `AuroraControlPanel.toggle_screenshot_popout_mode` [method (AuroraControlPanel)] `L9313`: No docstring summary.
+- `AuroraControlPanel.on_screenshot_preview_click` [method (AuroraControlPanel)] `L14302`: No docstring summary.
 

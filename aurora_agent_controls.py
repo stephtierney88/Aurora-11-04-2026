@@ -15,7 +15,7 @@ CONTROL_KEYS = ("model.text", "model.vision", "model.reasoning", "inference.reas
                 "inference.service_tier", "capture.mode", "scheduler.mode", "scheduler.heartbeat_seconds", "auth.mode", "runtime.assistant_policy", "runtime.execution",
                 "task.continuation_mode", "task.max_model_turns", "task.max_seconds", "task.outcome_reporting", "scheduler.readback_wake_enabled", "context.init_delivery")
 BUDGET_KEYS = ("task.max_commands", "task.max_reported_tokens", "task.unknown_usage_policy")
-CARRY_KEYS = ("task.plan_carry_policy", "task.pending_carry_policy")
+CARRY_KEYS = ("task.plan_carry_policy", "task.pending_carry_policy", "task.objective_mode")
 CONTROL_KEYS += BUDGET_KEYS + CARRY_KEYS
 CONTINUATION_KEYS = ("task.continuation_mode", "task.max_model_turns", "task.max_seconds", "task.outcome_reporting", "scheduler.readback_wake_enabled", "context.init_delivery") + BUDGET_KEYS + CARRY_KEYS
 
@@ -89,8 +89,10 @@ class AgentControls(CollapsibleSection):
         self._select(task_bar, "Readback follow-up", "scheduler.readback_wake_enabled", ("true", "false"), 6)
         self._select(task_bar, "Outcome reports", "task.outcome_reporting", ("false", "true"), 6)
         self._select(task_bar, "Init delivery", "context.init_delivery", ("legacy", "system_once"), 12)
+        self._select(task_bar, "Operator context", "task.objective_mode", ("legacy", "operator"), 10)
         self.task_button = task_bar.add(ttk.Button(task_bar, text="Apply task controls", command=lambda: self.apply_keys(CONTINUATION_KEYS)))
         task_bar.add(ttk.Button(task_bar, text="Inspect task", command=lambda: self.command("SHOW_TASK_STATUS()")))
+        task_bar.add(ttk.Button(task_bar, text="Execution inspector", command=app.open_execution_inspector))
         carry_bar = FlowBar(task_section.body)
         carry_bar.pack(fill="x", pady=4)
         self._select(carry_bar, "Previous-task plans", "task.plan_carry_policy", ("carry", "discard_previous"), 18)
@@ -199,6 +201,8 @@ class AgentControls(CollapsibleSection):
                              f"{task.get('elapsed_seconds', 0)}s elapsed · {task.get('stop_reason') or 'no stop recorded'} · "
                              f"Outcome reports: {task.get('outcome_reporting', 'not latched')} (active task) / {continuation.get('outcome_reporting', 'unknown')} (next task)"
                              + "\n" + task_budget_summary(task)
+                             + f"\nLast scheduler check: {((state.get('scheduler') or {}).get('decision') or {}).get('state', 'unknown')} · {((state.get('scheduler') or {}).get('decision') or {}).get('detail', '')}"
+                             + f"\nOperator context: {task.get('objective_mode', 'legacy')} (active) / {continuation.get('objective_mode', 'unknown')} (next); retained {(task.get('objective') or {}).get('messages', 0)} messages, {(task.get('objective') or {}).get('characters', 0)} characters; clears on stop"
                              + f"\nActive carry policies: plans {task.get('plan_carry_policy', 'not latched')} / proposals {task.get('pending_carry_policy', 'not latched')}"
                              + ("\n" + task_outcome_summary(task) if task.get("reported_outcome") else ""))
         models, status, modes = (state.get(key) or {} for key in ("models", "model_status", "modes"))

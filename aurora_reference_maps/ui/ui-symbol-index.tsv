@@ -1,356 +1,357 @@
 kind	simple_name	qualname	line	end_line	container	domain	args	returns	commands	effects	doc
-function	short	short	1267	1269		Other	(value, limit=120)	value	-	pure_or_unknown	-
-function	format_source_mix	format_source_mix	1272	1279		Other	(items, limit=10, item_limit=32)	value	-	pure_or_unknown	-
-function	format_pending_queue_mode_semantics	format_pending_queue_mode_semantics	1282	1289		Pending Queue UI	(mode)	value	-	command_queue	-
-function	has_effective_next_inference_plan	has_effective_next_inference_plan	1292	1310		Other	(next_plan)	value	-	pure_or_unknown	-
-function	build_queue_next_action_cue	build_queue_next_action_cue	1313	1349		Command Sink / Actions	(state)	value	-	command_queue	-
-function	format_monitor_summary	format_monitor_summary	1352	1360		Other	(monitors)	value	-	pure_or_unknown	-
-function	format_gameplay_monitor_summary	format_gameplay_monitor_summary	1363	1372		Other	(monitors, fallback_gameplay=None)	value	-	gameplay_input	-
-function	format_state_export_monitor_summary	format_state_export_monitor_summary	1375	1389		Refresh / State Load	(monitors, fallback_export=None)	value	-	state_export,log_write,ui_update	-
-function	format_queue_bridge_monitor_summary	format_queue_bridge_monitor_summary	1392	1409		Command Sink / Actions	(monitors, fallback_queue_bridge=None)	value	-	external_bridge,command_queue	-
-function	format_mutation_admission_summary	format_mutation_admission_summary	1412	1423		Other	(mutation_admission)	value	-	pure_or_unknown	-
-function	format_age_seconds	format_age_seconds	1426	1439		Other	(age)	value	-	pure_or_unknown	-
-function	parse_state_timestamp	parse_state_timestamp	1442	1451		Refresh / State Load	(value)	mixed	-	ui_update	-
-function	build_state_freshness_text	build_state_freshness_text	1454	1475		Refresh / State Load	(state)	value	-	ui_update	-
-function	format_timestamp_age_text	format_timestamp_age_text	1478	1483		Other	(value, label='timestamp')	value	-	pure_or_unknown	-
-function	format_file_age_text	format_file_age_text	1486	1496		Other	(path, label='file')	value	-	file_io	-
-function	format_price_value	format_price_value	1499	1505		Other	(value)	value	-	pure_or_unknown	-
-function	format_model_pricing_compact	format_model_pricing_compact	1508	1516		Other	(pricing)	value	-	model_api	-
-function	read_json	read_json	1519	1523		Other	(path, default)	value	-	file_io	-
-function	acquire_windows_single_instance_mutex	acquire_windows_single_instance_mutex	1526	1535		Other	(name)	mixed	-	pure_or_unknown	-
-function	release_windows_single_instance_mutex	release_windows_single_instance_mutex	1538	1541		Other	(handle)	none	-	pure_or_unknown	-
-function	is_windows_pid_running	is_windows_pid_running	1544	1561		Other	(pid)	value	-	file_io,process_lifecycle	-
-function	read_pid_file	read_pid_file	1564	1568		Other	(path)	value	-	file_io	-
-function	write_pid_file	write_pid_file	1571	1573		Other	(path, pid)	implicit	-	file_io	-
-function	remove_pid_file	remove_pid_file	1576	1586		Other	(path, expected_pid=None)	value	-	file_io	-
-function	decorate_state_processes	decorate_state_processes	1589	1609		Refresh / State Load	(state)	value	-	file_io,process_lifecycle,ui_update	-
-function	show_duplicate_instance_notice	show_duplicate_instance_notice	1612	1619		Other	(title, message)	implicit	-	ui_update	-
-function	format_runtime_seconds	format_runtime_seconds	1622	1633		Other	(value)	value	-	pure_or_unknown	-
-function	get_runtime_activation_plan	get_runtime_activation_plan	1636	1662		Other	(state)	value	-	process_lifecycle	-
-function	build_runtime_mode_spec	build_runtime_mode_spec	1665	1671		Other	(snapshot)	value	-	pure_or_unknown	-
-function	build_runtime_model_spec	build_runtime_model_spec	1674	1694		Other	(snapshot)	value	-	model_api	-
-function	launch_runtime_process	launch_runtime_process	1697	1717		Other	(with_ui=True, paused=False)	implicit	-	file_io,log_write,process_lifecycle	-
-function	tail_lines	tail_lines	1720	1729		Other	(path, limit=40)	value	-	file_io	-
-function	read_jsonl_records	read_jsonl_records	1732	1752		Other	(path, limit=None)	value	-	file_io,log_write	-
-function	read_model_catalog	read_model_catalog	1755	1766		Other	()	value	-	log_write,model_api	-
-function	build_model_choices	build_model_choices	1769	1771		Other	(model_catalog=None)	value	-	log_write,model_api	-
-function	append_external_message	append_external_message	1774	1786		Other	(text, raw=False, source='control_panel', subject='[AURORA CONTROL PANEL]', metadata=None, request_id=None, message_id=None)	value	-	log_write,external_bridge	-
-function	build_control_panel_registered_changes	build_control_panel_registered_changes	1789	1805		Other	(values)	value	-	log_write	-
-function	filter_changed_control_panel_settings	filter_changed_control_panel_settings	1808	1820		Other	(changes, snapshot)	value	-	log_write	-
-function	_format_control_panel_setting_value	_format_control_panel_setting_value	1823	1830		Other	(value)	value	-	pure_or_unknown	-
-function	format_control_panel_settings_snapshot	format_control_panel_settings_snapshot	1833	1859		Other	(snapshot)	value	-	state_export	-
-function	format_control_panel_settings_receipt	format_control_panel_settings_receipt	1862	1910		Other	(receipt)	value	-	log_write	-
-function	_normalize_screenshot_limit	_normalize_screenshot_limit	1913	1917		Screenshot Viewer	(limit)	value	-	pure_or_unknown	-
-function	_recent_screenshot_cache_key	_recent_screenshot_cache_key	1920	1921		Screenshot Viewer	(directory, limit)	value	-	file_io	-
-function	_sort_recent_paths	_sort_recent_paths	1924	1934		Other	(paths, limit)	value	-	file_io,log_write	-
-function	_merge_forced_screenshot	_merge_forced_screenshot	1937	1951		Screenshot Viewer	(files, force_path, limit)	value	-	file_io,log_write	-
-function	_scan_recent_screenshots	_scan_recent_screenshots	1954	1978		Screenshot Viewer	(directory, limit)	value	-	file_io	-
-function	safe_list_screenshots	safe_list_screenshots	1981	2032		Screenshot Viewer	(screenshots_dir, limit=SCREENSHOT_LIST_DEFAULT_LIMIT, force_path=None)	value	-	file_io	-
-function	get_screenshot_list_cache_stats	get_screenshot_list_cache_stats	2035	2044		Screenshot Viewer	(screenshots_dir, limit=SCREENSHOT_LIST_DEFAULT_LIMIT)	value	-	pure_or_unknown	-
-class	AuroraControlPanel	AuroraControlPanel	2047	14314		Other	()	class	-	pure_or_unknown	-
-method	__init__	AuroraControlPanel.__init__	2048	2205	AuroraControlPanel	Other	(self)	implicit	-	command_queue,model_api,ui_update	-
-method	_configure_initial_window_geometry	AuroraControlPanel._configure_initial_window_geometry	2207	2217	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	_restore_window_position	AuroraControlPanel._restore_window_position	2219	2232	AuroraControlPanel	Other	(self, geometry)	none	-	pure_or_unknown	-
-method	_remember_window_geometry	AuroraControlPanel._remember_window_geometry	2234	2241	AuroraControlPanel	Other	(self, event=None)	none	-	pure_or_unknown	-
-method	toggle_maximized	AuroraControlPanel.toggle_maximized	2243	2245	AuroraControlPanel	Other	(self, _event=None)	value	-	pure_or_unknown	-
-method	_register_widget_locks	AuroraControlPanel._register_widget_locks	2247	2251	AuroraControlPanel	Other	(self, widget, lock_names, quick=False)	implicit	-	log_write,ui_update	-
-method	_build_styles	AuroraControlPanel._build_styles	2253	2296	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
-method	_configure_window_icon	AuroraControlPanel._configure_window_icon	2298	2300	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	_load_runtime_orb_assets	AuroraControlPanel._load_runtime_orb_assets	2302	2320	AuroraControlPanel	Other	(self)	none	-	file_io	-
-method	_stop_runtime_orb_animation	AuroraControlPanel._stop_runtime_orb_animation	2322	2327	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	_tick_runtime_orb_animation	AuroraControlPanel._tick_runtime_orb_animation	2329	2335	AuroraControlPanel	Other	(self)	none	-	pure_or_unknown	-
-method	_start_runtime_orb_animation	AuroraControlPanel._start_runtime_orb_animation	2337	2343	AuroraControlPanel	Other	(self)	none	-	pure_or_unknown	-
-method	_cancel_runtime_orb_click	AuroraControlPanel._cancel_runtime_orb_click	2345	2348	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	_handle_runtime_orb_single_click	AuroraControlPanel._handle_runtime_orb_single_click	2350	2357	AuroraControlPanel	Other	(self)	implicit	-	process_lifecycle,ui_update	-
-method	_queue_runtime_orb_click	AuroraControlPanel._queue_runtime_orb_click	2359	2364	AuroraControlPanel	Command Sink / Actions	(self, _event=None)	value	-	command_queue	-
-method	_handle_runtime_orb_double_click	AuroraControlPanel._handle_runtime_orb_double_click	2366	2393	AuroraControlPanel	Other	(self, _event=None)	value	-	process_lifecycle	-
-method	start_or_enable_runtime	AuroraControlPanel.start_or_enable_runtime	2395	2408	AuroraControlPanel	Other	(self)	implicit	-	process_lifecycle	Start paused from the primary button; preserve the legacy orb profile path.
-method	_build_runtime_status_strip	AuroraControlPanel._build_runtime_status_strip	2410	2442	AuroraControlPanel	Layout / Tabs	(self, outer)	implicit	-	file_io,command_queue,model_api,ui_update	-
-method	_apply_header_layout	AuroraControlPanel._apply_header_layout	2444	2458	AuroraControlPanel	Command Sink / Actions	(self)	implicit	-	command_queue	Presentation preference only; keep the full header and every control reachable.
-method	_sync_refresh_health_visibility	AuroraControlPanel._sync_refresh_health_visibility	2460	2465	AuroraControlPanel	Refresh / State Load	(self, *_args)	implicit	-	ui_update	-
-method	_build_ui	AuroraControlPanel._build_ui	2467	2582	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	file_io,command_queue,model_api,ui_update	-
-method	_new_work_page	AuroraControlPanel._new_work_page	2584	2588	AuroraControlPanel	Other	(self, title)	value	-	pure_or_unknown	-
-method	_new_settings_section	AuroraControlPanel._new_settings_section	2590	2596	AuroraControlPanel	Other	(self, parent, title)	value	-	log_write	-
-method	_remember_section	AuroraControlPanel._remember_section	2598	2602	AuroraControlPanel	Other	(self, title, expanded)	implicit	-	pure_or_unknown	-
-method	_expand_all_settings	AuroraControlPanel._expand_all_settings	2604	2607	AuroraControlPanel	Other	(self, expanded)	implicit	-	pure_or_unknown	-
-method	_filter_settings_sections	AuroraControlPanel._filter_settings_sections	2609	2621	AuroraControlPanel	Other	(self, *_args)	implicit	-	pure_or_unknown	-
-method	_build_sidebar_runtime_details	AuroraControlPanel._build_sidebar_runtime_details	2623	2638	AuroraControlPanel	Layout / Tabs	(self, parent)	implicit	-	file_io,log_write,ui_update	-
-method	_build_quick_controls	AuroraControlPanel._build_quick_controls	2640	2707	AuroraControlPanel	Layout / Tabs	(self, parent)	implicit	-	model_api,ui_update	-
-method	_on_main_mousewheel	AuroraControlPanel._on_main_mousewheel	2710	2717	AuroraControlPanel	Other	(self, event)	mixed	-	gameplay_input	-
-method	_scroll_ancestor	AuroraControlPanel._scroll_ancestor	2719	2731	AuroraControlPanel	Other	(self, widget, event)	value	-	pure_or_unknown	-
-method	_protect_unfocused_combobox_wheel	AuroraControlPanel._protect_unfocused_combobox_wheel	2733	2737	AuroraControlPanel	Other	(self, parent)	implicit	-	pure_or_unknown	-
-method	_on_combobox_mousewheel	AuroraControlPanel._on_combobox_mousewheel	2739	2741	AuroraControlPanel	Other	(self, event)	value	-	gameplay_input	-
-method	_apply_settings_mode	AuroraControlPanel._apply_settings_mode	2743	2756	AuroraControlPanel	Command Sink / Actions	(self, mode)	implicit	-	command_queue	-
-method	toggle_settings_pane	AuroraControlPanel.toggle_settings_pane	2758	2760	AuroraControlPanel	Other	(self, _event=None)	value	-	pure_or_unknown	-
-method	toggle_expanded_settings	AuroraControlPanel.toggle_expanded_settings	2762	2763	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	_schedule_sash_clamp	AuroraControlPanel._schedule_sash_clamp	2765	2767	AuroraControlPanel	Other	(self, _event=None)	implicit	-	pure_or_unknown	-
-method	_clamp_settings_sash	AuroraControlPanel._clamp_settings_sash	2769	2780	AuroraControlPanel	Other	(self)	none	-	pure_or_unknown	-
-method	_remember_sash	AuroraControlPanel._remember_sash	2782	2785	AuroraControlPanel	Other	(self, _event=None)	implicit	-	pure_or_unknown	-
-method	_navigate_from_selector	AuroraControlPanel._navigate_from_selector	2787	2794	AuroraControlPanel	Other	(self, _event=None)	value	-	ui_update	-
-method	_filter_view_choices	AuroraControlPanel._filter_view_choices	2796	2800	AuroraControlPanel	Other	(self, event=None)	none	-	pure_or_unknown	-
-method	_focus_view_selector	AuroraControlPanel._focus_view_selector	2802	2806	AuroraControlPanel	Other	(self, _event=None)	value	-	pure_or_unknown	-
-method	_build_settings_card	AuroraControlPanel._build_settings_card	2808	3684	AuroraControlPanel	Layout / Tabs	(self, parent)	implicit	-	file_io,model_api,ui_update	-
-method	_build_feedback_card	AuroraControlPanel._build_feedback_card	3686	3705	AuroraControlPanel	Layout / Tabs	(self, parent)	implicit	-	ui_update	-
-method	_build_overview_tab	AuroraControlPanel._build_overview_tab	3707	3742	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
-method	_build_dashboard_tab	AuroraControlPanel._build_dashboard_tab	3744	3840	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	file_io,log_write,ui_update	-
-method	_dashboard_detail_widget	AuroraControlPanel._dashboard_detail_widget	3842	3855	AuroraControlPanel	Other	(self, parent, height=12)	value	-	ui_update	-
-method	_layout_dashboard_cards	AuroraControlPanel._layout_dashboard_cards	3857	3865	AuroraControlPanel	Layout / Tabs	(self, event)	implicit	-	ui_update	-
-method	_update_dashboard_wrap	AuroraControlPanel._update_dashboard_wrap	3867	3870	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	_show_dashboard_receipt	AuroraControlPanel._show_dashboard_receipt	3872	3876	AuroraControlPanel	Other	(self, _event=None)	implicit	-	file_io	-
-method	open_dashboard_receipt	AuroraControlPanel.open_dashboard_receipt	3878	3908	AuroraControlPanel	Other	(self, event=None)	mixed	-	file_io,ui_update	-
-method	_add_workflow_status_strip	AuroraControlPanel._add_workflow_status_strip	3910	3923	AuroraControlPanel	Other	(self, frame, key, title)	value	-	ui_update	-
-method	_build_memory_tab	AuroraControlPanel._build_memory_tab	3925	3936	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
-method	_build_episodic_tab	AuroraControlPanel._build_episodic_tab	3938	4139	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
-method	_build_pending_tab	AuroraControlPanel._build_pending_tab	4141	4210	AuroraControlPanel	Pending Queue UI	(self)	implicit	-	command_queue,ui_update	-
-method	_build_command_drip_tab	AuroraControlPanel._build_command_drip_tab	4212	4230	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	command_queue,ui_update	-
-method	_build_chat_tab	AuroraControlPanel._build_chat_tab	4232	4242	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	log_write,model_api,ui_update	-
-method	_build_conversation_tab	AuroraControlPanel._build_conversation_tab	4244	4296	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	external_bridge,ui_update	-
-method	edit_conversation_message	AuroraControlPanel.edit_conversation_message	4298	4309	AuroraControlPanel	Other	(self)	mixed	-	pure_or_unknown	-
-method	send_conversation_message	AuroraControlPanel.send_conversation_message	4311	4331	AuroraControlPanel	Other	(self, _event=None, composer=None)	value	-	log_write,external_bridge,ui_update	-
-method	open_conversation_outbox	AuroraControlPanel.open_conversation_outbox	4333	4340	AuroraControlPanel	Other	(self)	value	-	file_io,ui_update	-
-method	open_conversation_popout	AuroraControlPanel.open_conversation_popout	4342	4351	AuroraControlPanel	Dialogs / Popouts	(self)	value	-	file_io,log_write,model_api	-
-method	refresh_conversation_feedback	AuroraControlPanel.refresh_conversation_feedback	4353	4371	AuroraControlPanel	Refresh / State Load	(self, update_preview=True)	implicit	-	ui_update	-
-method	show_conversation_quick_start	AuroraControlPanel.show_conversation_quick_start	4373	4383	AuroraControlPanel	Other	(self)	implicit	-	file_io,log_write	-
-method	render_conversation	AuroraControlPanel.render_conversation	4385	4421	AuroraControlPanel	Other	(self)	none	-	file_io,ui_update	-
-method	_build_switchboard_tab	AuroraControlPanel._build_switchboard_tab	4423	4426	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
-method	_build_command_tab	AuroraControlPanel._build_command_tab	4428	4438	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	file_io,log_write,command_queue,ui_update	-
-method	_build_prompt_ledger_tab	AuroraControlPanel._build_prompt_ledger_tab	4440	4525	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
-method	_build_agents_tab	AuroraControlPanel._build_agents_tab	4527	4644	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
-method	_build_history_context_tab	AuroraControlPanel._build_history_context_tab	4646	4673	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
-method	_build_portal_intake_tab	AuroraControlPanel._build_portal_intake_tab	4675	4699	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
-method	_build_visual_context_tab	AuroraControlPanel._build_visual_context_tab	4701	4720	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
-method	_build_image_context_index_tab	AuroraControlPanel._build_image_context_index_tab	4722	4749	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
-method	_build_live_harness_tab	AuroraControlPanel._build_live_harness_tab	4751	4783	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	file_io,ui_update	-
-method	_build_responses_shadow_tab	AuroraControlPanel._build_responses_shadow_tab	4785	4825	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	model_api,ui_update	-
-method	_build_context_files_tab	AuroraControlPanel._build_context_files_tab	4827	4846	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	file_io,ui_update	-
-method	_build_settings_safety_tab	AuroraControlPanel._build_settings_safety_tab	4848	4949	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	file_io,ui_update	-
-method	_build_screenshots_tab	AuroraControlPanel._build_screenshots_tab	4951	4988	AuroraControlPanel	Screenshot Viewer	(self)	implicit	-	file_io,ui_update	-
-method	_build_image_memory_tab	AuroraControlPanel._build_image_memory_tab	4990	5026	AuroraControlPanel	Image Memory Viewer	(self)	implicit	-	file_io,ui_update	-
-method	_build_help_tab	AuroraControlPanel._build_help_tab	5028	5037	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	file_io,ui_update	-
-method	_build_raw_tab	AuroraControlPanel._build_raw_tab	5039	5046	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
-method	_is_dashboard_popout_open	AuroraControlPanel._is_dashboard_popout_open	5048	5052	AuroraControlPanel	Dialogs / Popouts	(self)	value	-	file_io,log_write	-
-method	toggle_dashboard_popout	AuroraControlPanel.toggle_dashboard_popout	5054	5058	AuroraControlPanel	Dialogs / Popouts	(self)	implicit	-	file_io,log_write	-
-method	open_dashboard_popout	AuroraControlPanel.open_dashboard_popout	5060	5126	AuroraControlPanel	Dialogs / Popouts	(self)	none	-	file_io,log_write,ui_update	-
-method	close_dashboard_popout	AuroraControlPanel.close_dashboard_popout	5128	5135	AuroraControlPanel	Dialogs / Popouts	(self)	implicit	-	file_io,log_write	-
-method	refresh_dashboard	AuroraControlPanel.refresh_dashboard	5137	5218	AuroraControlPanel	Refresh / State Load	(self, state=None)	mixed	-	file_io,ui_update	-
-method	sanitize_operator_activity_command	AuroraControlPanel.sanitize_operator_activity_command	5221	5228	AuroraControlPanel	Other	(command)	value	-	command_queue	-
-method	mark_operator_activity	AuroraControlPanel.mark_operator_activity	5230	5232	AuroraControlPanel	Other	(self, message)	implicit	-	pure_or_unknown	-
-method	send_raw	AuroraControlPanel.send_raw	5234	5242	AuroraControlPanel	Command Sink / Actions	(self, command)	value	-	log_write,external_bridge,command_queue	-
-method	_collect_registered_settings_form_values	AuroraControlPanel._collect_registered_settings_form_values	5244	5269	AuroraControlPanel	Other	(self)	value	-	pure_or_unknown	-
-method	_build_additional_settings_commands	AuroraControlPanel._build_additional_settings_commands	5271	5295	AuroraControlPanel	Layout / Tabs	(self)	value	-	command_queue,ui_update	-
-method	_build_advanced_context_commands	AuroraControlPanel._build_advanced_context_commands	5297	5325	AuroraControlPanel	Layout / Tabs	(self)	value	-	log_write,command_queue,ui_update	-
-method	_get_control_panel_settings_snapshot	AuroraControlPanel._get_control_panel_settings_snapshot	5327	5353	AuroraControlPanel	Other	(self, require_effective=False)	value	-	state_export	-
-method	_set_settings_transaction_button_states	AuroraControlPanel._set_settings_transaction_button_states	5355	5373	AuroraControlPanel	Refresh / State Load	(self, state=None)	implicit	-	ui_update	-
-method	_update_settings_transaction_surface	AuroraControlPanel._update_settings_transaction_surface	5375	5391	AuroraControlPanel	Other	(self, state)	implicit	-	pure_or_unknown	-
-method	_submit_settings_transaction	AuroraControlPanel._submit_settings_transaction	5393	5493	AuroraControlPanel	Other	(self, operation, changes=None, rollback_handle='', post_commands=None, show_confirmation=False, show_result_dialog=False, activity_label='registered settings', inline_results=False)	mixed	-	state_export,log_write,external_bridge,command_queue,process_lifecycle	-
-method	_wait_for_settings_transaction_receipt	AuroraControlPanel._wait_for_settings_transaction_receipt	5495	5511	AuroraControlPanel	Other	(self, request_id, offsets, client_id)	implicit	-	command_queue	-
-method	_drain_settings_transaction_results	AuroraControlPanel._drain_settings_transaction_results	5513	5519	AuroraControlPanel	Other	(self)	none	-	pure_or_unknown	-
-method	_handle_settings_transaction_result	AuroraControlPanel._handle_settings_transaction_result	5521	5597	AuroraControlPanel	Other	(self, result)	none	-	file_io,log_write	-
-method	_open_settings_text_dialog	AuroraControlPanel._open_settings_text_dialog	5599	5619	AuroraControlPanel	Dialogs / Popouts	(self, title, text, font=None, height=640)	implicit	-	file_io,log_write	-
-method	show_settings_details	AuroraControlPanel.show_settings_details	5621	5630	AuroraControlPanel	Other	(self)	none	-	state_export,file_io,log_write	-
-method	preview_settings	AuroraControlPanel.preview_settings	5632	5637	AuroraControlPanel	Other	(self)	value	-	pure_or_unknown	-
-method	rollback_settings	AuroraControlPanel.rollback_settings	5639	5655	AuroraControlPanel	Other	(self)	mixed	-	pure_or_unknown	-
-method	insert_latest_agent_pending_dry_run	AuroraControlPanel.insert_latest_agent_pending_dry_run	5657	5690	AuroraControlPanel	Pending Queue UI	(self)	none	-	command_queue,ui_update	-
-method	search_image_context_index	AuroraControlPanel.search_image_context_index	5692	5697	AuroraControlPanel	Other	(self)	none	-	pure_or_unknown	-
-method	confirm_and_send_raw	AuroraControlPanel.confirm_and_send_raw	5699	5701	AuroraControlPanel	Command Sink / Actions	(self, command, prompt)	implicit	-	command_queue	-
-method	_draw_chat_head_toggle_button	AuroraControlPanel._draw_chat_head_toggle_button	5703	5727	AuroraControlPanel	Other	(self, pressed, canvas=None)	none	-	model_api	-
-method	_set_panel_chat_head_requested	AuroraControlPanel._set_panel_chat_head_requested	5729	5737	AuroraControlPanel	Other	(self, enabled)	implicit	-	model_api	-
-method	_is_chat_head_strip_open	AuroraControlPanel._is_chat_head_strip_open	5739	5740	AuroraControlPanel	Other	(self)	value	-	file_io,model_api	-
-method	_is_chat_head_history_open	AuroraControlPanel._is_chat_head_history_open	5742	5743	AuroraControlPanel	Other	(self)	value	-	file_io,model_api	-
-method	toggle_chat_head_request	AuroraControlPanel.toggle_chat_head_request	5745	5753	AuroraControlPanel	Other	(self, _event=None)	implicit	-	file_io,model_api	-
-method	request_close_chat_head	AuroraControlPanel.request_close_chat_head	5755	5758	AuroraControlPanel	Other	(self, _event=None)	implicit	-	model_api	-
-method	sync_chat_head_visibility	AuroraControlPanel.sync_chat_head_visibility	5760	5769	AuroraControlPanel	Other	(self)	implicit	-	file_io,model_api,ui_update	-
-method	get_panel_chat_head_settings	AuroraControlPanel.get_panel_chat_head_settings	5771	5783	AuroraControlPanel	Other	(self)	value	-	model_api	-
-method	_build_chat_head_history_text	AuroraControlPanel._build_chat_head_history_text	5785	5796	AuroraControlPanel	Layout / Tabs	(self, state)	value	-	log_write,model_api,ui_update	-
-method	_draw_chat_head_expand_button	AuroraControlPanel._draw_chat_head_expand_button	5798	5818	AuroraControlPanel	Other	(self)	none	-	file_io,model_api	-
-method	_blend_chat_head_color	AuroraControlPanel._blend_chat_head_color	5821	5828	AuroraControlPanel	Other	(start_hex, end_hex, mix)	value	-	model_api	-
-method	_restore_chat_head_strip_visual	AuroraControlPanel._restore_chat_head_strip_visual	5830	5840	AuroraControlPanel	Other	(self)	none	-	model_api	-
-method	_run_chat_head_send_animation_step	AuroraControlPanel._run_chat_head_send_animation_step	5842	5868	AuroraControlPanel	Other	(self, start_time, duration_seconds)	none	-	file_io,model_api	-
-method	start_chat_head_send_animation	AuroraControlPanel.start_chat_head_send_animation	5870	5888	AuroraControlPanel	Other	(self)	none	-	file_io,model_api	-
-method	submit_chat_head_message	AuroraControlPanel.submit_chat_head_message	5890	5908	AuroraControlPanel	Other	(self, _event=None)	value	-	log_write,external_bridge,model_api	-
-method	_position_chat_head_strip	AuroraControlPanel._position_chat_head_strip	5910	5921	AuroraControlPanel	Other	(self)	none	-	file_io,model_api	-
-method	apply_chat_head_window_settings	AuroraControlPanel.apply_chat_head_window_settings	5923	5961	AuroraControlPanel	Command Sink / Actions	(self)	implicit	-	file_io,command_queue,model_api	-
-method	open_chat_head_strip	AuroraControlPanel.open_chat_head_strip	5963	6048	AuroraControlPanel	Other	(self)	none	-	file_io,model_api,ui_update	-
-method	open_chat_head_history	AuroraControlPanel.open_chat_head_history	6050	6120	AuroraControlPanel	Other	(self)	none	-	file_io,model_api,ui_update	-
-method	toggle_chat_head_history	AuroraControlPanel.toggle_chat_head_history	6122	6126	AuroraControlPanel	Other	(self, _event=None)	implicit	-	file_io,model_api	-
-method	close_chat_head_history	AuroraControlPanel.close_chat_head_history	6128	6134	AuroraControlPanel	Other	(self, _event=None)	implicit	-	file_io,model_api	-
-method	close_chat_head_windows	AuroraControlPanel.close_chat_head_windows	6136	6159	AuroraControlPanel	Other	(self, local_only=False)	implicit	-	file_io,model_api	-
-method	reposition_chat_head_history_window	AuroraControlPanel.reposition_chat_head_history_window	6161	6176	AuroraControlPanel	Other	(self, _event=None)	none	-	file_io,model_api	-
-method	refresh_chat_head_content	AuroraControlPanel.refresh_chat_head_content	6178	6196	AuroraControlPanel	Refresh / State Load	(self)	implicit	-	file_io,model_api,ui_update	-
-method	send_command_entry	AuroraControlPanel.send_command_entry	6198	6203	AuroraControlPanel	Other	(self, _event=None)	value	-	command_queue	-
-method	send_note_entry	AuroraControlPanel.send_note_entry	6205	6213	AuroraControlPanel	Other	(self, _event=None)	value	-	log_write,external_bridge	-
-method	_build_episodic_memory_commands	AuroraControlPanel._build_episodic_memory_commands	6215	6226	AuroraControlPanel	Layout / Tabs	(self)	value	-	command_queue,ui_update	-
-method	apply_episodic_memory_settings	AuroraControlPanel.apply_episodic_memory_settings	6228	6237	AuroraControlPanel	Command Sink / Actions	(self, show_confirmation=False)	implicit	-	command_queue	-
-method	send_episodic_snapshot	AuroraControlPanel.send_episodic_snapshot	6239	6249	AuroraControlPanel	Other	(self, _event=None)	value	-	state_export	-
-method	send_episodic_list_recent	AuroraControlPanel.send_episodic_list_recent	6251	6255	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	_build_episodic_search_filters	AuroraControlPanel._build_episodic_search_filters	6257	6298	AuroraControlPanel	Layout / Tabs	(self, parent)	implicit	-	ui_update	-
-method	_build_episodic_visual_search	AuroraControlPanel._build_episodic_visual_search	6300	6336	AuroraControlPanel	Layout / Tabs	(self, parent)	implicit	-	ui_update	-
-method	_change_episodic_weight	AuroraControlPanel._change_episodic_weight	6338	6352	AuroraControlPanel	Other	(self, key, value)	none	-	ui_update	-
-method	_set_episodic_weight_preset	AuroraControlPanel._set_episodic_weight_preset	6354	6364	AuroraControlPanel	Other	(self, key=None)	implicit	-	ui_update	-
-method	_refresh_episodic_visuals	AuroraControlPanel._refresh_episodic_visuals	6366	6399	AuroraControlPanel	Refresh / State Load	(self)	mixed	-	ui_update	-
-method	_draw_episodic_score_results	AuroraControlPanel._draw_episodic_score_results	6401	6430	AuroraControlPanel	Other	(self, results)	none	-	pure_or_unknown	-
-method	_episodic_retrieval_segments	AuroraControlPanel._episodic_retrieval_segments	6432	6484	AuroraControlPanel	Other	(self)	mixed	-	log_write	-
-method	_update_episodic_feedback_token	AuroraControlPanel._update_episodic_feedback_token	6486	6489	AuroraControlPanel	Other	(self, search_info)	implicit	-	auth_oauth	-
-method	send_episodic_feedback	AuroraControlPanel.send_episodic_feedback	6491	6493	AuroraControlPanel	Other	(self, action)	value	-	pure_or_unknown	-
-method	send_episodic_retrieval	AuroraControlPanel.send_episodic_retrieval	6495	6504	AuroraControlPanel	Other	(self, _event=None)	value	-	pure_or_unknown	-
-method	send_episodic_recall_shorthand	AuroraControlPanel.send_episodic_recall_shorthand	6506	6515	AuroraControlPanel	Other	(self, _event=None)	value	-	pure_or_unknown	-
-method	use_displayed_retrieval_handle	AuroraControlPanel.use_displayed_retrieval_handle	6517	6518	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	inspect_retained_retrieval	AuroraControlPanel.inspect_retained_retrieval	6520	6527	AuroraControlPanel	Other	(self)	none	-	pure_or_unknown	-
-method	send_episodic_promotion	AuroraControlPanel.send_episodic_promotion	6529	6547	AuroraControlPanel	Other	(self, _event=None)	value	-	pure_or_unknown	-
-method	set_operator_passcode	AuroraControlPanel.set_operator_passcode	6549	6556	AuroraControlPanel	Other	(self)	none	-	pure_or_unknown	-
-method	apply_operator_security_requirement	AuroraControlPanel.apply_operator_security_requirement	6558	6559	AuroraControlPanel	Command Sink / Actions	(self)	implicit	-	command_queue	-
-method	apply_passcode_command_visibility	AuroraControlPanel.apply_passcode_command_visibility	6561	6571	AuroraControlPanel	Command Sink / Actions	(self)	none	-	command_queue	-
-method	authorize_operator_access	AuroraControlPanel.authorize_operator_access	6573	6579	AuroraControlPanel	Other	(self)	none	-	auth_oauth	-
-method	clear_operator_passcode	AuroraControlPanel.clear_operator_passcode	6581	6585	AuroraControlPanel	Command Sink / Actions	(self)	none	-	command_queue	-
-method	_on_banner_autoscroll_toggle	AuroraControlPanel._on_banner_autoscroll_toggle	6587	6590	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	_adjust_banner_offset	AuroraControlPanel._adjust_banner_offset	6592	6598	AuroraControlPanel	Other	(self, delta)	implicit	-	pure_or_unknown	-
-method	_set_runtime_banner_text	AuroraControlPanel._set_runtime_banner_text	6600	6606	AuroraControlPanel	Other	(self, text)	none	-	pure_or_unknown	-
-method	_render_runtime_banner	AuroraControlPanel._render_runtime_banner	6608	6646	AuroraControlPanel	Other	(self, reset=False)	none	-	pure_or_unknown	-
-method	_banner_tick	AuroraControlPanel._banner_tick	6648	6656	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	open_banner_dialog	AuroraControlPanel.open_banner_dialog	6658	6676	AuroraControlPanel	Dialogs / Popouts	(self)	none	-	file_io,log_write,ui_update	-
-method	apply_turn_scheduler_profile_to_controls	AuroraControlPanel.apply_turn_scheduler_profile_to_controls	6678	6692	AuroraControlPanel	Command Sink / Actions	(self, profile_name)	none	-	file_io,command_queue	-
-method	on_turn_scheduler_profile_selected	AuroraControlPanel.on_turn_scheduler_profile_selected	6694	6701	AuroraControlPanel	Other	(self, _event=None)	none	-	file_io	-
-method	on_turn_scheduler_leaf_changed	AuroraControlPanel.on_turn_scheduler_leaf_changed	6703	6708	AuroraControlPanel	Other	(self, _event=None)	implicit	-	pure_or_unknown	-
-method	apply_model_preset	AuroraControlPanel.apply_model_preset	6710	6742	AuroraControlPanel	Command Sink / Actions	(self, preset_name)	none	-	file_io,command_queue,model_api	-
-method	apply_stateful_model_preset	AuroraControlPanel.apply_stateful_model_preset	6744	6755	AuroraControlPanel	Refresh / State Load	(self, profile_name)	none	-	model_api,ui_update	-
-method	apply_overlay_preset	AuroraControlPanel.apply_overlay_preset	6757	6774	AuroraControlPanel	Command Sink / Actions	(self, preset_name, apply_now=True)	none	-	command_queue	-
-method	apply_operator_profile	AuroraControlPanel.apply_operator_profile	6776	6933	AuroraControlPanel	Command Sink / Actions	(self, profile_name)	none	-	file_io,command_queue	-
-method	refresh_model_choice_widgets	AuroraControlPanel.refresh_model_choice_widgets	6935	6951	AuroraControlPanel	Refresh / State Load	(self, choices=None)	implicit	-	model_api,ui_update	-
-method	refresh_model_catalog	AuroraControlPanel.refresh_model_catalog	6953	6955	AuroraControlPanel	Refresh / State Load	(self)	implicit	-	log_write,model_api,ui_update	-
-method	_run_model_catalog_cli	AuroraControlPanel._run_model_catalog_cli	6957	6985	AuroraControlPanel	Other	(self, *args)	value	-	file_io,log_write,model_api	-
-method	add_model_dialog	AuroraControlPanel.add_model_dialog	6987	7010	AuroraControlPanel	Dialogs / Popouts	(self)	none	-	log_write,model_api,ui_update	-
-method	remove_selected_model_dialog	AuroraControlPanel.remove_selected_model_dialog	7012	7039	AuroraControlPanel	Dialogs / Popouts	(self)	none	-	log_write,model_api,ui_update	-
-method	apply_advanced_settings	AuroraControlPanel.apply_advanced_settings	7041	7048	AuroraControlPanel	Command Sink / Actions	(self, show_confirmation=False)	value	-	command_queue	-
-method	apply_chat_head_settings	AuroraControlPanel.apply_chat_head_settings	7050	7067	AuroraControlPanel	Command Sink / Actions	(self, show_confirmation=False)	implicit	-	command_queue,model_api	-
-method	apply_additional_settings	AuroraControlPanel.apply_additional_settings	7069	7079	AuroraControlPanel	Command Sink / Actions	(self, show_confirmation=False)	value	-	command_queue	-
-method	apply_settings	AuroraControlPanel.apply_settings	7081	7087	AuroraControlPanel	Command Sink / Actions	(self, show_confirmation=False, post_commands=None, activity_label='registered settings')	value	-	command_queue	-
-method	send_save_handoff	AuroraControlPanel.send_save_handoff	7089	7095	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	send_retrieve_handoff	AuroraControlPanel.send_retrieve_handoff	7097	7103	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	queue_next_inference_plan	AuroraControlPanel.queue_next_inference_plan	7105	7132	AuroraControlPanel	Command Sink / Actions	(self)	none	-	log_write,command_queue	-
-method	apply_runtime_locks	AuroraControlPanel.apply_runtime_locks	7134	7148	AuroraControlPanel	Command Sink / Actions	(self, locks)	implicit	-	command_queue	-
-method	approve_selected_pending	AuroraControlPanel.approve_selected_pending	7150	7159	AuroraControlPanel	Pending Queue UI	(self)	none	-	command_queue	-
-method	clear_selected_pending	AuroraControlPanel.clear_selected_pending	7161	7170	AuroraControlPanel	Pending Queue UI	(self)	none	-	command_queue	-
-method	pending_selection_arguments	AuroraControlPanel.pending_selection_arguments	7172	7178	AuroraControlPanel	Pending Queue UI	(self, selection)	value	-	log_write,command_queue	-
-method	reset_pending_filters	AuroraControlPanel.reset_pending_filters	7180	7184	AuroraControlPanel	Pending Queue UI	(self)	implicit	-	command_queue	-
-method	filter_pending_rows	AuroraControlPanel.filter_pending_rows	7186	7203	AuroraControlPanel	Pending Queue UI	(self)	value	-	log_write,command_queue	-
-method	render_pending_current	AuroraControlPanel.render_pending_current	7205	7229	AuroraControlPanel	Pending Queue UI	(self)	implicit	-	command_queue	-
-method	build_pending_candidate_text	AuroraControlPanel.build_pending_candidate_text	7231	7369	AuroraControlPanel	Pending Queue UI	(self, agent_suggestions, agent_tasks=None, agent_pending_gate=None, agent_pending_insert_dry_run=None)	value	-	log_write,command_queue	-
-method	get_pending_scope_summary	AuroraControlPanel.get_pending_scope_summary	7371	7396	AuroraControlPanel	Pending Queue UI	(self)	value	-	log_write,command_queue	-
-method	update_pending_selection_status	AuroraControlPanel.update_pending_selection_status	7398	7421	AuroraControlPanel	Pending Queue UI	(self, _event=None)	none	-	command_queue	-
-method	_refresh_thumbnail_region	AuroraControlPanel._refresh_thumbnail_region	7423	7427	AuroraControlPanel	Refresh / State Load	(self, _event=None)	implicit	-	ui_update	-
-method	_resize_thumbnail_window	AuroraControlPanel._resize_thumbnail_window	7429	7435	AuroraControlPanel	Other	(self, event=None)	none	-	pure_or_unknown	-
-method	_refresh_memory_thumbnail_region	AuroraControlPanel._refresh_memory_thumbnail_region	7437	7441	AuroraControlPanel	Refresh / State Load	(self, _event=None)	implicit	-	ui_update	-
-method	_resize_memory_thumbnail_window	AuroraControlPanel._resize_memory_thumbnail_window	7443	7449	AuroraControlPanel	Other	(self, event=None)	none	-	pure_or_unknown	-
-method	set_screenshot_index	AuroraControlPanel.set_screenshot_index	7451	7456	AuroraControlPanel	Screenshot Viewer	(self, index)	none	-	pure_or_unknown	-
-method	set_image_memory_index	AuroraControlPanel.set_image_memory_index	7458	7462	AuroraControlPanel	Image Memory Viewer	(self, index)	none	-	pure_or_unknown	-
-method	step_screenshot	AuroraControlPanel.step_screenshot	7464	7469	AuroraControlPanel	Screenshot Viewer	(self, delta)	none	-	pure_or_unknown	-
-method	jump_to_latest_screenshot	AuroraControlPanel.jump_to_latest_screenshot	7471	7476	AuroraControlPanel	Screenshot Viewer	(self)	none	-	pure_or_unknown	-
-method	pause_screenshot_follow_latest	AuroraControlPanel.pause_screenshot_follow_latest	7478	7481	AuroraControlPanel	Screenshot Viewer	(self)	implicit	-	pure_or_unknown	-
-method	step_image_memory	AuroraControlPanel.step_image_memory	7483	7487	AuroraControlPanel	Image Memory Viewer	(self, delta)	none	-	pure_or_unknown	-
-method	jump_to_latest_image_memory	AuroraControlPanel.jump_to_latest_image_memory	7489	7493	AuroraControlPanel	Image Memory Viewer	(self)	none	-	pure_or_unknown	-
-method	_refresh_runtime_status_strip	AuroraControlPanel._refresh_runtime_status_strip	7495	7562	AuroraControlPanel	Refresh / State Load	(self, state)	implicit	-	model_api,process_lifecycle,ui_update	-
-method	refresh_loop	AuroraControlPanel.refresh_loop	7564	7576	AuroraControlPanel	Refresh / State Load	(self)	none	-	ui_update	-
-method	refresh_now	AuroraControlPanel.refresh_now	7578	7628	AuroraControlPanel	Refresh / State Load	(self)	value	-	file_io,log_write,process_lifecycle,ui_update	-
-method	_sync_setting_var	AuroraControlPanel._sync_setting_var	7630	7636	AuroraControlPanel	Other	(self, variable, observed_value)	implicit	-	pure_or_unknown	-
-method	reload_observed_settings	AuroraControlPanel.reload_observed_settings	7638	7640	AuroraControlPanel	Command Sink / Actions	(self)	implicit	-	command_queue,ui_update	-
-method	on_close	AuroraControlPanel.on_close	7642	7668	AuroraControlPanel	Other	(self)	none	-	file_io,ui_update	-
-method	refresh_overview_summary	AuroraControlPanel.refresh_overview_summary	7670	8052	AuroraControlPanel	Refresh / State Load	(self, state)	none	-	state_export,file_io,log_write,external_bridge,command_queue,process_lifecycle,ui_update,gameplay_input	-
-method	refresh_workflow_status	AuroraControlPanel.refresh_workflow_status	8054	8438	AuroraControlPanel	Refresh / State Load	(self, state)	mixed	-	state_export,file_io,external_bridge,command_queue,model_api,ui_update	-
-method	render_state	AuroraControlPanel.render_state	8440	8687	AuroraControlPanel	Refresh / State Load	(self)	implicit	-	file_io,command_queue,model_api,ui_update	-
-method	render_pending	AuroraControlPanel.render_pending	8689	8695	AuroraControlPanel	Pending Queue UI	(self, rows, agent_suggestions=None, agent_tasks=None, agent_pending_gate=None, agent_pending_insert_dry_run=None, pending_queue=None)	implicit	-	file_io,command_queue	-
-method	render_memory	AuroraControlPanel.render_memory	8697	8759	AuroraControlPanel	Other	(self, state)	implicit	-	pure_or_unknown	-
-method	build_episodic_control_status	AuroraControlPanel.build_episodic_control_status	8761	8788	AuroraControlPanel	Other	(self, episodic, rehydration=None)	value	-	pure_or_unknown	-
-method	build_episodic_tab_planning_status	AuroraControlPanel.build_episodic_tab_planning_status	8790	8808	AuroraControlPanel	Layout / Tabs	(self, episodic, rehydration=None)	value	-	ui_update	-
-method	build_episodic_retrieval_status	AuroraControlPanel.build_episodic_retrieval_status	8810	8820	AuroraControlPanel	Other	(self, episodic)	value	-	pure_or_unknown	-
-method	build_episodic_promotion_status	AuroraControlPanel.build_episodic_promotion_status	8822	8830	AuroraControlPanel	Other	(self, episodic)	value	-	pure_or_unknown	-
-method	render_episodic	AuroraControlPanel.render_episodic	8832	8990	AuroraControlPanel	Other	(self, state)	implicit	-	file_io,log_write,auth_oauth,ui_update	-
-method	render_logs	AuroraControlPanel.render_logs	8992	8999	AuroraControlPanel	Other	(self, active_tab=None, force=False)	implicit	-	log_write,ui_update	-
-method	_render_log_widget	AuroraControlPanel._render_log_widget	9001	9010	AuroraControlPanel	Other	(self, log_name, widget, path, limit)	none	-	file_io,log_write,ui_update	-
-method	set_log_limit	AuroraControlPanel.set_log_limit	9012	9017	AuroraControlPanel	Other	(self, log_name, limit)	implicit	-	log_write	-
-method	_path_render_signature	AuroraControlPanel._path_render_signature	9020	9025	AuroraControlPanel	Other	(path)	value	-	file_io	-
-method	_get_thumbnail_photo	AuroraControlPanel._get_thumbnail_photo	9027	9048	AuroraControlPanel	Other	(self, path, size=THUMBNAIL_SIZE)	mixed	-	file_io	-
-method	_get_inline_preview_bounds	AuroraControlPanel._get_inline_preview_bounds	9050	9063	AuroraControlPanel	Other	(self, widget)	value	-	pure_or_unknown	-
-method	invalidate_screenshot_preview	AuroraControlPanel.invalidate_screenshot_preview	9065	9067	AuroraControlPanel	Screenshot Viewer	(self, _event=None)	implicit	-	pure_or_unknown	-
-method	invalidate_image_memory_preview	AuroraControlPanel.invalidate_image_memory_preview	9069	9071	AuroraControlPanel	Image Memory Viewer	(self, _event=None)	implicit	-	pure_or_unknown	-
-method	_is_screenshot_popout_open	AuroraControlPanel._is_screenshot_popout_open	9073	9077	AuroraControlPanel	Screenshot Viewer	(self)	value	-	file_io	-
-method	_is_image_memory_popout_open	AuroraControlPanel._is_image_memory_popout_open	9079	9083	AuroraControlPanel	Image Memory Viewer	(self)	value	-	file_io	-
-method	refresh_screenshot_list	AuroraControlPanel.refresh_screenshot_list	9085	9118	AuroraControlPanel	Screenshot Viewer	(self, state)	none	-	file_io,ui_update	-
-method	refresh_image_memory_list	AuroraControlPanel.refresh_image_memory_list	9120	9155	AuroraControlPanel	Image Memory Viewer	(self, state)	none	-	file_io,ui_update	-
-method	render_screenshot	AuroraControlPanel.render_screenshot	9157	9195	AuroraControlPanel	Screenshot Viewer	(self)	none	-	file_io,ui_update	-
-method	render_thumbnail_strip	AuroraControlPanel.render_thumbnail_strip	9197	9229	AuroraControlPanel	Other	(self)	none	-	log_write,ui_update	-
-method	highlight_active_thumbnail	AuroraControlPanel.highlight_active_thumbnail	9231	9239	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	open_screenshot_popout	AuroraControlPanel.open_screenshot_popout	9241	9285	AuroraControlPanel	Screenshot Viewer	(self)	none	-	file_io,ui_update	-
-method	close_screenshot_popout	AuroraControlPanel.close_screenshot_popout	9287	9298	AuroraControlPanel	Screenshot Viewer	(self)	implicit	-	ui_update	-
-method	set_screenshot_popout_mode	AuroraControlPanel.set_screenshot_popout_mode	9300	9302	AuroraControlPanel	Screenshot Viewer	(self, mode)	implicit	-	ui_update	-
-method	toggle_screenshot_popout_mode	AuroraControlPanel.toggle_screenshot_popout_mode	9304	9305	AuroraControlPanel	Screenshot Viewer	(self)	implicit	-	pure_or_unknown	-
-method	refresh_popout_image	AuroraControlPanel.refresh_popout_image	9307	9335	AuroraControlPanel	Refresh / State Load	(self, reset_view=False)	none	-	file_io,ui_update	-
-method	open_image_memory_popout	AuroraControlPanel.open_image_memory_popout	9337	9381	AuroraControlPanel	Image Memory Viewer	(self)	none	-	file_io,ui_update	-
-method	close_image_memory_popout	AuroraControlPanel.close_image_memory_popout	9383	9394	AuroraControlPanel	Image Memory Viewer	(self)	implicit	-	ui_update	-
-method	set_image_memory_popout_mode	AuroraControlPanel.set_image_memory_popout_mode	9396	9398	AuroraControlPanel	Image Memory Viewer	(self, mode)	implicit	-	ui_update	-
-method	toggle_image_memory_popout_mode	AuroraControlPanel.toggle_image_memory_popout_mode	9400	9401	AuroraControlPanel	Image Memory Viewer	(self)	implicit	-	pure_or_unknown	-
-method	refresh_image_memory_popout	AuroraControlPanel.refresh_image_memory_popout	9403	9436	AuroraControlPanel	Image Memory Viewer	(self, reset_view=False)	none	-	file_io,ui_update	-
-method	render_image_memory	AuroraControlPanel.render_image_memory	9438	9480	AuroraControlPanel	Image Memory Viewer	(self)	none	-	file_io,ui_update	-
-method	get_image_size	AuroraControlPanel.get_image_size	9483	9490	AuroraControlPanel	Other	(path)	mixed	-	file_io	-
-method	find_latest_renderable_index	AuroraControlPanel.find_latest_renderable_index	9492	9498	AuroraControlPanel	Other	(self, paths)	value	-	pure_or_unknown	-
-method	_get_canvas_bounds	AuroraControlPanel._get_canvas_bounds	9501	9506	AuroraControlPanel	Other	(canvas, fallback=(1600, 980))	value	-	ui_update	-
-method	_render_image_on_canvas	AuroraControlPanel._render_image_on_canvas	9508	9528	AuroraControlPanel	Other	(self, canvas, path, holder_attr, scale_mode='fit', reset_view=False)	none	-	file_io,ui_update	-
-method	render_image_memory_thumbnail_strip	AuroraControlPanel.render_image_memory_thumbnail_strip	9530	9563	AuroraControlPanel	Image Memory Viewer	(self)	none	-	file_io,log_write,ui_update	-
-method	highlight_active_memory_thumbnail	AuroraControlPanel.highlight_active_memory_thumbnail	9565	9573	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	build_model_cost_status	AuroraControlPanel.build_model_cost_status	9575	9606	AuroraControlPanel	Other	(self, status)	value	-	log_write,model_api	-
-method	build_next_turn_status	AuroraControlPanel.build_next_turn_status	9608	9618	AuroraControlPanel	Other	(self, planning)	value	-	pure_or_unknown	-
-method	build_advanced_context_status	AuroraControlPanel.build_advanced_context_status	9620	9649	AuroraControlPanel	Other	(self, advanced)	value	-	pure_or_unknown	-
-method	get_state_path_value	AuroraControlPanel.get_state_path_value	9652	9658	AuroraControlPanel	Refresh / State Load	(state, path, default='-')	value	-	file_io,ui_update	-
-method	format_settings_safety_value	AuroraControlPanel.format_settings_safety_value	9661	9673	AuroraControlPanel	Other	(value)	value	-	pure_or_unknown	-
-method	format_settings_safety_item_value	AuroraControlPanel.format_settings_safety_item_value	9675	9686	AuroraControlPanel	Other	(self, state, item)	value	-	file_io,log_write	-
-method	count_settings_safety_classes	AuroraControlPanel.count_settings_safety_classes	9688	9693	AuroraControlPanel	Other	(self)	value	-	pure_or_unknown	-
-method	get_baseline_diff_totals	AuroraControlPanel.get_baseline_diff_totals	9695	9711	AuroraControlPanel	Other	(self, state)	mixed	-	state_export	-
-method	build_recovery_home_snapshot	AuroraControlPanel.build_recovery_home_snapshot	9713	9868	AuroraControlPanel	Other	(self, state)	mixed	-	state_export,file_io,log_write	-
-method	refresh_recovery_home_vars	AuroraControlPanel.refresh_recovery_home_vars	9870	9895	AuroraControlPanel	Refresh / State Load	(self, state)	none	-	state_export,ui_update	-
-method	build_recovery_home_text	AuroraControlPanel.build_recovery_home_text	9897	9927	AuroraControlPanel	Other	(self, state)	value	-	state_export,log_write	-
-method	build_operator_risk_summary_text	AuroraControlPanel.build_operator_risk_summary_text	9929	9975	AuroraControlPanel	Other	(self, risk_summary, limit_rows=6)	value	-	log_write	-
-method	build_settings_safety_summary	AuroraControlPanel.build_settings_safety_summary	9977	10013	AuroraControlPanel	Other	(self, state)	value	-	state_export	-
-method	collect_recovery_diagnostics	AuroraControlPanel.collect_recovery_diagnostics	10015	10163	AuroraControlPanel	Other	(self, state)	value	-	log_write	-
-method	build_recovery_diagnostics_text	AuroraControlPanel.build_recovery_diagnostics_text	10165	10172	AuroraControlPanel	Other	(self, state)	value	-	log_write	-
-method	normalize_preference_value	AuroraControlPanel.normalize_preference_value	10175	10198	AuroraControlPanel	Other	(value)	value	-	pure_or_unknown	-
-method	flatten_preferences	AuroraControlPanel.flatten_preferences	10201	10211	AuroraControlPanel	Other	(payload, prefix='')	value	-	pure_or_unknown	-
-method	build_current_preferences_snapshot_from_state	AuroraControlPanel.build_current_preferences_snapshot_from_state	10213	10291	AuroraControlPanel	Refresh / State Load	(self, state)	value	-	state_export,ui_update	-
-method	diff_preferences_against_baseline	AuroraControlPanel.diff_preferences_against_baseline	10293	10302	AuroraControlPanel	Other	(self, current, baseline, limit=18)	value	-	log_write	-
-method	build_baseline_diff_text	AuroraControlPanel.build_baseline_diff_text	10304	10337	AuroraControlPanel	Other	(self, state)	value	-	state_export,log_write	-
-method	build_settings_safety_text	AuroraControlPanel.build_settings_safety_text	10339	10377	AuroraControlPanel	Other	(self, state)	value	-	log_write	-
-method	build_cadence_status_lines	AuroraControlPanel.build_cadence_status_lines	10379	10425	AuroraControlPanel	Other	(self, state=None, status=None)	value	-	pure_or_unknown	-
-method	build_model_status_text	AuroraControlPanel.build_model_status_text	10427	10536	AuroraControlPanel	Other	(self, status)	value	-	file_io,log_write,command_queue,model_api	-
-method	_format_next_inference	AuroraControlPanel._format_next_inference	10538	10551	AuroraControlPanel	Other	(self, next_plan)	value	-	log_write	-
-method	build_prompt_inclusion_readiness_text	AuroraControlPanel.build_prompt_inclusion_readiness_text	10553	10614	AuroraControlPanel	Other	(self, readiness, limit_rows=8)	value	-	log_write	-
-method	build_prompt_inclusion_preview_text	AuroraControlPanel.build_prompt_inclusion_preview_text	10616	10677	AuroraControlPanel	Other	(self, preview, limit_rows=8)	value	-	log_write	-
-method	build_prompt_inclusion_rehearsal_text	AuroraControlPanel.build_prompt_inclusion_rehearsal_text	10679	10730	AuroraControlPanel	Other	(self, rehearsal, limit_rows=8)	value	-	log_write	-
-method	build_prompt_inclusion_activation_checklist_text	AuroraControlPanel.build_prompt_inclusion_activation_checklist_text	10732	10788	AuroraControlPanel	Other	(self, checklist, limit_rows=8)	value	-	log_write	-
-method	build_prompt_inclusion_activation_text	AuroraControlPanel.build_prompt_inclusion_activation_text	10790	10848	AuroraControlPanel	Other	(self, activation_snapshot, limit_rows=8)	value	-	log_write	-
-method	build_prompt_inclusion_closure_text	AuroraControlPanel.build_prompt_inclusion_closure_text	10850	10903	AuroraControlPanel	Other	(self, closure, limit_rows=10)	value	-	log_write	-
-method	build_prompt_ledger_text	AuroraControlPanel.build_prompt_ledger_text	10905	11125	AuroraControlPanel	Other	(self, ledger, context_marks=None, prompt_inclusion_readiness=None, prompt_inclusion_preview=None, prompt_inclusion_rehearsal=None, prompt_inclusion_activation_checklist=None, prompt_inclusion_activation=None, prompt_inclusion_closure=None)	value	-	log_write	-
-method	build_agent_registry_text	AuroraControlPanel.build_agent_registry_text	11127	11594	AuroraControlPanel	Other	(self, registry, agent_suggestions=None, agent_tasks=None, agent_pending_gate=None, agent_pending_insert_dry_run=None, agent_helper_closure=None)	value	-	log_write	-
-method	build_portal_intake_text	AuroraControlPanel.build_portal_intake_text	11596	12203	AuroraControlPanel	Other	(self, portal_intake)	value	-	log_write	-
-method	build_history_context_text	AuroraControlPanel.build_history_context_text	12205	12735	AuroraControlPanel	Other	(self, history_context, companion_readiness=None, companion_protocol=None, companion_receipt=None, companion_closure=None)	value	-	log_write	-
-method	build_visual_context_text	AuroraControlPanel.build_visual_context_text	12737	12797	AuroraControlPanel	Other	(self, visual_context)	value	-	file_io,log_write	-
-method	build_image_context_index_text	AuroraControlPanel.build_image_context_index_text	12799	12948	AuroraControlPanel	Other	(self, image_index, image_cost_posture=None)	value	-	log_write	-
-method	build_live_harness_text	AuroraControlPanel.build_live_harness_text	12950	13089	AuroraControlPanel	Other	(self, harness, rehearsal=None, probe=None)	value	-	log_write	-
-method	build_responses_shadow_text	AuroraControlPanel.build_responses_shadow_text	13091	13421	AuroraControlPanel	Other	(self, responses_shadow)	value	-	log_write,model_api	-
-method	build_context_files_text	AuroraControlPanel.build_context_files_text	13423	13477	AuroraControlPanel	Other	(self, context_files)	value	-	file_io,log_write	-
-method	build_overview_text	AuroraControlPanel.build_overview_text	13479	14045	AuroraControlPanel	Other	(self, state)	value	-	state_export,log_write,external_bridge,command_queue,model_api,gameplay_input	-
-method	_command_drip_lane_totals	AuroraControlPanel._command_drip_lane_totals	14048	14077	AuroraControlPanel	Other	(snapshot)	value	-	command_queue	-
-method	_format_command_drip_summary	AuroraControlPanel._format_command_drip_summary	14080	14087	AuroraControlPanel	Other	(cls, snapshot)	value	-	command_queue	-
-method	_summarize_command_drip_bucket	AuroraControlPanel._summarize_command_drip_bucket	14090	14097	AuroraControlPanel	Other	(bucket)	value	-	log_write,command_queue	-
-method	build_command_drip_text	AuroraControlPanel.build_command_drip_text	14099	14173	AuroraControlPanel	Other	(self, snapshot)	value	-	log_write,command_queue	-
-method	_write_text	AuroraControlPanel._write_text	14175	14198	AuroraControlPanel	Other	(self, widget, content)	none	-	file_io	-
-method	show_tab	AuroraControlPanel.show_tab	14200	14213	AuroraControlPanel	Layout / Tabs	(self, tab_name)	value	-	ui_update	-
-method	_sync_focus_nav_state	AuroraControlPanel._sync_focus_nav_state	14215	14229	AuroraControlPanel	Refresh / State Load	(self, _event=None)	implicit	-	ui_update	-
-method	show_help_tab	AuroraControlPanel.show_help_tab	14231	14236	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
-method	show_episodic_tab	AuroraControlPanel.show_episodic_tab	14238	14244	AuroraControlPanel	Layout / Tabs	(self)	none	-	ui_update	-
-method	show_command_list	AuroraControlPanel.show_command_list	14246	14253	AuroraControlPanel	Other	(self)	implicit	-	command_queue,ui_update	-
-method	_bind_navigation_shortcuts	AuroraControlPanel._bind_navigation_shortcuts	14255	14260	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
-method	_handle_global_navigation	AuroraControlPanel._handle_global_navigation	14262	14275	AuroraControlPanel	Other	(self, event, delta)	none	-	ui_update	-
-method	_focused_widget_blocks_navigation	AuroraControlPanel._focused_widget_blocks_navigation	14277	14284	AuroraControlPanel	Other	(self)	value	-	ui_update	-
-method	_get_active_tab_name	AuroraControlPanel._get_active_tab_name	14286	14291	AuroraControlPanel	Layout / Tabs	(self)	value	-	ui_update	-
-method	on_screenshot_preview_click	AuroraControlPanel.on_screenshot_preview_click	14293	14294	AuroraControlPanel	Screenshot Viewer	(self, event)	implicit	-	pure_or_unknown	-
-method	on_image_memory_preview_click	AuroraControlPanel.on_image_memory_preview_click	14296	14297	AuroraControlPanel	Image Memory Viewer	(self, event)	implicit	-	pure_or_unknown	-
-method	_handle_preview_edge_navigation	AuroraControlPanel._handle_preview_edge_navigation	14299	14314	AuroraControlPanel	Other	(self, event, target)	none	-	pure_or_unknown	-
-function	main	main	14317	14328		Other	()	none	-	file_io	-
+function	short	short	1268	1270		Other	(value, limit=120)	value	-	pure_or_unknown	-
+function	format_source_mix	format_source_mix	1273	1280		Other	(items, limit=10, item_limit=32)	value	-	pure_or_unknown	-
+function	format_pending_queue_mode_semantics	format_pending_queue_mode_semantics	1283	1290		Pending Queue UI	(mode)	value	-	command_queue	-
+function	has_effective_next_inference_plan	has_effective_next_inference_plan	1293	1311		Other	(next_plan)	value	-	pure_or_unknown	-
+function	build_queue_next_action_cue	build_queue_next_action_cue	1314	1350		Command Sink / Actions	(state)	value	-	command_queue	-
+function	format_monitor_summary	format_monitor_summary	1353	1361		Other	(monitors)	value	-	pure_or_unknown	-
+function	format_gameplay_monitor_summary	format_gameplay_monitor_summary	1364	1373		Other	(monitors, fallback_gameplay=None)	value	-	gameplay_input	-
+function	format_state_export_monitor_summary	format_state_export_monitor_summary	1376	1390		Refresh / State Load	(monitors, fallback_export=None)	value	-	state_export,log_write,ui_update	-
+function	format_queue_bridge_monitor_summary	format_queue_bridge_monitor_summary	1393	1410		Command Sink / Actions	(monitors, fallback_queue_bridge=None)	value	-	external_bridge,command_queue	-
+function	format_mutation_admission_summary	format_mutation_admission_summary	1413	1424		Other	(mutation_admission)	value	-	pure_or_unknown	-
+function	format_age_seconds	format_age_seconds	1427	1440		Other	(age)	value	-	pure_or_unknown	-
+function	parse_state_timestamp	parse_state_timestamp	1443	1452		Refresh / State Load	(value)	mixed	-	ui_update	-
+function	build_state_freshness_text	build_state_freshness_text	1455	1476		Refresh / State Load	(state)	value	-	ui_update	-
+function	format_timestamp_age_text	format_timestamp_age_text	1479	1484		Other	(value, label='timestamp')	value	-	pure_or_unknown	-
+function	format_file_age_text	format_file_age_text	1487	1497		Other	(path, label='file')	value	-	file_io	-
+function	format_price_value	format_price_value	1500	1506		Other	(value)	value	-	pure_or_unknown	-
+function	format_model_pricing_compact	format_model_pricing_compact	1509	1517		Other	(pricing)	value	-	model_api	-
+function	read_json	read_json	1520	1524		Other	(path, default)	value	-	file_io	-
+function	acquire_windows_single_instance_mutex	acquire_windows_single_instance_mutex	1527	1536		Other	(name)	mixed	-	pure_or_unknown	-
+function	release_windows_single_instance_mutex	release_windows_single_instance_mutex	1539	1542		Other	(handle)	none	-	pure_or_unknown	-
+function	is_windows_pid_running	is_windows_pid_running	1545	1562		Other	(pid)	value	-	file_io,process_lifecycle	-
+function	read_pid_file	read_pid_file	1565	1569		Other	(path)	value	-	file_io	-
+function	write_pid_file	write_pid_file	1572	1574		Other	(path, pid)	implicit	-	file_io	-
+function	remove_pid_file	remove_pid_file	1577	1587		Other	(path, expected_pid=None)	value	-	file_io	-
+function	decorate_state_processes	decorate_state_processes	1590	1610		Refresh / State Load	(state)	value	-	file_io,process_lifecycle,ui_update	-
+function	show_duplicate_instance_notice	show_duplicate_instance_notice	1613	1620		Other	(title, message)	implicit	-	ui_update	-
+function	format_runtime_seconds	format_runtime_seconds	1623	1634		Other	(value)	value	-	pure_or_unknown	-
+function	get_runtime_activation_plan	get_runtime_activation_plan	1637	1663		Other	(state)	value	-	process_lifecycle	-
+function	build_runtime_mode_spec	build_runtime_mode_spec	1666	1672		Other	(snapshot)	value	-	pure_or_unknown	-
+function	build_runtime_model_spec	build_runtime_model_spec	1675	1695		Other	(snapshot)	value	-	model_api	-
+function	launch_runtime_process	launch_runtime_process	1698	1718		Other	(with_ui=True, paused=False)	implicit	-	file_io,log_write,process_lifecycle	-
+function	tail_lines	tail_lines	1721	1730		Other	(path, limit=40)	value	-	file_io	-
+function	read_jsonl_records	read_jsonl_records	1733	1753		Other	(path, limit=None)	value	-	file_io,log_write	-
+function	read_model_catalog	read_model_catalog	1756	1767		Other	()	value	-	log_write,model_api	-
+function	build_model_choices	build_model_choices	1770	1772		Other	(model_catalog=None)	value	-	log_write,model_api	-
+function	append_external_message	append_external_message	1775	1787		Other	(text, raw=False, source='control_panel', subject='[AURORA CONTROL PANEL]', metadata=None, request_id=None, message_id=None)	value	-	log_write,external_bridge	-
+function	build_control_panel_registered_changes	build_control_panel_registered_changes	1790	1806		Other	(values)	value	-	log_write	-
+function	filter_changed_control_panel_settings	filter_changed_control_panel_settings	1809	1821		Other	(changes, snapshot)	value	-	log_write	-
+function	_format_control_panel_setting_value	_format_control_panel_setting_value	1824	1831		Other	(value)	value	-	pure_or_unknown	-
+function	format_control_panel_settings_snapshot	format_control_panel_settings_snapshot	1834	1860		Other	(snapshot)	value	-	state_export	-
+function	format_control_panel_settings_receipt	format_control_panel_settings_receipt	1863	1911		Other	(receipt)	value	-	log_write	-
+function	_normalize_screenshot_limit	_normalize_screenshot_limit	1914	1918		Screenshot Viewer	(limit)	value	-	pure_or_unknown	-
+function	_recent_screenshot_cache_key	_recent_screenshot_cache_key	1921	1922		Screenshot Viewer	(directory, limit)	value	-	file_io	-
+function	_sort_recent_paths	_sort_recent_paths	1925	1935		Other	(paths, limit)	value	-	file_io,log_write	-
+function	_merge_forced_screenshot	_merge_forced_screenshot	1938	1952		Screenshot Viewer	(files, force_path, limit)	value	-	file_io,log_write	-
+function	_scan_recent_screenshots	_scan_recent_screenshots	1955	1979		Screenshot Viewer	(directory, limit)	value	-	file_io	-
+function	safe_list_screenshots	safe_list_screenshots	1982	2033		Screenshot Viewer	(screenshots_dir, limit=SCREENSHOT_LIST_DEFAULT_LIMIT, force_path=None)	value	-	file_io	-
+function	get_screenshot_list_cache_stats	get_screenshot_list_cache_stats	2036	2045		Screenshot Viewer	(screenshots_dir, limit=SCREENSHOT_LIST_DEFAULT_LIMIT)	value	-	pure_or_unknown	-
+class	AuroraControlPanel	AuroraControlPanel	2048	14323		Other	()	class	-	pure_or_unknown	-
+method	__init__	AuroraControlPanel.__init__	2049	2206	AuroraControlPanel	Other	(self)	implicit	-	command_queue,model_api,ui_update	-
+method	_configure_initial_window_geometry	AuroraControlPanel._configure_initial_window_geometry	2208	2218	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	_restore_window_position	AuroraControlPanel._restore_window_position	2220	2233	AuroraControlPanel	Other	(self, geometry)	none	-	pure_or_unknown	-
+method	_remember_window_geometry	AuroraControlPanel._remember_window_geometry	2235	2242	AuroraControlPanel	Other	(self, event=None)	none	-	pure_or_unknown	-
+method	toggle_maximized	AuroraControlPanel.toggle_maximized	2244	2246	AuroraControlPanel	Other	(self, _event=None)	value	-	pure_or_unknown	-
+method	_register_widget_locks	AuroraControlPanel._register_widget_locks	2248	2252	AuroraControlPanel	Other	(self, widget, lock_names, quick=False)	implicit	-	log_write,ui_update	-
+method	_build_styles	AuroraControlPanel._build_styles	2254	2297	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
+method	_configure_window_icon	AuroraControlPanel._configure_window_icon	2299	2301	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	_load_runtime_orb_assets	AuroraControlPanel._load_runtime_orb_assets	2303	2321	AuroraControlPanel	Other	(self)	none	-	file_io	-
+method	_stop_runtime_orb_animation	AuroraControlPanel._stop_runtime_orb_animation	2323	2328	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	_tick_runtime_orb_animation	AuroraControlPanel._tick_runtime_orb_animation	2330	2336	AuroraControlPanel	Other	(self)	none	-	pure_or_unknown	-
+method	_start_runtime_orb_animation	AuroraControlPanel._start_runtime_orb_animation	2338	2344	AuroraControlPanel	Other	(self)	none	-	pure_or_unknown	-
+method	_cancel_runtime_orb_click	AuroraControlPanel._cancel_runtime_orb_click	2346	2349	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	_handle_runtime_orb_single_click	AuroraControlPanel._handle_runtime_orb_single_click	2351	2358	AuroraControlPanel	Other	(self)	implicit	-	process_lifecycle,ui_update	-
+method	_queue_runtime_orb_click	AuroraControlPanel._queue_runtime_orb_click	2360	2365	AuroraControlPanel	Command Sink / Actions	(self, _event=None)	value	-	command_queue	-
+method	_handle_runtime_orb_double_click	AuroraControlPanel._handle_runtime_orb_double_click	2367	2394	AuroraControlPanel	Other	(self, _event=None)	value	-	process_lifecycle	-
+method	start_or_enable_runtime	AuroraControlPanel.start_or_enable_runtime	2396	2409	AuroraControlPanel	Other	(self)	implicit	-	process_lifecycle	Start paused from the primary button; preserve the legacy orb profile path.
+method	_build_runtime_status_strip	AuroraControlPanel._build_runtime_status_strip	2411	2443	AuroraControlPanel	Layout / Tabs	(self, outer)	implicit	-	file_io,command_queue,model_api,ui_update	-
+method	_apply_header_layout	AuroraControlPanel._apply_header_layout	2445	2459	AuroraControlPanel	Command Sink / Actions	(self)	implicit	-	command_queue	Presentation preference only; keep the full header and every control reachable.
+method	_sync_refresh_health_visibility	AuroraControlPanel._sync_refresh_health_visibility	2461	2466	AuroraControlPanel	Refresh / State Load	(self, *_args)	implicit	-	ui_update	-
+method	_build_ui	AuroraControlPanel._build_ui	2468	2583	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	file_io,command_queue,model_api,ui_update	-
+method	_new_work_page	AuroraControlPanel._new_work_page	2585	2589	AuroraControlPanel	Other	(self, title)	value	-	pure_or_unknown	-
+method	_new_settings_section	AuroraControlPanel._new_settings_section	2591	2597	AuroraControlPanel	Other	(self, parent, title)	value	-	log_write	-
+method	_remember_section	AuroraControlPanel._remember_section	2599	2603	AuroraControlPanel	Other	(self, title, expanded)	implicit	-	pure_or_unknown	-
+method	_expand_all_settings	AuroraControlPanel._expand_all_settings	2605	2608	AuroraControlPanel	Other	(self, expanded)	implicit	-	pure_or_unknown	-
+method	_filter_settings_sections	AuroraControlPanel._filter_settings_sections	2610	2622	AuroraControlPanel	Other	(self, *_args)	implicit	-	pure_or_unknown	-
+method	_build_sidebar_runtime_details	AuroraControlPanel._build_sidebar_runtime_details	2624	2639	AuroraControlPanel	Layout / Tabs	(self, parent)	implicit	-	file_io,log_write,ui_update	-
+method	_build_quick_controls	AuroraControlPanel._build_quick_controls	2641	2708	AuroraControlPanel	Layout / Tabs	(self, parent)	implicit	-	model_api,ui_update	-
+method	_on_main_mousewheel	AuroraControlPanel._on_main_mousewheel	2711	2718	AuroraControlPanel	Other	(self, event)	mixed	-	gameplay_input	-
+method	_scroll_ancestor	AuroraControlPanel._scroll_ancestor	2720	2732	AuroraControlPanel	Other	(self, widget, event)	value	-	pure_or_unknown	-
+method	_protect_unfocused_combobox_wheel	AuroraControlPanel._protect_unfocused_combobox_wheel	2734	2738	AuroraControlPanel	Other	(self, parent)	implicit	-	pure_or_unknown	-
+method	_on_combobox_mousewheel	AuroraControlPanel._on_combobox_mousewheel	2740	2742	AuroraControlPanel	Other	(self, event)	value	-	gameplay_input	-
+method	_apply_settings_mode	AuroraControlPanel._apply_settings_mode	2744	2757	AuroraControlPanel	Command Sink / Actions	(self, mode)	implicit	-	command_queue	-
+method	toggle_settings_pane	AuroraControlPanel.toggle_settings_pane	2759	2761	AuroraControlPanel	Other	(self, _event=None)	value	-	pure_or_unknown	-
+method	toggle_expanded_settings	AuroraControlPanel.toggle_expanded_settings	2763	2764	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	_schedule_sash_clamp	AuroraControlPanel._schedule_sash_clamp	2766	2768	AuroraControlPanel	Other	(self, _event=None)	implicit	-	pure_or_unknown	-
+method	_clamp_settings_sash	AuroraControlPanel._clamp_settings_sash	2770	2781	AuroraControlPanel	Other	(self)	none	-	pure_or_unknown	-
+method	_remember_sash	AuroraControlPanel._remember_sash	2783	2786	AuroraControlPanel	Other	(self, _event=None)	implicit	-	pure_or_unknown	-
+method	_navigate_from_selector	AuroraControlPanel._navigate_from_selector	2788	2795	AuroraControlPanel	Other	(self, _event=None)	value	-	ui_update	-
+method	_filter_view_choices	AuroraControlPanel._filter_view_choices	2797	2801	AuroraControlPanel	Other	(self, event=None)	none	-	pure_or_unknown	-
+method	_focus_view_selector	AuroraControlPanel._focus_view_selector	2803	2807	AuroraControlPanel	Other	(self, _event=None)	value	-	pure_or_unknown	-
+method	_build_settings_card	AuroraControlPanel._build_settings_card	2809	3685	AuroraControlPanel	Layout / Tabs	(self, parent)	implicit	-	file_io,model_api,ui_update	-
+method	_build_feedback_card	AuroraControlPanel._build_feedback_card	3687	3706	AuroraControlPanel	Layout / Tabs	(self, parent)	implicit	-	ui_update	-
+method	_build_overview_tab	AuroraControlPanel._build_overview_tab	3708	3743	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
+method	_build_dashboard_tab	AuroraControlPanel._build_dashboard_tab	3745	3842	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	file_io,log_write,ui_update	-
+method	open_execution_inspector	AuroraControlPanel.open_execution_inspector	3844	3846	AuroraControlPanel	Other	(self)	value	-	file_io	-
+method	_dashboard_detail_widget	AuroraControlPanel._dashboard_detail_widget	3848	3861	AuroraControlPanel	Other	(self, parent, height=12)	value	-	ui_update	-
+method	_layout_dashboard_cards	AuroraControlPanel._layout_dashboard_cards	3863	3871	AuroraControlPanel	Layout / Tabs	(self, event)	implicit	-	ui_update	-
+method	_update_dashboard_wrap	AuroraControlPanel._update_dashboard_wrap	3873	3876	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	_show_dashboard_receipt	AuroraControlPanel._show_dashboard_receipt	3878	3882	AuroraControlPanel	Other	(self, _event=None)	implicit	-	file_io	-
+method	open_dashboard_receipt	AuroraControlPanel.open_dashboard_receipt	3884	3914	AuroraControlPanel	Other	(self, event=None)	mixed	-	file_io,ui_update	-
+method	_add_workflow_status_strip	AuroraControlPanel._add_workflow_status_strip	3916	3929	AuroraControlPanel	Other	(self, frame, key, title)	value	-	ui_update	-
+method	_build_memory_tab	AuroraControlPanel._build_memory_tab	3931	3942	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
+method	_build_episodic_tab	AuroraControlPanel._build_episodic_tab	3944	4145	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
+method	_build_pending_tab	AuroraControlPanel._build_pending_tab	4147	4216	AuroraControlPanel	Pending Queue UI	(self)	implicit	-	command_queue,ui_update	-
+method	_build_command_drip_tab	AuroraControlPanel._build_command_drip_tab	4218	4236	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	command_queue,ui_update	-
+method	_build_chat_tab	AuroraControlPanel._build_chat_tab	4238	4248	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	log_write,model_api,ui_update	-
+method	_build_conversation_tab	AuroraControlPanel._build_conversation_tab	4250	4302	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	external_bridge,ui_update	-
+method	edit_conversation_message	AuroraControlPanel.edit_conversation_message	4304	4315	AuroraControlPanel	Other	(self)	mixed	-	pure_or_unknown	-
+method	send_conversation_message	AuroraControlPanel.send_conversation_message	4317	4337	AuroraControlPanel	Other	(self, _event=None, composer=None)	value	-	log_write,external_bridge,ui_update	-
+method	open_conversation_outbox	AuroraControlPanel.open_conversation_outbox	4339	4346	AuroraControlPanel	Other	(self)	value	-	file_io,ui_update	-
+method	open_conversation_popout	AuroraControlPanel.open_conversation_popout	4348	4357	AuroraControlPanel	Dialogs / Popouts	(self)	value	-	file_io,log_write,model_api	-
+method	refresh_conversation_feedback	AuroraControlPanel.refresh_conversation_feedback	4359	4380	AuroraControlPanel	Refresh / State Load	(self, update_preview=True)	implicit	-	ui_update	-
+method	show_conversation_quick_start	AuroraControlPanel.show_conversation_quick_start	4382	4392	AuroraControlPanel	Other	(self)	implicit	-	file_io,log_write	-
+method	render_conversation	AuroraControlPanel.render_conversation	4394	4430	AuroraControlPanel	Other	(self)	none	-	file_io,ui_update	-
+method	_build_switchboard_tab	AuroraControlPanel._build_switchboard_tab	4432	4435	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
+method	_build_command_tab	AuroraControlPanel._build_command_tab	4437	4447	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	file_io,log_write,command_queue,ui_update	-
+method	_build_prompt_ledger_tab	AuroraControlPanel._build_prompt_ledger_tab	4449	4534	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
+method	_build_agents_tab	AuroraControlPanel._build_agents_tab	4536	4653	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
+method	_build_history_context_tab	AuroraControlPanel._build_history_context_tab	4655	4682	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
+method	_build_portal_intake_tab	AuroraControlPanel._build_portal_intake_tab	4684	4708	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
+method	_build_visual_context_tab	AuroraControlPanel._build_visual_context_tab	4710	4729	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
+method	_build_image_context_index_tab	AuroraControlPanel._build_image_context_index_tab	4731	4758	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
+method	_build_live_harness_tab	AuroraControlPanel._build_live_harness_tab	4760	4792	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	file_io,ui_update	-
+method	_build_responses_shadow_tab	AuroraControlPanel._build_responses_shadow_tab	4794	4834	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	model_api,ui_update	-
+method	_build_context_files_tab	AuroraControlPanel._build_context_files_tab	4836	4855	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	file_io,ui_update	-
+method	_build_settings_safety_tab	AuroraControlPanel._build_settings_safety_tab	4857	4958	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	file_io,ui_update	-
+method	_build_screenshots_tab	AuroraControlPanel._build_screenshots_tab	4960	4997	AuroraControlPanel	Screenshot Viewer	(self)	implicit	-	file_io,ui_update	-
+method	_build_image_memory_tab	AuroraControlPanel._build_image_memory_tab	4999	5035	AuroraControlPanel	Image Memory Viewer	(self)	implicit	-	file_io,ui_update	-
+method	_build_help_tab	AuroraControlPanel._build_help_tab	5037	5046	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	file_io,ui_update	-
+method	_build_raw_tab	AuroraControlPanel._build_raw_tab	5048	5055	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
+method	_is_dashboard_popout_open	AuroraControlPanel._is_dashboard_popout_open	5057	5061	AuroraControlPanel	Dialogs / Popouts	(self)	value	-	file_io,log_write	-
+method	toggle_dashboard_popout	AuroraControlPanel.toggle_dashboard_popout	5063	5067	AuroraControlPanel	Dialogs / Popouts	(self)	implicit	-	file_io,log_write	-
+method	open_dashboard_popout	AuroraControlPanel.open_dashboard_popout	5069	5135	AuroraControlPanel	Dialogs / Popouts	(self)	none	-	file_io,log_write,ui_update	-
+method	close_dashboard_popout	AuroraControlPanel.close_dashboard_popout	5137	5144	AuroraControlPanel	Dialogs / Popouts	(self)	implicit	-	file_io,log_write	-
+method	refresh_dashboard	AuroraControlPanel.refresh_dashboard	5146	5227	AuroraControlPanel	Refresh / State Load	(self, state=None)	mixed	-	file_io,ui_update	-
+method	sanitize_operator_activity_command	AuroraControlPanel.sanitize_operator_activity_command	5230	5237	AuroraControlPanel	Other	(command)	value	-	command_queue	-
+method	mark_operator_activity	AuroraControlPanel.mark_operator_activity	5239	5241	AuroraControlPanel	Other	(self, message)	implicit	-	pure_or_unknown	-
+method	send_raw	AuroraControlPanel.send_raw	5243	5251	AuroraControlPanel	Command Sink / Actions	(self, command)	value	-	log_write,external_bridge,command_queue	-
+method	_collect_registered_settings_form_values	AuroraControlPanel._collect_registered_settings_form_values	5253	5278	AuroraControlPanel	Other	(self)	value	-	pure_or_unknown	-
+method	_build_additional_settings_commands	AuroraControlPanel._build_additional_settings_commands	5280	5304	AuroraControlPanel	Layout / Tabs	(self)	value	-	command_queue,ui_update	-
+method	_build_advanced_context_commands	AuroraControlPanel._build_advanced_context_commands	5306	5334	AuroraControlPanel	Layout / Tabs	(self)	value	-	log_write,command_queue,ui_update	-
+method	_get_control_panel_settings_snapshot	AuroraControlPanel._get_control_panel_settings_snapshot	5336	5362	AuroraControlPanel	Other	(self, require_effective=False)	value	-	state_export	-
+method	_set_settings_transaction_button_states	AuroraControlPanel._set_settings_transaction_button_states	5364	5382	AuroraControlPanel	Refresh / State Load	(self, state=None)	implicit	-	ui_update	-
+method	_update_settings_transaction_surface	AuroraControlPanel._update_settings_transaction_surface	5384	5400	AuroraControlPanel	Other	(self, state)	implicit	-	pure_or_unknown	-
+method	_submit_settings_transaction	AuroraControlPanel._submit_settings_transaction	5402	5502	AuroraControlPanel	Other	(self, operation, changes=None, rollback_handle='', post_commands=None, show_confirmation=False, show_result_dialog=False, activity_label='registered settings', inline_results=False)	mixed	-	state_export,log_write,external_bridge,command_queue,process_lifecycle	-
+method	_wait_for_settings_transaction_receipt	AuroraControlPanel._wait_for_settings_transaction_receipt	5504	5520	AuroraControlPanel	Other	(self, request_id, offsets, client_id)	implicit	-	command_queue	-
+method	_drain_settings_transaction_results	AuroraControlPanel._drain_settings_transaction_results	5522	5528	AuroraControlPanel	Other	(self)	none	-	pure_or_unknown	-
+method	_handle_settings_transaction_result	AuroraControlPanel._handle_settings_transaction_result	5530	5606	AuroraControlPanel	Other	(self, result)	none	-	file_io,log_write	-
+method	_open_settings_text_dialog	AuroraControlPanel._open_settings_text_dialog	5608	5628	AuroraControlPanel	Dialogs / Popouts	(self, title, text, font=None, height=640)	implicit	-	file_io,log_write	-
+method	show_settings_details	AuroraControlPanel.show_settings_details	5630	5639	AuroraControlPanel	Other	(self)	none	-	state_export,file_io,log_write	-
+method	preview_settings	AuroraControlPanel.preview_settings	5641	5646	AuroraControlPanel	Other	(self)	value	-	pure_or_unknown	-
+method	rollback_settings	AuroraControlPanel.rollback_settings	5648	5664	AuroraControlPanel	Other	(self)	mixed	-	pure_or_unknown	-
+method	insert_latest_agent_pending_dry_run	AuroraControlPanel.insert_latest_agent_pending_dry_run	5666	5699	AuroraControlPanel	Pending Queue UI	(self)	none	-	command_queue,ui_update	-
+method	search_image_context_index	AuroraControlPanel.search_image_context_index	5701	5706	AuroraControlPanel	Other	(self)	none	-	pure_or_unknown	-
+method	confirm_and_send_raw	AuroraControlPanel.confirm_and_send_raw	5708	5710	AuroraControlPanel	Command Sink / Actions	(self, command, prompt)	implicit	-	command_queue	-
+method	_draw_chat_head_toggle_button	AuroraControlPanel._draw_chat_head_toggle_button	5712	5736	AuroraControlPanel	Other	(self, pressed, canvas=None)	none	-	model_api	-
+method	_set_panel_chat_head_requested	AuroraControlPanel._set_panel_chat_head_requested	5738	5746	AuroraControlPanel	Other	(self, enabled)	implicit	-	model_api	-
+method	_is_chat_head_strip_open	AuroraControlPanel._is_chat_head_strip_open	5748	5749	AuroraControlPanel	Other	(self)	value	-	file_io,model_api	-
+method	_is_chat_head_history_open	AuroraControlPanel._is_chat_head_history_open	5751	5752	AuroraControlPanel	Other	(self)	value	-	file_io,model_api	-
+method	toggle_chat_head_request	AuroraControlPanel.toggle_chat_head_request	5754	5762	AuroraControlPanel	Other	(self, _event=None)	implicit	-	file_io,model_api	-
+method	request_close_chat_head	AuroraControlPanel.request_close_chat_head	5764	5767	AuroraControlPanel	Other	(self, _event=None)	implicit	-	model_api	-
+method	sync_chat_head_visibility	AuroraControlPanel.sync_chat_head_visibility	5769	5778	AuroraControlPanel	Other	(self)	implicit	-	file_io,model_api,ui_update	-
+method	get_panel_chat_head_settings	AuroraControlPanel.get_panel_chat_head_settings	5780	5792	AuroraControlPanel	Other	(self)	value	-	model_api	-
+method	_build_chat_head_history_text	AuroraControlPanel._build_chat_head_history_text	5794	5805	AuroraControlPanel	Layout / Tabs	(self, state)	value	-	log_write,model_api,ui_update	-
+method	_draw_chat_head_expand_button	AuroraControlPanel._draw_chat_head_expand_button	5807	5827	AuroraControlPanel	Other	(self)	none	-	file_io,model_api	-
+method	_blend_chat_head_color	AuroraControlPanel._blend_chat_head_color	5830	5837	AuroraControlPanel	Other	(start_hex, end_hex, mix)	value	-	model_api	-
+method	_restore_chat_head_strip_visual	AuroraControlPanel._restore_chat_head_strip_visual	5839	5849	AuroraControlPanel	Other	(self)	none	-	model_api	-
+method	_run_chat_head_send_animation_step	AuroraControlPanel._run_chat_head_send_animation_step	5851	5877	AuroraControlPanel	Other	(self, start_time, duration_seconds)	none	-	file_io,model_api	-
+method	start_chat_head_send_animation	AuroraControlPanel.start_chat_head_send_animation	5879	5897	AuroraControlPanel	Other	(self)	none	-	file_io,model_api	-
+method	submit_chat_head_message	AuroraControlPanel.submit_chat_head_message	5899	5917	AuroraControlPanel	Other	(self, _event=None)	value	-	log_write,external_bridge,model_api	-
+method	_position_chat_head_strip	AuroraControlPanel._position_chat_head_strip	5919	5930	AuroraControlPanel	Other	(self)	none	-	file_io,model_api	-
+method	apply_chat_head_window_settings	AuroraControlPanel.apply_chat_head_window_settings	5932	5970	AuroraControlPanel	Command Sink / Actions	(self)	implicit	-	file_io,command_queue,model_api	-
+method	open_chat_head_strip	AuroraControlPanel.open_chat_head_strip	5972	6057	AuroraControlPanel	Other	(self)	none	-	file_io,model_api,ui_update	-
+method	open_chat_head_history	AuroraControlPanel.open_chat_head_history	6059	6129	AuroraControlPanel	Other	(self)	none	-	file_io,model_api,ui_update	-
+method	toggle_chat_head_history	AuroraControlPanel.toggle_chat_head_history	6131	6135	AuroraControlPanel	Other	(self, _event=None)	implicit	-	file_io,model_api	-
+method	close_chat_head_history	AuroraControlPanel.close_chat_head_history	6137	6143	AuroraControlPanel	Other	(self, _event=None)	implicit	-	file_io,model_api	-
+method	close_chat_head_windows	AuroraControlPanel.close_chat_head_windows	6145	6168	AuroraControlPanel	Other	(self, local_only=False)	implicit	-	file_io,model_api	-
+method	reposition_chat_head_history_window	AuroraControlPanel.reposition_chat_head_history_window	6170	6185	AuroraControlPanel	Other	(self, _event=None)	none	-	file_io,model_api	-
+method	refresh_chat_head_content	AuroraControlPanel.refresh_chat_head_content	6187	6205	AuroraControlPanel	Refresh / State Load	(self)	implicit	-	file_io,model_api,ui_update	-
+method	send_command_entry	AuroraControlPanel.send_command_entry	6207	6212	AuroraControlPanel	Other	(self, _event=None)	value	-	command_queue	-
+method	send_note_entry	AuroraControlPanel.send_note_entry	6214	6222	AuroraControlPanel	Other	(self, _event=None)	value	-	log_write,external_bridge	-
+method	_build_episodic_memory_commands	AuroraControlPanel._build_episodic_memory_commands	6224	6235	AuroraControlPanel	Layout / Tabs	(self)	value	-	command_queue,ui_update	-
+method	apply_episodic_memory_settings	AuroraControlPanel.apply_episodic_memory_settings	6237	6246	AuroraControlPanel	Command Sink / Actions	(self, show_confirmation=False)	implicit	-	command_queue	-
+method	send_episodic_snapshot	AuroraControlPanel.send_episodic_snapshot	6248	6258	AuroraControlPanel	Other	(self, _event=None)	value	-	state_export	-
+method	send_episodic_list_recent	AuroraControlPanel.send_episodic_list_recent	6260	6264	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	_build_episodic_search_filters	AuroraControlPanel._build_episodic_search_filters	6266	6307	AuroraControlPanel	Layout / Tabs	(self, parent)	implicit	-	ui_update	-
+method	_build_episodic_visual_search	AuroraControlPanel._build_episodic_visual_search	6309	6345	AuroraControlPanel	Layout / Tabs	(self, parent)	implicit	-	ui_update	-
+method	_change_episodic_weight	AuroraControlPanel._change_episodic_weight	6347	6361	AuroraControlPanel	Other	(self, key, value)	none	-	ui_update	-
+method	_set_episodic_weight_preset	AuroraControlPanel._set_episodic_weight_preset	6363	6373	AuroraControlPanel	Other	(self, key=None)	implicit	-	ui_update	-
+method	_refresh_episodic_visuals	AuroraControlPanel._refresh_episodic_visuals	6375	6408	AuroraControlPanel	Refresh / State Load	(self)	mixed	-	ui_update	-
+method	_draw_episodic_score_results	AuroraControlPanel._draw_episodic_score_results	6410	6439	AuroraControlPanel	Other	(self, results)	none	-	pure_or_unknown	-
+method	_episodic_retrieval_segments	AuroraControlPanel._episodic_retrieval_segments	6441	6493	AuroraControlPanel	Other	(self)	mixed	-	log_write	-
+method	_update_episodic_feedback_token	AuroraControlPanel._update_episodic_feedback_token	6495	6498	AuroraControlPanel	Other	(self, search_info)	implicit	-	auth_oauth	-
+method	send_episodic_feedback	AuroraControlPanel.send_episodic_feedback	6500	6502	AuroraControlPanel	Other	(self, action)	value	-	pure_or_unknown	-
+method	send_episodic_retrieval	AuroraControlPanel.send_episodic_retrieval	6504	6513	AuroraControlPanel	Other	(self, _event=None)	value	-	pure_or_unknown	-
+method	send_episodic_recall_shorthand	AuroraControlPanel.send_episodic_recall_shorthand	6515	6524	AuroraControlPanel	Other	(self, _event=None)	value	-	pure_or_unknown	-
+method	use_displayed_retrieval_handle	AuroraControlPanel.use_displayed_retrieval_handle	6526	6527	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	inspect_retained_retrieval	AuroraControlPanel.inspect_retained_retrieval	6529	6536	AuroraControlPanel	Other	(self)	none	-	pure_or_unknown	-
+method	send_episodic_promotion	AuroraControlPanel.send_episodic_promotion	6538	6556	AuroraControlPanel	Other	(self, _event=None)	value	-	pure_or_unknown	-
+method	set_operator_passcode	AuroraControlPanel.set_operator_passcode	6558	6565	AuroraControlPanel	Other	(self)	none	-	pure_or_unknown	-
+method	apply_operator_security_requirement	AuroraControlPanel.apply_operator_security_requirement	6567	6568	AuroraControlPanel	Command Sink / Actions	(self)	implicit	-	command_queue	-
+method	apply_passcode_command_visibility	AuroraControlPanel.apply_passcode_command_visibility	6570	6580	AuroraControlPanel	Command Sink / Actions	(self)	none	-	command_queue	-
+method	authorize_operator_access	AuroraControlPanel.authorize_operator_access	6582	6588	AuroraControlPanel	Other	(self)	none	-	auth_oauth	-
+method	clear_operator_passcode	AuroraControlPanel.clear_operator_passcode	6590	6594	AuroraControlPanel	Command Sink / Actions	(self)	none	-	command_queue	-
+method	_on_banner_autoscroll_toggle	AuroraControlPanel._on_banner_autoscroll_toggle	6596	6599	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	_adjust_banner_offset	AuroraControlPanel._adjust_banner_offset	6601	6607	AuroraControlPanel	Other	(self, delta)	implicit	-	pure_or_unknown	-
+method	_set_runtime_banner_text	AuroraControlPanel._set_runtime_banner_text	6609	6615	AuroraControlPanel	Other	(self, text)	none	-	pure_or_unknown	-
+method	_render_runtime_banner	AuroraControlPanel._render_runtime_banner	6617	6655	AuroraControlPanel	Other	(self, reset=False)	none	-	pure_or_unknown	-
+method	_banner_tick	AuroraControlPanel._banner_tick	6657	6665	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	open_banner_dialog	AuroraControlPanel.open_banner_dialog	6667	6685	AuroraControlPanel	Dialogs / Popouts	(self)	none	-	file_io,log_write,ui_update	-
+method	apply_turn_scheduler_profile_to_controls	AuroraControlPanel.apply_turn_scheduler_profile_to_controls	6687	6701	AuroraControlPanel	Command Sink / Actions	(self, profile_name)	none	-	file_io,command_queue	-
+method	on_turn_scheduler_profile_selected	AuroraControlPanel.on_turn_scheduler_profile_selected	6703	6710	AuroraControlPanel	Other	(self, _event=None)	none	-	file_io	-
+method	on_turn_scheduler_leaf_changed	AuroraControlPanel.on_turn_scheduler_leaf_changed	6712	6717	AuroraControlPanel	Other	(self, _event=None)	implicit	-	pure_or_unknown	-
+method	apply_model_preset	AuroraControlPanel.apply_model_preset	6719	6751	AuroraControlPanel	Command Sink / Actions	(self, preset_name)	none	-	file_io,command_queue,model_api	-
+method	apply_stateful_model_preset	AuroraControlPanel.apply_stateful_model_preset	6753	6764	AuroraControlPanel	Refresh / State Load	(self, profile_name)	none	-	model_api,ui_update	-
+method	apply_overlay_preset	AuroraControlPanel.apply_overlay_preset	6766	6783	AuroraControlPanel	Command Sink / Actions	(self, preset_name, apply_now=True)	none	-	command_queue	-
+method	apply_operator_profile	AuroraControlPanel.apply_operator_profile	6785	6942	AuroraControlPanel	Command Sink / Actions	(self, profile_name)	none	-	file_io,command_queue	-
+method	refresh_model_choice_widgets	AuroraControlPanel.refresh_model_choice_widgets	6944	6960	AuroraControlPanel	Refresh / State Load	(self, choices=None)	implicit	-	model_api,ui_update	-
+method	refresh_model_catalog	AuroraControlPanel.refresh_model_catalog	6962	6964	AuroraControlPanel	Refresh / State Load	(self)	implicit	-	log_write,model_api,ui_update	-
+method	_run_model_catalog_cli	AuroraControlPanel._run_model_catalog_cli	6966	6994	AuroraControlPanel	Other	(self, *args)	value	-	file_io,log_write,model_api	-
+method	add_model_dialog	AuroraControlPanel.add_model_dialog	6996	7019	AuroraControlPanel	Dialogs / Popouts	(self)	none	-	log_write,model_api,ui_update	-
+method	remove_selected_model_dialog	AuroraControlPanel.remove_selected_model_dialog	7021	7048	AuroraControlPanel	Dialogs / Popouts	(self)	none	-	log_write,model_api,ui_update	-
+method	apply_advanced_settings	AuroraControlPanel.apply_advanced_settings	7050	7057	AuroraControlPanel	Command Sink / Actions	(self, show_confirmation=False)	value	-	command_queue	-
+method	apply_chat_head_settings	AuroraControlPanel.apply_chat_head_settings	7059	7076	AuroraControlPanel	Command Sink / Actions	(self, show_confirmation=False)	implicit	-	command_queue,model_api	-
+method	apply_additional_settings	AuroraControlPanel.apply_additional_settings	7078	7088	AuroraControlPanel	Command Sink / Actions	(self, show_confirmation=False)	value	-	command_queue	-
+method	apply_settings	AuroraControlPanel.apply_settings	7090	7096	AuroraControlPanel	Command Sink / Actions	(self, show_confirmation=False, post_commands=None, activity_label='registered settings')	value	-	command_queue	-
+method	send_save_handoff	AuroraControlPanel.send_save_handoff	7098	7104	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	send_retrieve_handoff	AuroraControlPanel.send_retrieve_handoff	7106	7112	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	queue_next_inference_plan	AuroraControlPanel.queue_next_inference_plan	7114	7141	AuroraControlPanel	Command Sink / Actions	(self)	none	-	log_write,command_queue	-
+method	apply_runtime_locks	AuroraControlPanel.apply_runtime_locks	7143	7157	AuroraControlPanel	Command Sink / Actions	(self, locks)	implicit	-	command_queue	-
+method	approve_selected_pending	AuroraControlPanel.approve_selected_pending	7159	7168	AuroraControlPanel	Pending Queue UI	(self)	none	-	command_queue	-
+method	clear_selected_pending	AuroraControlPanel.clear_selected_pending	7170	7179	AuroraControlPanel	Pending Queue UI	(self)	none	-	command_queue	-
+method	pending_selection_arguments	AuroraControlPanel.pending_selection_arguments	7181	7187	AuroraControlPanel	Pending Queue UI	(self, selection)	value	-	log_write,command_queue	-
+method	reset_pending_filters	AuroraControlPanel.reset_pending_filters	7189	7193	AuroraControlPanel	Pending Queue UI	(self)	implicit	-	command_queue	-
+method	filter_pending_rows	AuroraControlPanel.filter_pending_rows	7195	7212	AuroraControlPanel	Pending Queue UI	(self)	value	-	log_write,command_queue	-
+method	render_pending_current	AuroraControlPanel.render_pending_current	7214	7238	AuroraControlPanel	Pending Queue UI	(self)	implicit	-	command_queue	-
+method	build_pending_candidate_text	AuroraControlPanel.build_pending_candidate_text	7240	7378	AuroraControlPanel	Pending Queue UI	(self, agent_suggestions, agent_tasks=None, agent_pending_gate=None, agent_pending_insert_dry_run=None)	value	-	log_write,command_queue	-
+method	get_pending_scope_summary	AuroraControlPanel.get_pending_scope_summary	7380	7405	AuroraControlPanel	Pending Queue UI	(self)	value	-	log_write,command_queue	-
+method	update_pending_selection_status	AuroraControlPanel.update_pending_selection_status	7407	7430	AuroraControlPanel	Pending Queue UI	(self, _event=None)	none	-	command_queue	-
+method	_refresh_thumbnail_region	AuroraControlPanel._refresh_thumbnail_region	7432	7436	AuroraControlPanel	Refresh / State Load	(self, _event=None)	implicit	-	ui_update	-
+method	_resize_thumbnail_window	AuroraControlPanel._resize_thumbnail_window	7438	7444	AuroraControlPanel	Other	(self, event=None)	none	-	pure_or_unknown	-
+method	_refresh_memory_thumbnail_region	AuroraControlPanel._refresh_memory_thumbnail_region	7446	7450	AuroraControlPanel	Refresh / State Load	(self, _event=None)	implicit	-	ui_update	-
+method	_resize_memory_thumbnail_window	AuroraControlPanel._resize_memory_thumbnail_window	7452	7458	AuroraControlPanel	Other	(self, event=None)	none	-	pure_or_unknown	-
+method	set_screenshot_index	AuroraControlPanel.set_screenshot_index	7460	7465	AuroraControlPanel	Screenshot Viewer	(self, index)	none	-	pure_or_unknown	-
+method	set_image_memory_index	AuroraControlPanel.set_image_memory_index	7467	7471	AuroraControlPanel	Image Memory Viewer	(self, index)	none	-	pure_or_unknown	-
+method	step_screenshot	AuroraControlPanel.step_screenshot	7473	7478	AuroraControlPanel	Screenshot Viewer	(self, delta)	none	-	pure_or_unknown	-
+method	jump_to_latest_screenshot	AuroraControlPanel.jump_to_latest_screenshot	7480	7485	AuroraControlPanel	Screenshot Viewer	(self)	none	-	pure_or_unknown	-
+method	pause_screenshot_follow_latest	AuroraControlPanel.pause_screenshot_follow_latest	7487	7490	AuroraControlPanel	Screenshot Viewer	(self)	implicit	-	pure_or_unknown	-
+method	step_image_memory	AuroraControlPanel.step_image_memory	7492	7496	AuroraControlPanel	Image Memory Viewer	(self, delta)	none	-	pure_or_unknown	-
+method	jump_to_latest_image_memory	AuroraControlPanel.jump_to_latest_image_memory	7498	7502	AuroraControlPanel	Image Memory Viewer	(self)	none	-	pure_or_unknown	-
+method	_refresh_runtime_status_strip	AuroraControlPanel._refresh_runtime_status_strip	7504	7571	AuroraControlPanel	Refresh / State Load	(self, state)	implicit	-	model_api,process_lifecycle,ui_update	-
+method	refresh_loop	AuroraControlPanel.refresh_loop	7573	7585	AuroraControlPanel	Refresh / State Load	(self)	none	-	ui_update	-
+method	refresh_now	AuroraControlPanel.refresh_now	7587	7637	AuroraControlPanel	Refresh / State Load	(self)	value	-	file_io,log_write,process_lifecycle,ui_update	-
+method	_sync_setting_var	AuroraControlPanel._sync_setting_var	7639	7645	AuroraControlPanel	Other	(self, variable, observed_value)	implicit	-	pure_or_unknown	-
+method	reload_observed_settings	AuroraControlPanel.reload_observed_settings	7647	7649	AuroraControlPanel	Command Sink / Actions	(self)	implicit	-	command_queue,ui_update	-
+method	on_close	AuroraControlPanel.on_close	7651	7677	AuroraControlPanel	Other	(self)	none	-	file_io,ui_update	-
+method	refresh_overview_summary	AuroraControlPanel.refresh_overview_summary	7679	8061	AuroraControlPanel	Refresh / State Load	(self, state)	none	-	state_export,file_io,log_write,external_bridge,command_queue,process_lifecycle,ui_update,gameplay_input	-
+method	refresh_workflow_status	AuroraControlPanel.refresh_workflow_status	8063	8447	AuroraControlPanel	Refresh / State Load	(self, state)	mixed	-	state_export,file_io,external_bridge,command_queue,model_api,ui_update	-
+method	render_state	AuroraControlPanel.render_state	8449	8696	AuroraControlPanel	Refresh / State Load	(self)	implicit	-	file_io,command_queue,model_api,ui_update	-
+method	render_pending	AuroraControlPanel.render_pending	8698	8704	AuroraControlPanel	Pending Queue UI	(self, rows, agent_suggestions=None, agent_tasks=None, agent_pending_gate=None, agent_pending_insert_dry_run=None, pending_queue=None)	implicit	-	file_io,command_queue	-
+method	render_memory	AuroraControlPanel.render_memory	8706	8768	AuroraControlPanel	Other	(self, state)	implicit	-	pure_or_unknown	-
+method	build_episodic_control_status	AuroraControlPanel.build_episodic_control_status	8770	8797	AuroraControlPanel	Other	(self, episodic, rehydration=None)	value	-	pure_or_unknown	-
+method	build_episodic_tab_planning_status	AuroraControlPanel.build_episodic_tab_planning_status	8799	8817	AuroraControlPanel	Layout / Tabs	(self, episodic, rehydration=None)	value	-	ui_update	-
+method	build_episodic_retrieval_status	AuroraControlPanel.build_episodic_retrieval_status	8819	8829	AuroraControlPanel	Other	(self, episodic)	value	-	pure_or_unknown	-
+method	build_episodic_promotion_status	AuroraControlPanel.build_episodic_promotion_status	8831	8839	AuroraControlPanel	Other	(self, episodic)	value	-	pure_or_unknown	-
+method	render_episodic	AuroraControlPanel.render_episodic	8841	8999	AuroraControlPanel	Other	(self, state)	implicit	-	file_io,log_write,auth_oauth,ui_update	-
+method	render_logs	AuroraControlPanel.render_logs	9001	9008	AuroraControlPanel	Other	(self, active_tab=None, force=False)	implicit	-	log_write,ui_update	-
+method	_render_log_widget	AuroraControlPanel._render_log_widget	9010	9019	AuroraControlPanel	Other	(self, log_name, widget, path, limit)	none	-	file_io,log_write,ui_update	-
+method	set_log_limit	AuroraControlPanel.set_log_limit	9021	9026	AuroraControlPanel	Other	(self, log_name, limit)	implicit	-	log_write	-
+method	_path_render_signature	AuroraControlPanel._path_render_signature	9029	9034	AuroraControlPanel	Other	(path)	value	-	file_io	-
+method	_get_thumbnail_photo	AuroraControlPanel._get_thumbnail_photo	9036	9057	AuroraControlPanel	Other	(self, path, size=THUMBNAIL_SIZE)	mixed	-	file_io	-
+method	_get_inline_preview_bounds	AuroraControlPanel._get_inline_preview_bounds	9059	9072	AuroraControlPanel	Other	(self, widget)	value	-	pure_or_unknown	-
+method	invalidate_screenshot_preview	AuroraControlPanel.invalidate_screenshot_preview	9074	9076	AuroraControlPanel	Screenshot Viewer	(self, _event=None)	implicit	-	pure_or_unknown	-
+method	invalidate_image_memory_preview	AuroraControlPanel.invalidate_image_memory_preview	9078	9080	AuroraControlPanel	Image Memory Viewer	(self, _event=None)	implicit	-	pure_or_unknown	-
+method	_is_screenshot_popout_open	AuroraControlPanel._is_screenshot_popout_open	9082	9086	AuroraControlPanel	Screenshot Viewer	(self)	value	-	file_io	-
+method	_is_image_memory_popout_open	AuroraControlPanel._is_image_memory_popout_open	9088	9092	AuroraControlPanel	Image Memory Viewer	(self)	value	-	file_io	-
+method	refresh_screenshot_list	AuroraControlPanel.refresh_screenshot_list	9094	9127	AuroraControlPanel	Screenshot Viewer	(self, state)	none	-	file_io,ui_update	-
+method	refresh_image_memory_list	AuroraControlPanel.refresh_image_memory_list	9129	9164	AuroraControlPanel	Image Memory Viewer	(self, state)	none	-	file_io,ui_update	-
+method	render_screenshot	AuroraControlPanel.render_screenshot	9166	9204	AuroraControlPanel	Screenshot Viewer	(self)	none	-	file_io,ui_update	-
+method	render_thumbnail_strip	AuroraControlPanel.render_thumbnail_strip	9206	9238	AuroraControlPanel	Other	(self)	none	-	log_write,ui_update	-
+method	highlight_active_thumbnail	AuroraControlPanel.highlight_active_thumbnail	9240	9248	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	open_screenshot_popout	AuroraControlPanel.open_screenshot_popout	9250	9294	AuroraControlPanel	Screenshot Viewer	(self)	none	-	file_io,ui_update	-
+method	close_screenshot_popout	AuroraControlPanel.close_screenshot_popout	9296	9307	AuroraControlPanel	Screenshot Viewer	(self)	implicit	-	ui_update	-
+method	set_screenshot_popout_mode	AuroraControlPanel.set_screenshot_popout_mode	9309	9311	AuroraControlPanel	Screenshot Viewer	(self, mode)	implicit	-	ui_update	-
+method	toggle_screenshot_popout_mode	AuroraControlPanel.toggle_screenshot_popout_mode	9313	9314	AuroraControlPanel	Screenshot Viewer	(self)	implicit	-	pure_or_unknown	-
+method	refresh_popout_image	AuroraControlPanel.refresh_popout_image	9316	9344	AuroraControlPanel	Refresh / State Load	(self, reset_view=False)	none	-	file_io,ui_update	-
+method	open_image_memory_popout	AuroraControlPanel.open_image_memory_popout	9346	9390	AuroraControlPanel	Image Memory Viewer	(self)	none	-	file_io,ui_update	-
+method	close_image_memory_popout	AuroraControlPanel.close_image_memory_popout	9392	9403	AuroraControlPanel	Image Memory Viewer	(self)	implicit	-	ui_update	-
+method	set_image_memory_popout_mode	AuroraControlPanel.set_image_memory_popout_mode	9405	9407	AuroraControlPanel	Image Memory Viewer	(self, mode)	implicit	-	ui_update	-
+method	toggle_image_memory_popout_mode	AuroraControlPanel.toggle_image_memory_popout_mode	9409	9410	AuroraControlPanel	Image Memory Viewer	(self)	implicit	-	pure_or_unknown	-
+method	refresh_image_memory_popout	AuroraControlPanel.refresh_image_memory_popout	9412	9445	AuroraControlPanel	Image Memory Viewer	(self, reset_view=False)	none	-	file_io,ui_update	-
+method	render_image_memory	AuroraControlPanel.render_image_memory	9447	9489	AuroraControlPanel	Image Memory Viewer	(self)	none	-	file_io,ui_update	-
+method	get_image_size	AuroraControlPanel.get_image_size	9492	9499	AuroraControlPanel	Other	(path)	mixed	-	file_io	-
+method	find_latest_renderable_index	AuroraControlPanel.find_latest_renderable_index	9501	9507	AuroraControlPanel	Other	(self, paths)	value	-	pure_or_unknown	-
+method	_get_canvas_bounds	AuroraControlPanel._get_canvas_bounds	9510	9515	AuroraControlPanel	Other	(canvas, fallback=(1600, 980))	value	-	ui_update	-
+method	_render_image_on_canvas	AuroraControlPanel._render_image_on_canvas	9517	9537	AuroraControlPanel	Other	(self, canvas, path, holder_attr, scale_mode='fit', reset_view=False)	none	-	file_io,ui_update	-
+method	render_image_memory_thumbnail_strip	AuroraControlPanel.render_image_memory_thumbnail_strip	9539	9572	AuroraControlPanel	Image Memory Viewer	(self)	none	-	file_io,log_write,ui_update	-
+method	highlight_active_memory_thumbnail	AuroraControlPanel.highlight_active_memory_thumbnail	9574	9582	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	build_model_cost_status	AuroraControlPanel.build_model_cost_status	9584	9615	AuroraControlPanel	Other	(self, status)	value	-	log_write,model_api	-
+method	build_next_turn_status	AuroraControlPanel.build_next_turn_status	9617	9627	AuroraControlPanel	Other	(self, planning)	value	-	pure_or_unknown	-
+method	build_advanced_context_status	AuroraControlPanel.build_advanced_context_status	9629	9658	AuroraControlPanel	Other	(self, advanced)	value	-	pure_or_unknown	-
+method	get_state_path_value	AuroraControlPanel.get_state_path_value	9661	9667	AuroraControlPanel	Refresh / State Load	(state, path, default='-')	value	-	file_io,ui_update	-
+method	format_settings_safety_value	AuroraControlPanel.format_settings_safety_value	9670	9682	AuroraControlPanel	Other	(value)	value	-	pure_or_unknown	-
+method	format_settings_safety_item_value	AuroraControlPanel.format_settings_safety_item_value	9684	9695	AuroraControlPanel	Other	(self, state, item)	value	-	file_io,log_write	-
+method	count_settings_safety_classes	AuroraControlPanel.count_settings_safety_classes	9697	9702	AuroraControlPanel	Other	(self)	value	-	pure_or_unknown	-
+method	get_baseline_diff_totals	AuroraControlPanel.get_baseline_diff_totals	9704	9720	AuroraControlPanel	Other	(self, state)	mixed	-	state_export	-
+method	build_recovery_home_snapshot	AuroraControlPanel.build_recovery_home_snapshot	9722	9877	AuroraControlPanel	Other	(self, state)	mixed	-	state_export,file_io,log_write	-
+method	refresh_recovery_home_vars	AuroraControlPanel.refresh_recovery_home_vars	9879	9904	AuroraControlPanel	Refresh / State Load	(self, state)	none	-	state_export,ui_update	-
+method	build_recovery_home_text	AuroraControlPanel.build_recovery_home_text	9906	9936	AuroraControlPanel	Other	(self, state)	value	-	state_export,log_write	-
+method	build_operator_risk_summary_text	AuroraControlPanel.build_operator_risk_summary_text	9938	9984	AuroraControlPanel	Other	(self, risk_summary, limit_rows=6)	value	-	log_write	-
+method	build_settings_safety_summary	AuroraControlPanel.build_settings_safety_summary	9986	10022	AuroraControlPanel	Other	(self, state)	value	-	state_export	-
+method	collect_recovery_diagnostics	AuroraControlPanel.collect_recovery_diagnostics	10024	10172	AuroraControlPanel	Other	(self, state)	value	-	log_write	-
+method	build_recovery_diagnostics_text	AuroraControlPanel.build_recovery_diagnostics_text	10174	10181	AuroraControlPanel	Other	(self, state)	value	-	log_write	-
+method	normalize_preference_value	AuroraControlPanel.normalize_preference_value	10184	10207	AuroraControlPanel	Other	(value)	value	-	pure_or_unknown	-
+method	flatten_preferences	AuroraControlPanel.flatten_preferences	10210	10220	AuroraControlPanel	Other	(payload, prefix='')	value	-	pure_or_unknown	-
+method	build_current_preferences_snapshot_from_state	AuroraControlPanel.build_current_preferences_snapshot_from_state	10222	10300	AuroraControlPanel	Refresh / State Load	(self, state)	value	-	state_export,ui_update	-
+method	diff_preferences_against_baseline	AuroraControlPanel.diff_preferences_against_baseline	10302	10311	AuroraControlPanel	Other	(self, current, baseline, limit=18)	value	-	log_write	-
+method	build_baseline_diff_text	AuroraControlPanel.build_baseline_diff_text	10313	10346	AuroraControlPanel	Other	(self, state)	value	-	state_export,log_write	-
+method	build_settings_safety_text	AuroraControlPanel.build_settings_safety_text	10348	10386	AuroraControlPanel	Other	(self, state)	value	-	log_write	-
+method	build_cadence_status_lines	AuroraControlPanel.build_cadence_status_lines	10388	10434	AuroraControlPanel	Other	(self, state=None, status=None)	value	-	pure_or_unknown	-
+method	build_model_status_text	AuroraControlPanel.build_model_status_text	10436	10545	AuroraControlPanel	Other	(self, status)	value	-	file_io,log_write,command_queue,model_api	-
+method	_format_next_inference	AuroraControlPanel._format_next_inference	10547	10560	AuroraControlPanel	Other	(self, next_plan)	value	-	log_write	-
+method	build_prompt_inclusion_readiness_text	AuroraControlPanel.build_prompt_inclusion_readiness_text	10562	10623	AuroraControlPanel	Other	(self, readiness, limit_rows=8)	value	-	log_write	-
+method	build_prompt_inclusion_preview_text	AuroraControlPanel.build_prompt_inclusion_preview_text	10625	10686	AuroraControlPanel	Other	(self, preview, limit_rows=8)	value	-	log_write	-
+method	build_prompt_inclusion_rehearsal_text	AuroraControlPanel.build_prompt_inclusion_rehearsal_text	10688	10739	AuroraControlPanel	Other	(self, rehearsal, limit_rows=8)	value	-	log_write	-
+method	build_prompt_inclusion_activation_checklist_text	AuroraControlPanel.build_prompt_inclusion_activation_checklist_text	10741	10797	AuroraControlPanel	Other	(self, checklist, limit_rows=8)	value	-	log_write	-
+method	build_prompt_inclusion_activation_text	AuroraControlPanel.build_prompt_inclusion_activation_text	10799	10857	AuroraControlPanel	Other	(self, activation_snapshot, limit_rows=8)	value	-	log_write	-
+method	build_prompt_inclusion_closure_text	AuroraControlPanel.build_prompt_inclusion_closure_text	10859	10912	AuroraControlPanel	Other	(self, closure, limit_rows=10)	value	-	log_write	-
+method	build_prompt_ledger_text	AuroraControlPanel.build_prompt_ledger_text	10914	11134	AuroraControlPanel	Other	(self, ledger, context_marks=None, prompt_inclusion_readiness=None, prompt_inclusion_preview=None, prompt_inclusion_rehearsal=None, prompt_inclusion_activation_checklist=None, prompt_inclusion_activation=None, prompt_inclusion_closure=None)	value	-	log_write	-
+method	build_agent_registry_text	AuroraControlPanel.build_agent_registry_text	11136	11603	AuroraControlPanel	Other	(self, registry, agent_suggestions=None, agent_tasks=None, agent_pending_gate=None, agent_pending_insert_dry_run=None, agent_helper_closure=None)	value	-	log_write	-
+method	build_portal_intake_text	AuroraControlPanel.build_portal_intake_text	11605	12212	AuroraControlPanel	Other	(self, portal_intake)	value	-	log_write	-
+method	build_history_context_text	AuroraControlPanel.build_history_context_text	12214	12744	AuroraControlPanel	Other	(self, history_context, companion_readiness=None, companion_protocol=None, companion_receipt=None, companion_closure=None)	value	-	log_write	-
+method	build_visual_context_text	AuroraControlPanel.build_visual_context_text	12746	12806	AuroraControlPanel	Other	(self, visual_context)	value	-	file_io,log_write	-
+method	build_image_context_index_text	AuroraControlPanel.build_image_context_index_text	12808	12957	AuroraControlPanel	Other	(self, image_index, image_cost_posture=None)	value	-	log_write	-
+method	build_live_harness_text	AuroraControlPanel.build_live_harness_text	12959	13098	AuroraControlPanel	Other	(self, harness, rehearsal=None, probe=None)	value	-	log_write	-
+method	build_responses_shadow_text	AuroraControlPanel.build_responses_shadow_text	13100	13430	AuroraControlPanel	Other	(self, responses_shadow)	value	-	log_write,model_api	-
+method	build_context_files_text	AuroraControlPanel.build_context_files_text	13432	13486	AuroraControlPanel	Other	(self, context_files)	value	-	file_io,log_write	-
+method	build_overview_text	AuroraControlPanel.build_overview_text	13488	14054	AuroraControlPanel	Other	(self, state)	value	-	state_export,log_write,external_bridge,command_queue,model_api,gameplay_input	-
+method	_command_drip_lane_totals	AuroraControlPanel._command_drip_lane_totals	14057	14086	AuroraControlPanel	Other	(snapshot)	value	-	command_queue	-
+method	_format_command_drip_summary	AuroraControlPanel._format_command_drip_summary	14089	14096	AuroraControlPanel	Other	(cls, snapshot)	value	-	command_queue	-
+method	_summarize_command_drip_bucket	AuroraControlPanel._summarize_command_drip_bucket	14099	14106	AuroraControlPanel	Other	(bucket)	value	-	log_write,command_queue	-
+method	build_command_drip_text	AuroraControlPanel.build_command_drip_text	14108	14182	AuroraControlPanel	Other	(self, snapshot)	value	-	log_write,command_queue	-
+method	_write_text	AuroraControlPanel._write_text	14184	14207	AuroraControlPanel	Other	(self, widget, content)	none	-	file_io	-
+method	show_tab	AuroraControlPanel.show_tab	14209	14222	AuroraControlPanel	Layout / Tabs	(self, tab_name)	value	-	ui_update	-
+method	_sync_focus_nav_state	AuroraControlPanel._sync_focus_nav_state	14224	14238	AuroraControlPanel	Refresh / State Load	(self, _event=None)	implicit	-	ui_update	-
+method	show_help_tab	AuroraControlPanel.show_help_tab	14240	14245	AuroraControlPanel	Layout / Tabs	(self)	implicit	-	ui_update	-
+method	show_episodic_tab	AuroraControlPanel.show_episodic_tab	14247	14253	AuroraControlPanel	Layout / Tabs	(self)	none	-	ui_update	-
+method	show_command_list	AuroraControlPanel.show_command_list	14255	14262	AuroraControlPanel	Other	(self)	implicit	-	command_queue,ui_update	-
+method	_bind_navigation_shortcuts	AuroraControlPanel._bind_navigation_shortcuts	14264	14269	AuroraControlPanel	Other	(self)	implicit	-	pure_or_unknown	-
+method	_handle_global_navigation	AuroraControlPanel._handle_global_navigation	14271	14284	AuroraControlPanel	Other	(self, event, delta)	none	-	ui_update	-
+method	_focused_widget_blocks_navigation	AuroraControlPanel._focused_widget_blocks_navigation	14286	14293	AuroraControlPanel	Other	(self)	value	-	ui_update	-
+method	_get_active_tab_name	AuroraControlPanel._get_active_tab_name	14295	14300	AuroraControlPanel	Layout / Tabs	(self)	value	-	ui_update	-
+method	on_screenshot_preview_click	AuroraControlPanel.on_screenshot_preview_click	14302	14303	AuroraControlPanel	Screenshot Viewer	(self, event)	implicit	-	pure_or_unknown	-
+method	on_image_memory_preview_click	AuroraControlPanel.on_image_memory_preview_click	14305	14306	AuroraControlPanel	Image Memory Viewer	(self, event)	implicit	-	pure_or_unknown	-
+method	_handle_preview_edge_navigation	AuroraControlPanel._handle_preview_edge_navigation	14308	14323	AuroraControlPanel	Other	(self, event, target)	none	-	pure_or_unknown	-
+function	main	main	14326	14337		Other	()	none	-	file_io	-

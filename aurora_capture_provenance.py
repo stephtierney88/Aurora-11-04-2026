@@ -9,6 +9,85 @@ import math
 import threading
 import time
 import uuid
+from aurora_capture_artifacts import safe_reference
+
+
+def dynamic_observation_guidance(policy):
+    """Describe selected batching semantics without changing execution authority."""
+    beginning = "Dynamic observation flow: after a submitted desktop/game input batch, Aurora requests a post-action screenshot automatically. "
+    if policy in {"batch_end", "batch_end_explicit"}:
+        timing = (f"Command-batch capture policy={policy}. Explicit capture commands in the batch share one "
+                  "fresh acquisition after its terminal receipt with automatic post-action capture. "
+                  "A capture command is not a visual feedback barrier inside the batch; split actions that depend on seeing a new image. ")
+        if policy == "batch_end_explicit":
+            timing += ("Successful capture-only batches use their explicit requested delay (zero if omitted); "
+                       "input, mixed or uncertain batches retain the post-action delay. Longer pending waits are preserved. ")
+        else:
+            timing += "The longest explicit/default post-action delay applies, including to capture-only batches. "
+        timing += "A settle delay does not verify visual stability or completion of an animation. "
+    else:
+        timing = ("Normally end the batch after its actions and let that observation continue the task; an additional REQUEST_SCREENSHOT_CAPTURE "
+                  "in the same batch is optional and can produce an extra capture. ")
+    return beginning + timing + (
+        "Use explicit capture when observing without input, when the last image is insufficient/stale, or after inspecting a capture failure. "
+        "Optional OBSERVE_SCREEN_CHANGE(frame_id,3,0.25) waits within one standalone command for a sampled fingerprint change "
+        "from the exact latest frame (request-only capture and verified geometry/provenance required). It sends no input, "
+        "takes at most 12 samples and returns changed/timeout/failure evidence; changed does not mean an animation finished. "
+        "Rejected/held commands do not prove an action or fresh observation occurred. Readbacks can continue without an image; "
+        "never assume the screen changed. This guidance changes no permissions, capture settings, batching rules or observation freshness checks.")
+
+
+def is_capture_only_receipt(row):
+    """Require complete successful receipt evidence before omitting the input delay."""
+    commands = row.get("executed_commands")
+    count = (row.get("capture_batch") or {}).get("requests")
+    if (row.get("success") is not True or not isinstance(commands, list) or not commands
+            or type(count) is not int or count != len(commands)):
+        return False
+    for field in ("desktop_results", "failed_commands", "blocked_commands", "cancelled_commands"):
+        if not isinstance(row.get(field), list) or row[field]:
+            return False
+    return all(isinstance(command, str) and command.split("(", 1)[0].strip().upper()
+               in {"REQUEST_SCREENSHOT_CAPTURE", "REQUEST_DEMAND_CAPTURE"} for command in commands)
+
+
+def plan_batch_observation(entries, *, session_id, lifecycle, command_generation, default_settle):
+    """Select terminal receipts, never pixels. A later acquisition is still required.
+
+    Legacy receipts keep their existing path. Opted-in requests are discarded
+    after cancellation/lifecycle replacement, and share the longest settle delay.
+    batch_end_explicit omits the default floor only with capture-only proof.
+    """
+    selected, rejected, deferred = [], [], 0
+    settle = 0.0
+    explicit_only = default_floor = 0
+    for row in entries:
+        batch = row.get("capture_batch") or {}
+        row_settle = float(default_settle)
+        if batch.get("policy") in {"batch_end", "batch_end_explicit"}:
+            if (row.get("cancelled") or batch.get("session_id") != session_id
+                    or batch.get("lifecycle") != lifecycle or row.get("command_generation") != command_generation):
+                rejected.append(row.get("command_batch_id", ""))
+                continue
+            delay = batch.get("settle_seconds", 0.0)
+            if not isinstance(delay, (int, float)) or not math.isfinite(delay) or delay < 0:
+                rejected.append(row.get("command_batch_id", ""))
+                continue
+            if batch.get("policy") == "batch_end_explicit" and is_capture_only_receipt(row):
+                row_settle = 0.0
+                explicit_only += 1
+            else:
+                default_floor += 1
+            row_settle = max(row_settle, delay)
+            deferred += batch.get("requests", 0)
+        else:
+            default_floor += 1
+        settle = max(settle, row_settle)
+        selected.append(row)
+    return selected, dict(settle_seconds=settle if selected else float(default_settle), deferred_requests=deferred,
+                          explicit_only_batches=explicit_only, default_settle_batches=default_floor,
+                          selected_batches=len(selected), rejected_batch_ids=rejected,
+                          boundary="receipt drain followed by fresh acquisition; no frame reuse")
 
 
 @dataclass(frozen=True)
@@ -180,7 +259,7 @@ class CaptureService:
                         and stamp.request_generation == self.pending["generation"]
                         and stamp.acquired_start_monotonic >= self.pending["due_at_monotonic"])
 
-    def publish(self, stamp, *, path, timestamp, capture_hash, counter, geometry=None):
+    def publish(self, stamp, *, path, timestamp, capture_hash, counter, geometry=None, artifact=None):
         with self.lock:
             if not self.accepts(stamp):
                 return False
@@ -192,7 +271,8 @@ class CaptureService:
             now = self.epoch()
             self.latest = {"path": path, "timestamp": timestamp, "hash": capture_hash,
                            "counter": counter, "published_at_epoch": now, "provenance": stamp.to_dict(),
-                           "geometry": geometry.to_dict() if geometry else {"status": "unknown"}}
+                           "geometry": geometry.to_dict() if geometry else {"status": "unknown"},
+                           "artifact": safe_reference(artifact)}
             if matched:
                 self.completed_count += 1
                 self.last_completion = {"generation": self.pending["generation"], "reason": self.pending["reason"],
@@ -232,6 +312,18 @@ class CaptureService:
             self.attempt_due_at = self.retry_at = 0.0
             self.blocked_generation = 0
             self.last_cancel_reason = str(reason)
+
+    def cancel_request(self, generation, reason):
+        """Cancel only an owned pending request; never consume a newer request."""
+        with self.lock:
+            if not self.pending or self.pending['generation'] != generation:
+                return False
+            self.rejected_generation = max(self.rejected_generation, generation)
+            self.cancelled_count += 1
+            self.pending = None
+            self.attempt_due_at = self.retry_at = 0.0
+            self.last_cancel_reason = str(reason)
+            return True
 
     def boundary(self, settle=0.0):
         with self.lock:

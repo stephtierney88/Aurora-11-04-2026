@@ -57,6 +57,7 @@ PROFILE_FIELDS = {
     "turn_post_action_settle_seconds": ("set_turn_post_action_settle_seconds", "scheduler.post_action_settle_seconds", ""),
     "demand_capture_enabled": ("set_demand_capture_enabled", "capture.demand_enabled", ""),
     "capture_mode": ("set_capture_mode", "capture.mode", ""),
+    "capture_command_policy": ("set_capture_command_policy", "capture.command_policy", ""),
     "capture_geometry_policy": ("set_capture_geometry_policy", "capture.geometry_policy", ""),
     "capture_request_timeout_seconds": ("set_capture_request_timeout", "capture.request_timeout_seconds", ""),
     "capture_request_max_attempts": ("set_capture_request_attempts", "capture.request_max_attempts", ""),

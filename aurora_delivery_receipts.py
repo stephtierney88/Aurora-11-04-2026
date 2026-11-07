@@ -45,13 +45,14 @@ def queued_input_identities(values):
 
 
 class TurnDelivery:
-    def __init__(self, writer, references, *, observer=None):
+    def __init__(self, writer, references, *, observer=None, guard=None):
         self.writer, self.references = writer, input_identities(references)
         self.inference_request_id = "turn-" + uuid.uuid4().hex
         self.phase, self.sequence, self.model = "", 0, ""
         self.request_started = False
         self.receipt_errors = 0
         self.observer, self.observer_errors = observer, 0
+        self.guard = guard
 
     def observe(self, phase):
         if self.observer is not None:
@@ -64,6 +65,8 @@ class TurnDelivery:
     def emit(self, phase, *, reason="", model="", provider_model=""):
         if phase not in TURN_PHASES or self.phase in TERMINAL_PHASES:
             return
+        if self.guard is not None:
+            self.guard(self, phase)
         self.phase, self.sequence = phase, self.sequence + 1
         if model:
             self.model = str(model)
@@ -88,12 +91,14 @@ def current_delivery():
 
 
 @contextmanager
-def delivery_turn(writer, references, *, observer=None):
-    delivery = TurnDelivery(writer, references, observer=observer)
+def delivery_turn(writer, references, *, observer=None, guard=None):
+    delivery = TurnDelivery(writer, references, observer=observer, guard=guard)
     token = _current.set(delivery)
-    delivery.emit("preparing", reason="Selected from input queue; waiting for turn preparation.")
     try:
+        delivery.emit("preparing", reason="Selected from input queue; waiting for turn preparation.")
         yield delivery
     finally:
-        delivery.emit("failed", reason="Turn ended without a confirmed response. Inspect runtime details; no automatic resend.")
-        _current.reset(token)
+        try:
+            delivery.emit("failed", reason="Turn ended without a confirmed response. Inspect runtime details; no automatic resend.")
+        finally:
+            _current.reset(token)

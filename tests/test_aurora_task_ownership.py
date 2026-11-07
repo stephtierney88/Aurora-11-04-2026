@@ -93,6 +93,7 @@ class OwnershipRuntimeTests(unittest.TestCase):
                       TASK_MAX_MODEL_TURNS=20, TASK_MAX_SECONDS=120, TASK_OUTCOME_REPORTING=False,
                       TASK_MAX_COMMANDS=0, TASK_MAX_REPORTED_TOKENS=0, TASK_UNKNOWN_USAGE_POLICY="continue",
                       TASK_PLAN_CARRY_POLICY="carry", TASK_PENDING_CARRY_POLICY="carry",
+                      TASK_OBJECTIVE_MODE="legacy",
                       TASK_TRANSITION_SCHEMA=TASK_TRANSITION_SCHEMA, reconcile_task_artifacts=reconcile_task_artifacts,
                       inference_plan_version=inference_plan_version, normalize_next_inference_pairs=normalize_next_inference_pairs,
                       require_runtime_setting_unlocked=lambda *a: None)

@@ -7,6 +7,9 @@ from __future__ import annotations
 
 from aurora_goal_store import (GOAL_FILE_COMMANDS, parse_task_file_arguments, describe_goal_file_contract,
                                MEMORY_COMMANDS, HORIZON_COMMANDS, parse_memory_command_arguments, describe_memory_command_contract)
+from aurora_horizon_identity import IDENTITY_COMMANDS, parse_identity_arguments, describe_identity_contract
+from aurora_observation_wait import COMMAND as OBSERVATION_COMMAND, parse_observation_arguments, describe_observation_contract
+from aurora_input_recovery import COMMANDS as INPUT_RECOVERY_COMMANDS, parse_arguments as parse_recovery_arguments, describe_contract as describe_recovery_contract
 
 import copy
 import hashlib
@@ -92,6 +95,8 @@ INPUT_CONTROL_COMMANDS = {
     "CANCEL_ACTIVE_WORK": "Cancel model and command work and release Aurora-owned inputs. Live stays unchanged; remote model work may still drain.",
     "SHUTDOWN_RUNTIME": "Request shutdown, cancel work and release Aurora-owned inputs; report incomplete cleanup.",
 }
+RECORDING_COMMAND = "RETRY_EXECUTION_RECORDING"
+RECORDING_SUMMARY = "Operator-only retry of the exact unconfirmed recording batch. No action replay or automatic history deletion."
 
 INFERENCE_PLAN_COMMANDS = frozenset({
     "SET_NEXT_INFERENCE", "SET_NEXT_REASONING_EFFORT", "CLEAR_NEXT_INFERENCE", "SHOW_NEXT_INFERENCE",
@@ -216,7 +221,8 @@ def parse_inference_plan_arguments(name, args):
         for segment in _inference_option_segments(argument):
             separator = "=" if "=" in segment else ":" if ":" in segment else ""
             if not separator:
-                raise ValueError(f"Expected a key=value next inference option: {segment}.")
+                raise ValueError(f"Expected a key=value next inference option: {segment}. "
+                                 'Quote text values containing commas or semicolons, for example note="inspect; then compare, with evidence".')
             key, value = segment.split(separator, 1)
             value = value.strip()
             if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
@@ -261,7 +267,8 @@ def describe_inference_plan_contract(name):
             [{"name": "options", "type": "string", "required": False, "variadic": True, "omitted": "read_current_plan",
               "keys": list(NEXT_INFERENCE_KEYS), "accepted_aliases": dict(NEXT_INFERENCE_ALIASES),
               "option_schema": {"type": "object", "properties": options, "additionalProperties": False},
-              "separators": ["semicolon", "newline", "separate command arguments"], "assignment": ["=", ":"]}]),
+              "separators": ["semicolon", "newline", "separate command arguments"], "assignment": ["=", ":"],
+              "quoting": 'Quote text values containing delimiters, e.g. note="inspect; then compare, with evidence". Unquoted semicolons/newlines start another option.'}]),
         "effects": INFERENCE_PLAN_SUMMARIES[name.upper()],
         "replacement_semantics": "Supplied options replace the entire queued plan; omitted fields do not carry forward. Empty fields are omitted; conflicting duplicates or aliases reject.",
         "validation_owner": "aurora_command_contracts.parse_inference_plan_arguments",
@@ -363,9 +370,15 @@ def parse_lock_command_arguments(name, args):
 
 
 def command_failure_stops_batch(name):
+    if name.upper() == OBSERVATION_COMMAND:
+        return True
+    if name.upper() in INPUT_RECOVERY_COMMANDS:
+        return True
+    if name.upper() in IDENTITY_COMMANDS:
+        return True
     if name.upper() in TASK_CONTROL_COMMANDS or name.upper() in MEMORY_COMMANDS or name.upper() in SIMPLE_BOOLEAN_COMMANDS:
         return True
-    return bool(name.upper() in GOAL_FILE_COMMANDS or setting_command_definition(name) or name.upper() in LOCK_COMMANDS or name.upper() in TRANSACTION_COMMANDS or name.upper() in INPUT_CONTROL_COMMANDS or name.upper() in INFERENCE_PLAN_COMMANDS or name.upper() in DEFAULT_PROFILE_COMMANDS or name.upper() in PENDING_COMMANDS or name.upper() in HISTORY_COMMANDS or name.upper() in RETRIEVAL_RESULT_COMMANDS or name.upper() in EPISODIC_COMMANDS or name.upper() == "RESET_RESPONSES_SESSION")
+    return bool(name.upper() in GOAL_FILE_COMMANDS or setting_command_definition(name) or name.upper() in LOCK_COMMANDS or name.upper() in TRANSACTION_COMMANDS or name.upper() in INPUT_CONTROL_COMMANDS or name.upper() in INFERENCE_PLAN_COMMANDS or name.upper() in DEFAULT_PROFILE_COMMANDS or name.upper() in PENDING_COMMANDS or name.upper() in HISTORY_COMMANDS or name.upper() in RETRIEVAL_RESULT_COMMANDS or name.upper() in EPISODIC_COMMANDS or name.upper() in ("RESET_RESPONSES_SESSION", RECORDING_COMMAND))
 
 
 def describe_setting_command_contract(name):
@@ -609,7 +622,13 @@ def validate_desktop_keys(name, values, *, keyboard_keys, game_key_validator):
 
 def validate_command_arguments(name: str, args) -> None:
     """Validate reviewed parameters before any member of a batch dispatches."""
-    if name.upper() in TASK_CONTROL_COMMANDS:
+    if name.upper() == OBSERVATION_COMMAND:
+        parse_observation_arguments(args)
+    elif name.upper() in INPUT_RECOVERY_COMMANDS:
+        parse_recovery_arguments(name, args)
+    elif name.upper() in IDENTITY_COMMANDS:
+        parse_identity_arguments(name, args)
+    elif name.upper() in TASK_CONTROL_COMMANDS:
         parse_task_control_arguments(name, args)
     elif name.upper() in MEMORY_COMMANDS:
         parse_memory_command_arguments(name, args)
@@ -625,7 +644,7 @@ def validate_command_arguments(name: str, args) -> None:
         parse_history_arguments(name, args)
     elif name.upper() in PENDING_COMMANDS:
         validate_pending_arguments(name, args)
-    elif name.upper() in INPUT_CONTROL_COMMANDS:
+    elif name.upper() in INPUT_CONTROL_COMMANDS or name.upper() == RECORDING_COMMAND:
         if args:
             raise ValueError(f"{name.upper()} takes no arguments.")
     elif name.upper() == "RESET_RESPONSES_SESSION":
@@ -654,8 +673,26 @@ def desktop_result(name, *, success=True, effect_status="submitted", reason=""):
 
 
 def reviewed_command_description(name):
+    if name.upper() == OBSERVATION_COMMAND:
+        return dict(signature='OBSERVE_SCREEN_CHANGE(frame_id[, timeout_seconds=3, poll_seconds=0.25])',
+                    summary=describe_observation_contract()['effects'])
+    if name.upper() in INPUT_RECOVERY_COMMANDS:
+        args = {'SHOW_INPUT_RECOVERY':'[offset, limit]',
+                'SHOW_INPUT_RECOVERY_STATUS':'', 'ACK_INPUT_RECOVERY_DIAGNOSTIC':'version',
+                'PREVIEW_INPUT_RECONCILIATION':'entry_id, version',
+                'RECONCILE_INPUT_DELIVERY':'entry_id, version, evidence_version',
+                'PREVIEW_INPUT_RECOVERY_COMPACTION':'[keep_terminal, limit]',
+                'PREVIEW_INPUT_RECOVERY_ARCHIVE':'[limit=1000]',
+                'COMPACT_INPUT_RECOVERY':'keep_terminal, limit, version, discard_text'}.get(name.upper(),
+                'entry_id, version' + ('[, allow_uncertain]' if name.upper() == 'RETRY_INPUT' else ''))
+        return {'signature': f'{name.upper()}({args})', 'summary': describe_recovery_contract(name)['semantics']}
+    if name.upper() in IDENTITY_COMMANDS:
+        args = '[all|goals|immediate|short|medium|long[, offset, limit]]' if name.upper() == 'SHOW_HORIZON_ENTRIES' else 'entry_id, entry_version, goal_uid|none'
+        return {'signature': f'{name.upper()}({args})', 'summary': describe_identity_contract(name)['semantics']}
     if name.upper() in TASK_CONTROL_COMMANDS:
-        return {"signature": f"{name.upper()}(" + ("task_id, done|wait|approval|error, reason" if name.upper() == "REPORT_TASK_OUTCOME" else "") + ")",
+        args = {"REPORT_TASK_OUTCOME": "task_id, done|wait|approval|error, reason", "CANCEL_ACTIVE_WORK_IF_TASK": "task_id",
+                "SHOW_TASK_CONTEXT": "task_id", "STEER_TASK": "task_id, context_version, text_json_base64url"}.get(name.upper(), "")
+        return {"signature": f"{name.upper()}({args})",
                 "summary": TASK_CONTROL_COMMANDS[name.upper()]}
     if name.upper() in SIMPLE_BOOLEAN_COMMANDS:
         return {"signature": f"{name.upper()}([on|off])", "summary": "Set this existing runtime toggle, or omit the value to inspect it. Also accepts true/false, 1/0, yes/no."}
@@ -703,6 +740,8 @@ def reviewed_command_description(name):
                 "summary": INFERENCE_PLAN_SUMMARIES[name.upper()]}
     if name.upper() in INPUT_CONTROL_COMMANDS:
         return {"signature": f"{name.upper()}()", "summary": INPUT_CONTROL_COMMANDS[name.upper()]}
+    if name.upper() == RECORDING_COMMAND:
+        return {"signature": f"{RECORDING_COMMAND}()", "summary": RECORDING_SUMMARY}
     definition = setting_command_definition(name)
     if definition:
         if setting_shortcut_definition(name):
@@ -735,6 +774,12 @@ def command_result_failed(result: Any) -> bool:
 
 
 def describe_command_contract(name: str) -> dict[str, Any]:
+    if name.upper() == OBSERVATION_COMMAND:
+        return describe_observation_contract()
+    if name.upper() in INPUT_RECOVERY_COMMANDS:
+        return describe_recovery_contract(name)
+    if name.upper() in IDENTITY_COMMANDS:
+        return describe_identity_contract(name)
     if name.upper() in TASK_CONTROL_COMMANDS:
         return describe_task_control_contract(name)
     if name.upper() in SIMPLE_BOOLEAN_COMMANDS:
@@ -780,6 +825,12 @@ def describe_command_contract(name: str) -> dict[str, Any]:
                                 "receipt_field": "held_input_results" if name.upper() == "SHOW_HELD_INPUTS" else "input_cleanup_results",
                                 "failure_policy": "Stop the remaining batch on failure. Failed releases stay tracked for explicit retry; an in-flight native call may defer cleanup to its owner.",
                                 "verification": "Backend submission only; no proof of application behavior or ownership of physically held human inputs."})
+    elif name.upper() == RECORDING_COMMAND:
+        contract.update(parameter_validation="pre_dispatch", parameters=[], min_arguments=0, max_arguments=0,
+                        effects=RECORDING_SUMMARY,
+                        result={"protocol": "boolean_handler_result", "success": "retry requested; publication is asynchronous",
+                                "failure_policy": "Operator-only under execution lock; running writers reject retry. Failures keep the unacknowledged prefix.",
+                                "verification": "Inspect continuation.recording state, last_receipt and committed counters; true does not prove a disk commit."})
     elif name.upper() == "RESET_RESPONSES_SESSION":
         contract.update(parameter_validation="pre_dispatch", parameters=[], min_arguments=0, max_arguments=0,
                         effects="Clear local provider continuation identity between requests under the reasoning lock; no API request, no remote-history deletion, no automatic replay.",

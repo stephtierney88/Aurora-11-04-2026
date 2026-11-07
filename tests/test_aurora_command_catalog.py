@@ -61,7 +61,13 @@ class CommandCatalogTests(unittest.TestCase):
             self.assertEqual(contract["result"]["receipt_field"], "setting_results")
         self.assertIn("SET_REASONING_EFFORT", rows["SET_SESSION_REASONING_EFFORT"]["aliases"])
         self.assertIn("SET_SESSION_REASONING_EFFORT", rows["SET_REASONING_EFFORT"]["aliases"])
-        self.assertEqual(sum(row["contract"]["parameter_validation"] == "pre_dispatch" for row in rows.values()), 157)
+        self.assertEqual(sum(row["contract"]["parameter_validation"] == "pre_dispatch" for row in rows.values()), 180)
+        self.assertEqual(rows['STEER_TASK']['contract']['actor'], 'operator_only')
+        self.assertEqual(rows['SHOW_TASK_CONTEXT']['contract']['max_arguments'], 1)
+        self.assertEqual(rows['CANCEL_ACTIVE_WORK_IF_TASK']['signature'], 'CANCEL_ACTIVE_WORK_IF_TASK(task_id)')
+        self.assertEqual(rows['CANCEL_ACTIVE_WORK_IF_TASK']['contract']['actor'], 'operator_only')
+        self.assertIn('evidence_version', rows['RECONCILE_INPUT_DELIVERY']['signature'])
+        self.assertEqual(rows['PREVIEW_INPUT_RECONCILIATION']['contract']['max_arguments'], 2)
 
     def test_history_contract_changes_invalidate_published_catalog(self):
         with tempfile.TemporaryDirectory(prefix="aurora-history-catalog-") as folder:
@@ -71,7 +77,7 @@ class CommandCatalogTests(unittest.TestCase):
             path.write_text(json.dumps(self.catalog), encoding="utf-8")
             authority = root / "aurora_history_controls.py"
             authority.write_bytes((ROOT / authority.name).read_bytes())
-            self.assertEqual(len(load_command_catalog(root)), 387)
+            self.assertEqual(len(load_command_catalog(root)), len(self.catalog["commands"]))
             with authority.open("a", encoding="utf-8") as handle:
                 handle.write("\n# changed history contract\n")
             with self.assertRaisesRegex(ValueError, "stale"):
@@ -85,7 +91,7 @@ class CommandCatalogTests(unittest.TestCase):
             path.write_text(json.dumps(self.catalog), encoding="utf-8")
             authority = root / "aurora_task_continuation.py"
             authority.write_bytes((ROOT / authority.name).read_bytes())
-            self.assertEqual(len(load_command_catalog(root)), 387)
+            self.assertEqual(len(load_command_catalog(root)), len(self.catalog["commands"]))
             with authority.open("a", encoding="utf-8") as handle:
                 handle.write("\n# changed task outcome contract\n")
             with self.assertRaisesRegex(ValueError, "stale"):
@@ -99,7 +105,7 @@ class CommandCatalogTests(unittest.TestCase):
             path.write_text(json.dumps(self.catalog), encoding="utf-8")
             authority = root / "aurora_goal_store.py"
             authority.write_bytes((ROOT / authority.name).read_bytes())
-            self.assertEqual(len(load_command_catalog(root)), 387)
+            self.assertEqual(len(load_command_catalog(root)), len(self.catalog["commands"]))
             with authority.open("a", encoding="utf-8") as handle:
                 handle.write("\n# changed goal argument validation\n")
             with self.assertRaisesRegex(ValueError, "stale"):
@@ -113,7 +119,7 @@ class CommandCatalogTests(unittest.TestCase):
             path.write_text(json.dumps(self.catalog), encoding="utf-8")
             registry = root / "aurora_settings_registry.py"
             registry.write_bytes((ROOT / registry.name).read_bytes())
-            self.assertEqual(len(load_command_catalog(root)), 387)
+            self.assertEqual(len(load_command_catalog(root)), len(self.catalog["commands"]))
             with registry.open("a", encoding="utf-8") as handle:
                 handle.write("\n# changed validation authority\n")
             with self.assertRaisesRegex(ValueError, "stale"):
@@ -127,7 +133,7 @@ class CommandCatalogTests(unittest.TestCase):
             path.write_text(json.dumps(self.catalog), encoding="utf-8")
             authority = root / "aurora_settings_transactions.py"
             authority.write_bytes((ROOT / authority.name).read_bytes())
-            self.assertEqual(len(load_command_catalog(root)), 387)
+            self.assertEqual(len(load_command_catalog(root)), len(self.catalog["commands"]))
             with authority.open("a", encoding="utf-8") as handle:
                 handle.write("\n# changed transaction validator\n")
             with self.assertRaisesRegex(ValueError, "stale"):
